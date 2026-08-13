@@ -640,7 +640,35 @@ Alarm engine core has zero MQTT dependency; MQTT is one optional output path.
    - Tests: `frigate/test/test_alarm_contact_id.py`, 18 tests, all passing,
      ruff/format/mypy clean, no cv2/config dependency so it actually ran
      here.
-7. Reporting queue (send/ACK/retry/failure) + tests — not started
+7. Reporting queue (send/ACK/retry/failure) + tests — **DONE**.
+   `frigate/alarm/queue.py`: `ReportingQueue`, modeled directly on
+   `WebPushClient._process_notifications`
+   (`frigate/comms/webpush.py`) — a `queue.Queue[AlarmEvent]` plus one
+   background thread, no new dependency. Protocol-agnostic: constructed
+   with a plain `send: Callable[[AlarmEvent], bool]`, so it never imports
+   `sia.py`/`contact_id.py` — the wiring layer (phase 9) passes in
+   something like `lambda event: sia_client.send(encode_sia_message(event,
+   ...))`.
+   - Events are delivered one at a time, in order, retries included (not
+     fanned across worker threads) — deliberate: for a home alarm, ordering
+     matters more than throughput, and it mirrors the webpush precedent.
+   - Retry is linear backoff (`retry_delay_seconds * attempt_number`) up to
+     `max_attempts`, then the report is marked `failed`.
+   - `on_health_change(bool)` fires only on healthy<->unhealthy
+     transitions, not on every event, so it's usable as a fault-state
+     trigger later (phase 8/9 camera/comms supervision) without being
+     spammed on every retry.
+   - Tests: `frigate/test/test_alarm_queue.py`, 9 tests, all passing,
+     ruff/format/mypy clean. Most tests call the private
+     `_deliver_with_retry` directly (deterministic, no thread timing to
+     race) rather than only going through the real background thread,
+     following the `test_maintainer.py` precedent of exercising internal
+     methods directly; two tests do exercise the real
+     `start()`/`enqueue()`/`stop()` thread path using a
+     `threading.Event` to synchronize instead of sleep-polling.
+   - Full alarm test suite re-run after this phase: 77 collected, 76 pass,
+     1 error — the pre-existing/expected `test_alarm_config` cv2-import
+     gap from phase 4, nothing new broken.
 8. API endpoints + auth + tests — not started
 9. MQTT integration (optional path) + test engine runs with MQTT off — not started
 10. Frontend components — not started
