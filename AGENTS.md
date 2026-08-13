@@ -477,12 +477,39 @@ Alarm engine core has zero MQTT dependency; MQTT is one optional output path.
    `clear_fault()` first). This module has zero external dependencies
    (stdlib only), so it's a safe reuse target for the Phase 3 adapter and
    Phase 8 API layer.
-3. Detection → canonical event adapter + tests — not started (next up: needs
-   an `AlarmEvent`-ish dataclass, per-zone `AlarmStateMachine` instances or a
-   single machine with per-zone dwell/verification bookkeeping — decide when
-   starting this phase, re-read the review `ActiveObjects` pattern noted in
-   phase 1 first)
-4. Config schema, validation, backwards-compat tests — not started
+3. Detection → canonical event adapter + tests — **DONE**. See
+   `frigate/alarm/event.py` (`AlarmEventType`, `AlarmEvent` — the canonical,
+   protocol-agnostic event), `frigate/alarm/rules.py` (`ZoneAlarmRule`, a
+   plain dataclass, NOT the Pydantic config), and `frigate/alarm/adapter.py`
+   (`DetectionAlarmAdapter.evaluate()`). 18 tests in
+   `frigate/test/test_alarm_adapter.py`, all passing; ruff/format/mypy clean.
+   Design choices: (a) the adapter takes `armed_mode: ArmedMode | None` as an
+   explicit parameter rather than holding a reference to `AlarmStateMachine`
+   — one-way dependency (detections -> adapter -> engine), the adapter never
+   imports `engine.py`, and it's unit-testable without constructing an engine.
+   (b) "alarm enabled" (global) is NOT checked inside the adapter — the
+   caller simply doesn't construct/use one when alarm is disabled; adding an
+   internal flag would be redundant state. (c) persistence/verification is
+   one numeric knob, `verification_seconds` (0 = instant-trigger, >0 = must
+   dwell that long), tracked per (camera, zone, object_id) in
+   `adapter._pending`; `clear_object()` lets the caller drop tracking when an
+   object leaves a zone or its tracked-object lifecycle ends (future wiring
+   phase must call this or trackers leak for objects that never
+   re-qualify). (d) entry/exit delay is NOT applied by the adapter — it
+   returns whether a detection qualifies; the caller reads
+   `rule.entry_delay_seconds` via `adapter.get_rule(camera, zone)` and passes
+   it to `engine.trigger()`. (e) a real bug was caught by the tests during
+   this phase and fixed before commit: the object-whitelist check used
+   `if rule.objects and label not in rule.objects`, which skipped the check
+   entirely (allowing everything through) when the whitelist was empty,
+   contradicting the "empty = nothing qualifies" design; fixed to
+   `if label not in rule.objects`.
+4. Config schema, validation, backwards-compat tests — not started (next up:
+   `frigate/config/alarm.py` `AlarmConfig` + per-camera `alarm` field on
+   `CameraConfig`, `verify_alarm_*` validators in `post_validation`; needs to
+   decide how a `ZoneAlarmRule` gets built from the validated config, e.g. a
+   `to_rule()` method or a builder function — keep it simple, don't add a
+   generic mapping layer for one conversion)
 5. SIA DC-09 adapter + tests — **blocked: no SIA DC-09 spec has been provided.**
    Only an Ademco Contact ID report-code reference (PDF) has been supplied. Do
    not implement SIA DC-09 framing/auth/encryption from memory when this phase
