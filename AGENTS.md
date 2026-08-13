@@ -561,10 +561,48 @@ Alarm engine core has zero MQTT dependency; MQTT is one optional output path.
      dev/CI environment with full deps installed** — this has not been
      confirmed to actually pass, only to be free of syntax/lint errors and
      to structurally match working precedent.
-5. SIA DC-09 adapter + tests — **blocked: no SIA DC-09 spec has been provided.**
-   Only an Ademco Contact ID report-code reference (PDF) has been supplied. Do
-   not implement SIA DC-09 framing/auth/encryption from memory when this phase
-   starts — stop and ask for the spec first.
+5. SIA DC-09 adapter + tests — **DONE, but explicitly UNVERIFIED — do not
+   treat as spec-compliant.** No ANSI/SIA DC-09 spec text was ever provided
+   (only the Ademco Contact ID PDF, used in phase 6). I stopped and asked;
+   given three options (provide the spec / skip to Contact ID first / stub
+   it flagged-unverified), the user chose **stub it, flagged unverified**,
+   overriding the project's default "don't implement without the spec"
+   instruction — that's a deliberate, explicit choice on record, not a
+   lapse.
+   - `frigate/alarm/protocols/sia.py`: `encode_sia_message`/
+     `parse_sia_message` (envelope: `LF CRC LENGTH "SIA-DCS" SEQ R L
+     #ACCOUNT [DATA] _TIMESTAMP CR`), `SiaClient` (bare TCP
+     connect/send/close, no retry — retry is phase 7's job), `is_ack`
+     (substring check).
+   - What's confidently correct: general envelope shape, framing bytes,
+     that it's length + CRC prefixed. What's explicitly NOT verified and
+     likely wrong against a real receiver: the CRC variant (used CRC-16/ARC,
+     poly 0xA001 — other SIA implementations may use a different one), the
+     inner data-block subfield grammar (real DC-09 has structured
+     event-qualifier tokens; this emits a simplified
+     `[#account|code+zone]`), and ACK/NAK/DUH framing (real DC-09 responses
+     are structured; this just substring-matches "ACK").
+   - `SIA_EVENT_CODES` in that file only maps event types with reasonably
+     common public citations (burglary->BA, panic->PA, tamper->TA, arm->CL,
+     disarm->OP, test->RP). fault/restore/camera_failure/
+     communication_failure/supervision are deliberately left unmapped —
+     encoding one raises `UnmappedAlarmEventType` rather than emitting a
+     fabricated code. Do not add codes for these without the real spec.
+   - Encryption is NOT implemented. DC-09 has an AES-based encrypted
+     variant; `encrypted=True` raises `NotImplementedError` rather than
+     guessing at IV/padding for something security-relevant — that's a
+     harder line than the rest of the stub, worth keeping even if the
+     envelope guesses above ever get "good enough" treatment.
+   - Tests: `frigate/test/test_alarm_sia.py`, 11 tests, all passing,
+     ruff/format/mypy clean — but these only prove internal
+     self-consistency (our encoder round-trips through our own parser,
+     CRC/length invariants hold, a loopback-socket transport test) and
+     prove NOTHING about interoperability with a real monitoring receiver.
+     No cv2/pydantic-config dependency here (unlike phase 4), so this phase
+     actually ran in this sandbox, not just syntax-checked.
+   - **Before this touches a real receiver**: get the actual ANSI/SIA
+     DC-09 spec and re-verify every point above, especially the CRC
+     algorithm and the subfield grammar.
 6. Contact ID adapter + tests — not started (Contact ID code table is in hand)
 7. Reporting queue (send/ACK/retry/failure) + tests — not started
 8. API endpoints + auth + tests — not started
