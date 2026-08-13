@@ -504,12 +504,63 @@ Alarm engine core has zero MQTT dependency; MQTT is one optional output path.
    entirely (allowing everything through) when the whitelist was empty,
    contradicting the "empty = nothing qualifies" design; fixed to
    `if label not in rule.objects`.
-4. Config schema, validation, backwards-compat tests — not started (next up:
-   `frigate/config/alarm.py` `AlarmConfig` + per-camera `alarm` field on
-   `CameraConfig`, `verify_alarm_*` validators in `post_validation`; needs to
-   decide how a `ZoneAlarmRule` gets built from the validated config, e.g. a
-   `to_rule()` method or a builder function — keep it simple, don't add a
-   generic mapping layer for one conversion)
+4. Config schema, validation, backwards-compat tests — **DONE, but NOT
+   runtime-verified in this sandbox — see caveat below, run the tests in a
+   full dev/CI env before trusting this phase.**
+   - `frigate/config/alarm.py`: `AlarmConfig` (global) — `enabled`,
+     `exit_delay_seconds`, `enabled_in_config` (snapshotted in
+     `FrigateConfig.post_validation`, mirroring the existing
+     `self.notifications.enabled_in_config = self.notifications.enabled`
+     line right next to it).
+   - `frigate/config/camera/alarm.py`: `AlarmZoneConfig` (per Frigate zone —
+     `enabled`, `objects`, `event`, `object_event_overrides`,
+     `min_confidence`, `verification_seconds`, `delay` [entry delay],
+     `arm_modes`) and `CameraAlarmConfig` (`enabled`, `zones: dict[str,
+     AlarmZoneConfig]`). `AlarmZoneConfig.to_rule(camera, zone)` builds a
+     `frigate.alarm.rules.ZoneAlarmRule` directly (resolving the phase-3
+     "decide how a rule gets built from config" question as a method on the
+     config model itself, not a separate bridging module — one conversion
+     didn't justify a new layer). `CameraAlarmConfig.build_rules(camera)`
+     maps all enabled zones to rules, empty dict if the camera's alarm is
+     disabled.
+   - `CameraConfig.alarm` field added to `frigate/config/camera/camera.py`
+     ("Options with global fallback" section, alphabetically first).
+     `FrigateConfig.alarm` field added to `frigate/config/config.py`
+     ("Global config" section).
+   - Three new validators in `frigate/config/config.py`, called from the
+     existing per-camera loop in `post_validation` right after
+     `verify_lpr_and_face`: `verify_alarm_zones_exist` (mirrors
+     `verify_required_zones_exist`: an alarm zone key must exist in
+     `camera.zones`), `verify_alarm_zone_objects_are_tracked` (mirrors
+     `verify_zone_objects_are_tracked`: alarm zone `objects` must be a
+     subset of `camera.objects.track`), `verify_alarm_requires_global_enabled`
+     (mirrors `verify_lpr_and_face`: camera-level `alarm.enabled` requires
+     global `alarm.enabled`).
+   - Backwards compat: no migration needed, same as every other optional
+     section — `default_factory=AlarmConfig`/`default_factory=
+     CameraAlarmConfig` means an old config.yml with no `alarm:` key at all
+     parses to `enabled=False` everywhere, zero behavior change.
+   - Tests: `frigate/test/test_alarm_config.py` (backwards-compat defaults,
+     zone-existence validation, object-tracked validation, global/camera
+     enabled-gating, `to_rule()`/`build_rules()` correctness).
+   - **Caveat, read before trusting this phase**: `frigate/config/__init__.py`
+     unconditionally does `from .camera import *` etc., which pulls in
+     `frigate.detectors` -> `frigate.plus` -> `import cv2`. This dev sandbox
+     has no `cv2`/`fastapi`/`peewee`/etc. installed (same gap phases 1-3
+     already hit for the other 73 pre-existing tests), so NOTHING under
+     `frigate.config.*` — old or new — could be runtime-imported here, let
+     alone executed. Verification for this phase was: `python3 -m py_compile`
+     (syntax), `ruff check`/`ruff format --check` (clean), and manual
+     line-by-line comparison against the exact precedent being mirrored
+     (`verify_required_zones_exist`, `verify_lpr_and_face`,
+     `NotificationConfig`). mypy was skipped deliberately, not just
+     unavailable: `frigate/mypy.ini` has `[mypy-frigate.config.*]
+     ignore_errors = true` project-wide, so it wouldn't have checked these
+     files anyway. **Before relying on this phase, run
+     `python3 -u -m unittest frigate.test.test_alarm_config` in a real
+     dev/CI environment with full deps installed** — this has not been
+     confirmed to actually pass, only to be free of syntax/lint errors and
+     to structurally match working precedent.
 5. SIA DC-09 adapter + tests — **blocked: no SIA DC-09 spec has been provided.**
    Only an Ademco Contact ID report-code reference (PDF) has been supplied. Do
    not implement SIA DC-09 framing/auth/encryption from memory when this phase
