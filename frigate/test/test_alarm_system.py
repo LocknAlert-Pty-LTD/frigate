@@ -95,6 +95,41 @@ class TestEventHistory(unittest.TestCase):
         system.record_event(_event())  # should not raise
 
 
+class TestArmedModeForEvaluation(unittest.TestCase):
+    def test_none_when_disarmed(self) -> None:
+        system = AlarmSystem(_rules())
+        self.assertIsNone(system.armed_mode_for_evaluation)
+
+    def test_none_during_exit_delay(self) -> None:
+        system = AlarmSystem(_rules())
+        system.arm(ArmedMode.away, exit_delay_seconds=30)
+        self.assertIsNone(system.armed_mode_for_evaluation)
+
+    def test_set_when_armed_away(self) -> None:
+        system = AlarmSystem(_rules())
+        system.arm(ArmedMode.away, exit_delay_seconds=0)
+        self.assertEqual(system.armed_mode_for_evaluation, ArmedMode.away)
+
+    def test_set_during_entry_delay(self) -> None:
+        system = AlarmSystem(_rules())
+        system.arm(ArmedMode.stay, exit_delay_seconds=0)
+        system.state_machine.trigger(entry_delay_seconds=30)
+        self.assertEqual(system.armed_mode_for_evaluation, ArmedMode.stay)
+
+    def test_set_during_active_alarm(self) -> None:
+        system = AlarmSystem(_rules())
+        system.arm(ArmedMode.away, exit_delay_seconds=0)
+        system.state_machine.trigger(entry_delay_seconds=0)
+        self.assertEqual(system.armed_mode_for_evaluation, ArmedMode.away)
+
+    def test_none_in_alarm_memory(self) -> None:
+        system = AlarmSystem(_rules())
+        system.arm(ArmedMode.away, exit_delay_seconds=0)
+        system.state_machine.trigger(entry_delay_seconds=0)
+        system.disarm()
+        self.assertIsNone(system.armed_mode_for_evaluation)
+
+
 class TestZoneStatus(unittest.TestCase):
     def test_zone_not_armed_when_system_disarmed(self) -> None:
         system = AlarmSystem(_rules())

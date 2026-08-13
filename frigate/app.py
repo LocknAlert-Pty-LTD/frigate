@@ -15,6 +15,9 @@ import uvicorn
 from peewee_migrate import Router
 from playhouse.sqlite_ext import SqliteExtDatabase
 
+from frigate.alarm.detection_thread import AlarmDetectionThread
+from frigate.alarm.factory import build_alarm_system
+from frigate.alarm.mqtt_bridge import AlarmMqttBridge
 from frigate.api.auth import hash_password
 from frigate.api.fastapi_app import create_fastapi_app
 from frigate.camera import CameraMetrics, PTZMetrics
@@ -348,6 +351,31 @@ class FrigateApp:
             comms,
         )
 
+    def init_alarm_system(self) -> None:
+        # AlarmSystem itself has zero MQTT/Dispatcher dependency (see
+        # frigate/test/test_alarm_no_mqtt_dependency.py); the bridge below
+        # is the only piece that knows about publishing, and it only takes
+        # a plain callable, not the Dispatcher class.
+        self.alarm_system = build_alarm_system(self.config)
+        self.alarm_mqtt_bridge = (
+            AlarmMqttBridge(self.alarm_system, self.dispatcher.publish)
+            if self.alarm_system is not None
+            else None
+        )
+        self.alarm_detection_thread: AlarmDetectionThread | None = None
+
+    def start_alarm_system(self) -> None:
+        if self.alarm_system is None:
+            return
+
+        if self.alarm_system.reporting_queue is not None:
+            self.alarm_system.reporting_queue.start()
+
+        self.alarm_detection_thread = AlarmDetectionThread(
+            self.alarm_system, self.stop_event, self.alarm_mqtt_bridge
+        )
+        self.alarm_detection_thread.start()
+
     def init_profile_manager(self) -> None:
         self.profile_manager = ProfileManager(
             self.config, self.inter_config_updater, self.dispatcher
@@ -601,6 +629,7 @@ class FrigateApp:
         self.init_inter_process_communicator()
         self.start_detectors()
         self.init_dispatcher()
+        self.init_alarm_system()
         self.init_profile_manager()
 
         # workers get a copy of the config and can miss the broadcast below, so
@@ -621,6 +650,7 @@ class FrigateApp:
         self.start_event_processor()
         self.start_event_cleanup()
         self.start_record_cleanup()
+        self.start_alarm_system()
         self.start_watchdog()
 
         # publish for the recording/review/embeddings processes, which start
@@ -646,6 +676,7 @@ class FrigateApp:
                     self.dispatcher,
                     self.profile_manager,
                     config_holder=self.config_holder,
+                    alarm_system=self.alarm_system,
                 ),
                 host="127.0.0.1",
                 port=5001,
@@ -706,6 +737,14 @@ class FrigateApp:
 
         self.review_segment_process.terminate()
         self.review_segment_process.join()
+
+        if self.alarm_detection_thread is not None:
+            self.alarm_detection_thread.stop()
+        if (
+            self.alarm_system is not None
+            and self.alarm_system.reporting_queue is not None
+        ):
+            self.alarm_system.reporting_queue.stop()
 
         self.dispatcher.stop()
         self.ptz_autotracker_thread.join()

@@ -126,5 +126,40 @@ class TestBuildRules(unittest.TestCase):
         self.assertEqual(config.cameras["back"].alarm.build_rules("back"), {})
 
 
+class TestReportingConfig(unittest.TestCase):
+    def setUp(self) -> None:
+        if not os.path.exists(MODEL_CACHE_DIR) and not os.path.islink(MODEL_CACHE_DIR):
+            os.makedirs(MODEL_CACHE_DIR)
+
+    def test_reporting_disabled_by_default(self) -> None:
+        config = FrigateConfig(**_minimal(global_alarm={"enabled": True}))
+        self.assertEqual(config.alarm.reporting.protocol, "none")
+
+    def test_reporting_requires_receiver_details_when_enabled(self) -> None:
+        config_dict = _minimal(
+            global_alarm={
+                "enabled": True,
+                "reporting": {"protocol": "contact_id"},
+            }
+        )
+        self.assertRaises(ValidationError, lambda: FrigateConfig(**config_dict))
+
+    def test_reporting_valid_with_receiver_details(self) -> None:
+        config = FrigateConfig(
+            **_minimal(
+                global_alarm={
+                    "enabled": True,
+                    "reporting": {
+                        "protocol": "contact_id",
+                        "host": "monitoring.example.com",
+                        "port": 4025,
+                        "account": "1234",
+                    },
+                }
+            )
+        )
+        self.assertEqual(config.alarm.reporting.host, "monitoring.example.com")
+
+
 if __name__ == "__main__":
     unittest.main()

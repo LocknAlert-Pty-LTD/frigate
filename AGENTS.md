@@ -735,7 +735,116 @@ Alarm engine core has zero MQTT dependency; MQTT is one optional output path.
      could not be run here for the same missing-fastapi reason) to
      regenerate `docs/static/frigate-api.yaml` before this could pass CI's
      `--check` gate.
-9. MQTT integration (optional path) + test engine runs with MQTT off — not started
+9. MQTT integration (optional path) + test engine runs with MQTT off —
+   **DONE**, including real `frigate/app.py` wiring (the highest-risk phase
+   so far — touches the actual process startup sequence, not just new
+   isolated files). Read this whole entry before trusting it.
+   - **Config gap-fill (belongs to phase 4, added now because phase 9
+     needed it)**: `frigate/config/alarm.py` gained `AlarmReportingConfig`
+     (`protocol`: none/sia_dc09/contact_id, `host`, `port`, `account`,
+     `timeout_seconds`, `max_attempts`, `retry_delay_seconds`) and
+     `AlarmConfig.reporting`. A `model_validator` requires host/port/account
+     when protocol isn't `none`. Tests added to `test_alarm_config.py`
+     (same cv2-import caveat as the rest of that file).
+   - `frigate/alarm/factory.py`: `build_alarm_system(config) -> AlarmSystem
+     | None`, `build_alarm_rules()`, `build_reporting_queue()`. Builds the
+     SIA/Contact ID `send` callable (connect -> encode -> send -> close per
+     attempt) from `AlarmReportingConfig`. This is glue, not core — it's
+     the one alarm module allowed to import `frigate.config` — so like
+     phase 4/8 it could only be verified via `py_compile`/`ruff`/`mypy`
+     here (mypy *did* run cleanly on it — it statically resolves
+     `frigate.config` fine without cv2 actually being installed, since
+     mypy doesn't execute code — a useful distinction from runtime tests
+     discovered this phase).
+   - `frigate/alarm/mqtt_bridge.py`: `AlarmMqttBridge`, publishes
+     `alarm/state`/`alarm/fault` (retained) and `alarm/event` (not
+     retained) plus, critically, `<camera>/alarm_zone/<zone>/state` per
+     zone — NOT the spec's literal `alarm/zone/<zone>/state`, because that
+     doesn't start with a camera name and would be silently dropped by
+     `frigate/comms/ws.py`'s fail-closed classifier (see phase 1 analysis).
+     Takes a plain `Callable[[str, str, bool], None]` for publish, not a
+     `Dispatcher` import, so it stays testable without the comms stack —
+     confirmed by 6 tests in `test_alarm_mqtt_bridge.py` that all actually
+     run here, including a regression guard specifically asserting the
+     zone topic is camera-prefixed.
+   - `frigate/alarm/detection_thread.py`: `AlarmDetectionThread`, a
+     `threading.Thread` (modeled on `EventProcessor`) that subscribes to
+     `EventUpdateSubscriber` — the internal MQTT-independent ZMQ event bus,
+     not MQTT — and drives `adapter.evaluate()` ->
+     `state_machine.trigger()` -> `alarm_system.record_event()` ->
+     `mqtt_bridge.publish_*()`. The exact dict field names read off each
+     tracked-object update (`current_zones`, `entered_zones`, `id`,
+     `label`, `top_score`/`score`, `false_positive`, `frame_time`) were
+     read directly from `TrackedObject.to_dict()`
+     (`frigate/track/tracked_object.py:387-430`) and
+     `EventUpdateSubscriber`/`Subscriber.check_for_update()`
+     (`frigate/comms/events_updater.py`, `frigate/comms/zmq_proxy.py`) —
+     not guessed, unlike the SIA/Contact ID situation. `InvalidAlarmTransition`
+     from `trigger()` (e.g. a second qualifying detection while already in
+     ALARM) is caught and logged at debug, not treated as an error — the
+     event still gets recorded/reported.
+   - **A real design bug was caught while writing this phase's tests, not
+     before**: `AlarmSystem.armed_mode_for_evaluation` (added this phase)
+     originally excluded `AlarmState.alarm` from the states that permit
+     evaluation, meaning a second zone triggering while an alarm was
+     already sounding would silently never get recorded or reported. Fixed
+     by including `alarm` in that set — a genuinely different question
+     from "should this trigger a *new* alarm" (no, `state_machine.trigger()`
+     correctly rejects that) vs. "should this qualifying detection still be
+     logged and reported" (yes). `EXIT_DELAY` deliberately still excluded
+     (motion while walking out during exit delay shouldn't trigger).
+   - **Test: "engine runs correctly with MQTT off"** (explicitly required
+     by the original spec) — `frigate/test/test_alarm_no_mqtt_dependency.py`,
+     3 tests, all passing. Rather than spinning up a real FrigateApp with
+     MQTT disabled (impossible here, needs the full dependency set), this
+     statically parses every core module's imports via `ast` and asserts
+     none reference `mqtt` or `dispatcher`, PLUS actually imports the 9
+     core modules and confirms `frigate.comms` never lands in
+     `sys.modules` as a side effect. `factory.py` and
+     `detection_thread.py` are explicitly exempted (documented in the file)
+     as the wiring/glue layer that's expected to depend on
+     `frigate.config`/the internal ZMQ bus — everything else (`state.py`,
+     `engine.py`, `event.py`, `rules.py`, `adapter.py`, `queue.py`,
+     `system.py`, `protocols/*`) is asserted clean.
+   - **`frigate/test/test_alarm_detection_thread.py` — 9 tests, and they
+     genuinely run here**, unlike everything else touching `frigate.app`/
+     `frigate.config` this phase. `frigate.comms.events_updater` (which
+     needs `pyzmq`, not installed here) is mocked out of `sys.modules`
+     before importing `AlarmDetectionThread`, following the exact pattern
+     already established in `frigate/test/test_maintainer.py`. Because
+     `AlarmDetectionThread` doesn't import `frigate.config` at all (unlike
+     `test_maintainer.py`'s target), this sidesteps the cv2 chain entirely
+     and actually exercises `_evaluate()` and `run()`'s logic end to end.
+   - `frigate/app.py` wiring (read `init_dispatcher`/`start_event_processor`/
+     `start()`/`stop()` from source before editing, not from memory of the
+     phase-1 research summary): `init_alarm_system()` (builds
+     `self.alarm_system`/`self.alarm_mqtt_bridge`/
+     `self.alarm_detection_thread`, called right after `init_dispatcher()`
+     since the bridge needs `self.dispatcher.publish`) and
+     `start_alarm_system()` (starts the reporting queue and detection
+     thread, no-ops cleanly if alarm is disabled) added to the `start()`
+     sequence; `alarm_system=self.alarm_system` added to the
+     `create_fastapi_app(...)` call; `stop()` stops the detection thread
+     and reporting queue before `self.dispatcher.stop()`.
+   - **Caveat, the most important one in this file**: `frigate/app.py` is
+     ~750 lines and could not be executed or imported at all in this
+     sandbox (pulls in cv2, zmq, peewee, fastapi, everything). Verification
+     here was `python3 -m py_compile` (passes), `ruff check`/`ruff format`
+     (clean), and `mypy` (clean — zero errors in `frigate/app.py` or any
+     file this project touched; the 105 errors mypy reported while
+     following imports are 100% pre-existing, in numpy/opencv-heavy files
+     never touched this session like `norfair_tracker.py` and
+     `license_plate/mixin.py`, almost certainly a numpy/stub version
+     mismatch between this sandbox and the real dev container — verified
+     by grepping mypy's output for any file this session created/edited
+     and finding none). **This is the single most important thing to
+     verify before trusting this branch**: boot a real Frigate instance
+     (with and without `alarm.enabled`) off this branch and confirm it
+     starts, stops cleanly, and (with alarm enabled) that arm/disarm via
+     the API actually changes state and MQTT topics actually publish. None
+     of that has been observed — only that the code compiles, lints, and
+     type-checks, and that every non-`frigate.app`/`frigate.config`
+     piece's *logic* is unit-tested.
 10. Frontend components — not started
 11. Full test suite run, fix regressions — not started
 12. Final architecture review against phase 1 — not started

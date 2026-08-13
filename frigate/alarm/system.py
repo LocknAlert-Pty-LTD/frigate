@@ -72,6 +72,26 @@ class AlarmSystem:
     def recent_events(self, limit: int = 50) -> list[AlarmEvent]:
         return list(self._events)[-limit:][::-1]
 
+    @property
+    def armed_mode_for_evaluation(self) -> ArmedMode | None:
+        """Armed mode to use when evaluating new detections against alarm
+        rules. Stricter than zone_status's display logic in one direction
+        (EXIT_DELAY does not count: the system isn't fully armed yet, so
+        motion while walking out shouldn't trigger) and looser in another
+        (ALARM does count: further qualifying detections while an alarm is
+        already sounding should still be recorded/reported, e.g. a second
+        zone violation during the same episode, even though the state
+        machine itself will reject the redundant trigger() call).
+        """
+        if self.state_machine.state in (
+            AlarmState.armed_away,
+            AlarmState.armed_stay,
+            AlarmState.entry_delay,
+            AlarmState.alarm,
+        ):
+            return self.state_machine.armed_mode
+        return None
+
     def zone_status(self) -> list[ZoneStatus]:
         armed_mode = (
             self.state_machine.armed_mode
