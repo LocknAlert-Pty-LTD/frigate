@@ -669,7 +669,72 @@ Alarm engine core has zero MQTT dependency; MQTT is one optional output path.
    - Full alarm test suite re-run after this phase: 77 collected, 76 pass,
      1 error — the pre-existing/expected `test_alarm_config` cv2-import
      gap from phase 4, nothing new broken.
-8. API endpoints + auth + tests — not started
+8. API endpoints + auth + tests — **DONE, but like phase 4, NOT
+   runtime-verified in this sandbox (no fastapi installed) — see caveat
+   below.**
+   - `frigate/alarm/system.py`: new `AlarmSystem` orchestrator, deliberately
+     kept separate from `AlarmStateMachine`. Bundles `state_machine`,
+     `adapter` (`DetectionAlarmAdapter`, built from the same `rules` dict
+     phase 4's `CameraAlarmConfig.build_rules()` produces), a bounded
+     `deque` event history, and an optional `ReportingQueue`. `arm()`/
+     `disarm()`/`clear()` delegate straight to the state machine;
+     `record_event()` only does history + reporting-queue bookkeeping — it
+     does NOT call `state_machine.trigger()` itself, since the caller (the
+     phase-9 wiring layer) already has the qualifying `ZoneAlarmRule` via
+     `adapter.get_rule()` and needs to decide the entry delay. `status()`
+     and `zone_status()` back the GET endpoints. Tests:
+     `frigate/test/test_alarm_system.py`, 15 tests, all passing (no
+     fastapi/config dependency, pure `frigate.alarm.*`, so this part
+     actually ran here).
+   - `frigate/api/alarm.py`: the 5 endpoints from the spec (`GET
+     alarm/status`, `GET alarm/events`, `POST alarm/arm`, `POST
+     alarm/disarm`, `POST alarm/clear`). GET routes use
+     `allow_any_authenticated()`; the 3 POST actions use
+     `require_role(["admin"])`, following the exact pattern of
+     `review.py`'s admin-gated POSTs. All 5 read `request.app.alarm_system`
+     and return a 400 `GenericResponse`-shaped body (not a 500) when it's
+     `None` (alarm disabled), mirroring `notification.py`'s
+     `get_vapid_pub_key` 400-when-not-enabled precedent.
+     `InvalidAlarmTransition` from a bad arm/clear request is caught and
+     turned into a 400, not a 500.
+   - `frigate/api/defs/request/alarm_body.py` (`AlarmArmBody`),
+     `frigate/api/defs/response/alarm_response.py`
+     (`AlarmStatusResponse`/`AlarmZoneStatusResponse`/`AlarmEventResponse`),
+     `Tags.alarm` added to `frigate/api/defs/tags.py`.
+   - Wiring: `frigate/api/fastapi_app.py` — `alarm_system: AlarmSystem |
+     None = None` added as a new trailing optional parameter to
+     `create_fastapi_app()` (additive, matches the existing `dispatcher`/
+     `profile_manager`/`config_holder` optional-trailing-param pattern, so
+     no existing caller breaks), `app.include_router(alarm.router)`,
+     `app.alarm_system = alarm_system`. Actually constructing and starting
+     an `AlarmSystem` from real config in `frigate/app.py` is phase 9's
+     job, not this one — phase 8 only builds the API surface and the class
+     it talks to.
+   - `generate_api_auth_spec.py` also updated (import + its own
+     independent `routers` list in `build_app()`) — CLAUDE.md is explicit
+     that this file keeps its own router list separate from
+     `fastapi_app.py` and both need updating for a new router to be
+     classified correctly.
+   - Tests: `frigate/test/http_api/test_http_alarm.py`, follows
+     `BaseTestHttp`/`AuthTestClient` exactly, including the observed
+     precedent of assigning `self.app.alarm_system = ...` directly after
+     `create_app()` (mirrors `self.app.detected_frames_processor =
+     MagicMock()` in `test_http_latest_frame.py`, since `create_app()`
+     doesn't expose every optional app attribute as a parameter).
+   - **Caveat, read before trusting this phase**: no `fastapi`/`peewee`/etc.
+     installed in this sandbox (same gap as phase 4), so
+     `frigate/api/alarm.py`, the `fastapi_app.py`/`generate_api_auth_spec.py`
+     edits, and `test_http_alarm.py` could only be verified with
+     `python3 -m py_compile` + `ruff check`/`ruff format --check` (all
+     clean) plus careful manual comparison against `review.py`/
+     `notification.py`/`base_http_test.py`, not by running them. **Before
+     relying on this phase**: run
+     `python3 -u -m unittest frigate.test.http_api.test_http_alarm` in a
+     real dev/CI environment, AND run `python3 generate_api_auth_spec.py`
+     (required by this repo's own CLAUDE.md after any endpoint change —
+     could not be run here for the same missing-fastapi reason) to
+     regenerate `docs/static/frigate-api.yaml` before this could pass CI's
+     `--check` gate.
 9. MQTT integration (optional path) + test engine runs with MQTT off — not started
 10. Frontend components — not started
 11. Full test suite run, fix regressions — not started
