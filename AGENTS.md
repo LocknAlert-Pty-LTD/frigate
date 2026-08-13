@@ -845,7 +845,64 @@ Alarm engine core has zero MQTT dependency; MQTT is one optional output path.
      of that has been observed — only that the code compiles, lints, and
      type-checks, and that every non-`frigate.app`/`frigate.config`
      piece's *logic* is unit-tested.
-10. Frontend components — not started
+10. Frontend components — **DONE, and this is the first phase with real
+    tooling verification** (`node_modules` wasn't installed; ran
+    `npm install` in this sandbox specifically to unlock `tsc`/`eslint`/
+    `vite build`/`i18next-cli extract`, unlike every backend phase that
+    depended on `cv2`/`fastapi`/etc.).
+    - Deliberately did NOT hand-build a settings form for `AlarmConfig`/
+      `CameraAlarmConfig`/`AlarmZoneConfig`: every field in those Pydantic
+      models already has `title`/`description` (from phases 4 and 9), so
+      the existing schema-driven `ConfigSectionTemplate` machinery
+      generates one automatically once `python3
+      generate_config_translations.py` is run in a full environment (could
+      not run it here, same cv2 gap as everything backend). Registered via
+      `createSectionPage("alarm", "global")` and `createSectionPage("alarm",
+      "camera")` in `web/src/pages/Settings.tsx`, exactly mirroring
+      `createSectionPage("lpr", "camera")` etc. — no new form code.
+    - What genuinely needed hand-building: `web/src/views/settings/
+      AlarmView.tsx`, a live operational view (current state, armed mode,
+      arm-away/arm-stay/disarm/clear buttons, zone status, fault banner,
+      reporting health, recent-events table), modeled on
+      `MotionTunerView.tsx`. Registered as its own new `settingsGroups`
+      entry (`label: "alarm"`), not folded into an existing group, since
+      it's a distinct subsystem the same way "cameras" and "system" are.
+    - Data fetching is `useSWR` polling (`refreshInterval: 5000`) against
+      `GET alarm/status`/`GET alarm/events`, not the WS pub/sub layer
+      (`web/src/api/ws.ts`). This is a deliberate scope cut, not an
+      oversight: wiring real-time topics into `ws.ts`'s
+      `processWsMessage`/`applyCameraActivity` would need to be blind-coded
+      against source I can't execute, unlike the backend where `tsc`
+      exists as a safety net for API/type mistakes but not for runtime WS
+      message-shape mistakes. Upgrading to WS-driven live updates (mirroring
+      `useAutoFrigateStats`'s SWR-snapshot + WS-override pattern) is the
+      natural next step once this can be verified in a browser.
+    - New files: `web/src/types/alarm.ts` (response types matching
+      `frigate/api/defs/response/alarm_response.py` by hand — there's no
+      shared codegen between the two), `web/public/locales/en/views/
+      alarm.json` (new i18n namespace, registered in `web/src/utils/
+      i18n.ts`), `menu.alarm`/`menu.alarmStatus`/`menu.globalAlarm`/
+      `menu.cameraAlarm` keys added to `web/public/locales/en/views/
+      settings.json`.
+    - Actually verified in this sandbox (all passed, not just
+      syntax-checked): `npx tsc --noEmit` (caught and fixed a real bug —
+      `Heading` only supports `h1`-`h4`, I'd used `h5`), `npx eslint`
+      (clean after one auto-fix), `npx vite build --base=/BASE_PATH/`
+      (production build succeeds, only pre-existing unrelated chunk-size
+      warnings), `npx i18next-cli extract --ci` (exit 0 — every `t()` call
+      in the new code has a real matching key, nothing missing or unused).
+    - **Not verified, explicitly**: visual appearance and live
+      interaction. No browser was opened, `npm run dev` was not started
+      (CLAUDE.md: agents should never start the dev server unless asked),
+      no screenshot taken, no e2e/Playwright spec added. This codebase has
+      no component-level unit tests to mirror (`web/src/**/*.test.tsx`
+      doesn't exist anywhere — e2e/Playwright is the only test layer), so
+      "add a test" for this phase means an e2e spec, which needs a live
+      built app + backend (mock data doesn't cover alarm endpoints yet)
+      and was out of scope here. **Before trusting this phase**: run
+      `npm run dev`, open Settings → Alarm, and confirm arm/disarm/clear
+      actually work end-to-end against a real backend with
+      `alarm.enabled: true`.
 11. Full test suite run, fix regressions — not started
 12. Final architecture review against phase 1 — not started
 

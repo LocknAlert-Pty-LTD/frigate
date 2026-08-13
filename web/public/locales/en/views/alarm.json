@@ -1,0 +1,62 @@
+{
+  "documentTitle": "Alarm - Frigate",
+  "title": "Alarm",
+  "description": "Arm, disarm, and monitor the alarm engine.",
+  "notEnabled": "Alarm is not enabled. Enable it in Global Alarm settings.",
+  "state": {
+    "disarmed": "Disarmed",
+    "arming": "Arming",
+    "exit_delay": "Exit Delay",
+    "armed_away": "Armed Away",
+    "armed_stay": "Armed Stay",
+    "entry_delay": "Entry Delay",
+    "alarm": "Alarm",
+    "alarm_memory": "Alarm Memory",
+    "fault": "Fault"
+  },
+  "armedMode": {
+    "away": "Away",
+    "stay": "Stay"
+  },
+  "actions": {
+    "armAway": "Arm Away",
+    "armStay": "Arm Stay",
+    "disarm": "Disarm",
+    "clear": "Clear Memory"
+  },
+  "toast": {
+    "armSuccess": "Alarm armed",
+    "disarmSuccess": "Alarm disarmed",
+    "clearSuccess": "Alarm memory cleared",
+    "error": "Failed to update alarm: {{errorMessage}}"
+  },
+  "fault": {
+    "title": "Fault",
+    "reason": "Reason: {{reason}}"
+  },
+  "reporting": {
+    "title": "Reporting",
+    "healthy": "Healthy",
+    "unhealthy": "Delivery failing",
+    "notConfigured": "Not configured"
+  },
+  "zones": {
+    "title": "Zones",
+    "empty": "No alarm zones configured.",
+    "armed": "Armed",
+    "disarmed": "Disarmed",
+    "disabled": "Disabled"
+  },
+  "events": {
+    "title": "Recent Events",
+    "empty": "No alarm events yet.",
+    "columns": {
+      "time": "Time",
+      "type": "Type",
+      "camera": "Camera",
+      "zone": "Zone",
+      "object": "Object",
+      "confidence": "Confidence"
+    }
+  }
+}
