@@ -448,3 +448,89 @@ Always conform new and refactored code to the existing coding style in the proje
 - Documentation: https://docs.frigate.video
 - Main Repository: https://github.com/blakeblackshear/frigate
 - Home Assistant Integration: https://github.com/blakeblackshear/frigate-hass-integration
+
+---
+
+## Alarm Engine Project (branch: feature/alarm-engine)
+
+**Goal**: extend Frigate into an AI-based alarm system — camera/zone-driven alarm
+zones, arm/disarm (away/stay), entry/exit delay, alarm memory, fault/supervision,
+persistence-based AI verification, SIA DC-09 and Contact ID reporting over IP.
+Alarm engine core has zero MQTT dependency; MQTT is one optional output path.
+
+**Phase tracker** (12 phases, commit + update this file after each):
+1. Architectural analysis — **DONE, signed off by user**
+2. Core alarm domain / state machine + unit tests — **DONE**. See
+   `frigate/alarm/state.py` (`AlarmState`, `ArmedMode`, `ALLOWED_TRANSITIONS`
+   table, `InvalidAlarmTransition`) and `frigate/alarm/engine.py`
+   (`AlarmStateMachine`). 20 tests in `frigate/test/test_alarm_state_machine.py`,
+   all passing; ruff/format/mypy clean. Key design choices: (a) entry/exit
+   delay countdowns are NOT timed inside the state machine — callers own the
+   timer and call `complete_exit_delay()`/`complete_entry_delay()` when it
+   elapses, or `disarm()` to cancel; keeps the FSM pure and trivially unit
+   testable. (b) `disarm()` during an active ALARM moves to ALARM_MEMORY, not
+   DISARMED — `clear()` is the separate call that actually clears memory,
+   matching the spec's distinct `alarm/disarm` vs `alarm/clear` API. (c) FAULT
+   is enterable from any state and always restores whichever state was active
+   before the fault, rather than having fixed predecessors/successors in the
+   transition table — while faulted, no other transition is permitted (must
+   `clear_fault()` first). This module has zero external dependencies
+   (stdlib only), so it's a safe reuse target for the Phase 3 adapter and
+   Phase 8 API layer.
+3. Detection → canonical event adapter + tests — not started (next up: needs
+   an `AlarmEvent`-ish dataclass, per-zone `AlarmStateMachine` instances or a
+   single machine with per-zone dwell/verification bookkeeping — decide when
+   starting this phase, re-read the review `ActiveObjects` pattern noted in
+   phase 1 first)
+4. Config schema, validation, backwards-compat tests — not started
+5. SIA DC-09 adapter + tests — **blocked: no SIA DC-09 spec has been provided.**
+   Only an Ademco Contact ID report-code reference (PDF) has been supplied. Do
+   not implement SIA DC-09 framing/auth/encryption from memory when this phase
+   starts — stop and ask for the spec first.
+6. Contact ID adapter + tests — not started (Contact ID code table is in hand)
+7. Reporting queue (send/ACK/retry/failure) + tests — not started
+8. API endpoints + auth + tests — not started
+9. MQTT integration (optional path) + test engine runs with MQTT off — not started
+10. Frontend components — not started
+11. Full test suite run, fix regressions — not started
+12. Final architecture review against phase 1 — not started
+
+**Proposed architecture (pending sign-off, see phase 1 analysis in conversation)**:
+- New package `frigate/alarm/` — protocol-agnostic engine (state machine, zone
+  verification, alarm memory), zero MQTT/ZMQ imports inside the state machine
+  itself. Runs as a thread started from `FrigateApp` (pattern: `EventProcessor`
+  in `frigate/events/maintainer.py`), consuming `EventUpdateSubscriber` /
+  `DetectionSubscriber` (`frigate/comms/events_updater.py`,
+  `frigate/comms/detections_updater.py`) — the same MQTT-independent internal
+  ZMQ bus every other subsystem (review, timeline, events) already uses.
+- New `frigate/alarm/protocols/sia.py` and `frigate/alarm/protocols/contact_id.py`
+  — isolated encoding/transport, consuming only the canonical `AlarmEvent`.
+- Reporting queue: in-process `queue.Queue` + background thread, modeled on
+  `WebPushClient._process_notifications` (`frigate/comms/webpush.py`) — no new
+  dependency needed.
+- Config: `frigate/config/alarm.py` (`AlarmConfig`, global) + per-camera
+  `alarm` field on `CameraConfig`, following the `NotificationConfig` /
+  `FaceRecognitionConfig` dual-level `enabled` pattern
+  (`frigate/config/camera/notification.py`, `frigate/config/classification.py`).
+  Cross-field validation added as `verify_alarm_*` functions called from
+  `FrigateConfig.post_validation` (`frigate/config/config.py:629`), mirroring
+  `verify_required_zones_exist` / `verify_lpr_and_face`.
+- API: new `frigate/api/alarm.py` router, registered in
+  `frigate/api/fastapi_app.py` and in `generate_api_auth_spec.py`'s router list.
+- MQTT/WS: alarm state published via the existing `Dispatcher.publish()`
+  (`frigate/comms/dispatcher.py:396`) so MQTT + WebSocket get it in one call.
+  New global topics (`alarm/state`, `alarm/fault`) need explicit registration
+  in `frigate/comms/ws.py`'s `_WS_GLOBAL_OUTBOUND_TOPICS` (fail-closed
+  classifier — unregistered topics are silently dropped). Per-zone topic
+  should be `<camera>/alarm_zone/<zone>/state` (not `alarm/zone/<zone>/state`)
+  to piggyback on the existing camera-prefix auto-scoping in `ws.py`, avoiding
+  bespoke zone-fanout classifier code.
+- Frontend: custom view (not the generic schema-driven config form) under
+  `web/src/views/settings/AlarmSettingsView.tsx`, modeled on
+  `MotionTunerView.tsx` / `TriggerView.tsx`; live status via the existing
+  `useWs` pub/sub layer (`web/src/api/ws.ts`), SWR snapshot + WS override
+  pattern from `useAutoFrigateStats` (`web/src/hooks/use-stats.ts`).
+
+Full phase-1 analysis with file:line citations lives in the conversation that
+produced this file; re-derive from the codebase if that conversation is gone
+and this summary is insufficient.
