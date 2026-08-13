@@ -603,7 +603,43 @@ Alarm engine core has zero MQTT dependency; MQTT is one optional output path.
    - **Before this touches a real receiver**: get the actual ANSI/SIA
      DC-09 spec and re-verify every point above, especially the CRC
      algorithm and the subfield grammar.
-6. Contact ID adapter + tests — not started (Contact ID code table is in hand)
+6. Contact ID adapter + tests — **DONE, and materially more trustworthy
+   than phase 5** since the event code table came from an actual attached
+   reference, not memory.
+   - `frigate/alarm/protocols/contact_id.py`: `CID_EVENT_DESCRIPTIONS` is
+     the full CID#->description table transcribed directly from the
+     attached Ademco Contact ID Report Codes PDF (the plain 3-digit CID#
+     column — the wire format code — not the hex "Programming Value"
+     column, which is for Ademco keypad panel programming, a different
+     thing). `CONTACT_ID_EVENT_CODES` maps canonical `AlarmEventType` to a
+     code from that table; a test (`TestEventCodesAreFromReference`)
+     asserts every mapped code is a real key in the reference table, so
+     "don't invent codes" is enforced, not just claimed.
+   - Mapping: burglary->130, panic->120, tamper->137, fault->300,
+     communication_failure->354, supervision->380 (a judgment call among
+     several plausible codes, not a guess at an undocumented one),
+     test->602, arm/disarm->401 (both share "Open/Close by user"; which one
+     you get is the qualifier digit, not the code — Contact ID's Q digit
+     means Open/Close for code 401 specifically, New/Restore for
+     alarm-type codes elsewhere, same 1/3 values, context-dependent
+     meaning, handled via `ContactIDQualifier`).
+   - Deliberately unmapped, same "raise rather than fabricate" posture as
+     phase 5: `camera_failure` (no video-specific code in this
+     burglar-panel reference) and `restore` (Contact ID expresses restore
+     as a qualifier on the *original* event's code, not as its own code —
+     callers should re-encode the original event_type with
+     `qualifier=new_restore`, not use `AlarmEventType.restore` here).
+   - The 15-digit message layout (ACCT+type+qualifier+code+group+zone) is
+     the standard public Contact ID wire format — high confidence, unlike
+     phase 5's envelope. What's still a real caveat: no checksum digit
+     (DTMF-only concept, assumed unnecessary over TCP — verify against
+     your receiver), and "Contact ID over IP" transport itself isn't
+     standardized the way DC-09 is (Contact ID is natively DTMF-over-POTS),
+     so `ContactIDClient` is a reasonable-but-generic TCP transport, not a
+     verified wire protocol.
+   - Tests: `frigate/test/test_alarm_contact_id.py`, 18 tests, all passing,
+     ruff/format/mypy clean, no cv2/config dependency so it actually ran
+     here.
 7. Reporting queue (send/ACK/retry/failure) + tests — not started
 8. API endpoints + auth + tests — not started
 9. MQTT integration (optional path) + test engine runs with MQTT off — not started
