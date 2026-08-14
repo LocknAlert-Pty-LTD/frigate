@@ -939,7 +939,72 @@ Alarm engine core has zero MQTT dependency; MQTT is one optional output path.
       *this sandbox's* tests are internally consistent and regression-free,
       not that the untested-here code actually works. That full
       dev/CI-environment verification pass is still outstanding.
-12. Final architecture review against phase 1 — not started
+12. Final architecture review against phase 1 — **DONE**. All 12 phases
+    complete; branch `feature/alarm-engine` has 17 commits from phase 1
+    through this one.
+    - **Drift from the phase 1 plan, and why**:
+      1. **SIA DC-09 (phase 5)** — the single biggest deviation. The
+         original instructions (both the project bootstrap and section
+         5.5) say to stop rather than implement a protocol from memory.
+         No spec was ever provided; the user was given three explicit
+         options (provide the spec / do Contact ID first / stub it
+         flagged-unverified) and chose the third, overriding the default
+         rule on record. `frigate/alarm/protocols/sia.py` is real,
+         tested code, but "tested" only means internally self-consistent
+         — it has never been checked against the actual ANSI/SIA DC-09
+         spec text and should not be trusted against a real receiver
+         without that check.
+      2. **Frontend config UI** — phase 1 proposed a fully custom view;
+         what got built instead reuses the existing schema-driven
+         `ConfigSectionTemplate` form for all of `AlarmConfig`/
+         `CameraAlarmConfig`/`AlarmZoneConfig` (via `createSectionPage`),
+         and reserves the hand-built `AlarmView.tsx` for only the parts
+         that form genuinely can't do (arm/disarm buttons, live status,
+         event log). This is a scope reduction, not a shortfall: every
+         config field already had `title`/`description` from phases 4/9,
+         so a second hand-built form would have been duplicate work for
+         no benefit.
+      3. **`AlarmReportingConfig` (SIA/Contact ID receiver host/port/
+         account) wasn't planned as its own line item** in phase 1 or
+         built in phase 4 where it belongs conceptually — it was a real
+         gap, caught only when phase 9 needed it to actually construct a
+         `ReportingQueue`, and back-filled then. Noted honestly in the
+         phase 9 entry rather than pretending it was planned.
+      4. **The WS classifier registration** — phase 1's own analysis
+         explicitly flagged `frigate/comms/ws.py`'s fail-closed classifier
+         as a sharp edge new topics must be registered in, and proposed
+         the exact fix (camera-prefixed zone topic to dodge it). Despite
+         calling this out in the plan, phase 9 built `AlarmMqttBridge` and
+         never actually touched `ws.py` — the three global/payload topics
+         would have been silently dropped for every WebSocket client (MQTT
+         delivery was unaffected, which is why none of phase 9's own tests
+         caught it — none of them exercise `ws.py`). Found and fixed
+         during this final review, before writing it up as done. This is
+         the clearest example in the whole project of why phase 11 (full
+         suite) and phase 12 (review against the original plan) are
+         separate, real steps and not just a formality: isolated
+         per-module tests all passed while a real integration gap sat
+         unnoticed for three phases.
+      5. **Process model** (thread vs. `mp.Process` for the alarm engine)
+         — built exactly as flagged for confirmation in phase 1
+         (`AlarmDetectionThread` as a `threading.Thread`, not a process)
+         and signed off on at the time; no drift.
+      6. **Zone MQTT topic naming** (`<camera>/alarm_zone/<zone>/state`
+         instead of the spec's literal `alarm/zone/<zone>/state`) — also
+         flagged and signed off in phase 1, implemented as planned in
+         phase 9; no drift.
+    - **What was never touched, and should be before this is real**:
+      camera/comms supervision -> automatic `FAULT` entry (spec 5.8) was
+      never wired up — `AlarmStateMachine.enter_fault()` exists and is
+      tested, but nothing calls it automatically on camera offline /
+      detection subsystem down / reporting-connection-down conditions.
+      `ReportingQueue.on_health_change` exists specifically so this could
+      be wired (unhealthy reporting -> fault) but that wiring itself
+      was never done. This is a real functional gap, not just an
+      unverified-in-this-sandbox one.
+    - See the git log on this branch (17 commits, phase 1 through this
+      one) for the full history; this file is the durable summary if that
+      conversation is gone.
 
 **Proposed architecture (pending sign-off, see phase 1 analysis in conversation)**:
 - New package `frigate/alarm/` — protocol-agnostic engine (state machine, zone
