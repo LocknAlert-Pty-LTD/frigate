@@ -9,6 +9,8 @@ knows about wiring those pieces together and answering "what's the current
 status" -- neither one needs to know about Frigate detections or FastAPI.
 """
 
+import logging
+import threading
 from collections import deque
 from dataclasses import dataclass
 
@@ -17,7 +19,9 @@ from frigate.alarm.engine import AlarmStateMachine
 from frigate.alarm.event import AlarmEvent
 from frigate.alarm.queue import ReportingQueue
 from frigate.alarm.rules import ZoneAlarmRule
-from frigate.alarm.state import AlarmState, ArmedMode
+from frigate.alarm.state import AlarmState, ArmedMode, InvalidAlarmTransition
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -44,19 +48,77 @@ class AlarmSystem:
         self.reporting_queue = reporting_queue
         self._events: deque[AlarmEvent] = deque(maxlen=event_history_size)
 
+        # AlarmStateMachine deliberately doesn't time its own delay states
+        # (see engine.py) -- this is the caller that owns the timers, using
+        # plain stdlib threading.Timer since these are simple one-shot
+        # delays, not something that needs a scheduler.
+        self._exit_delay_timer: threading.Timer | None = None
+        self._entry_delay_timer: threading.Timer | None = None
+
     def arm(self, mode: ArmedMode, exit_delay_seconds: int | None = None) -> AlarmState:
+        self._cancel_timers()
         delay = (
             self.default_exit_delay_seconds
             if exit_delay_seconds is None
             else exit_delay_seconds
         )
-        return self.state_machine.arm(mode, exit_delay_seconds=delay)
+        state = self.state_machine.arm(mode, exit_delay_seconds=delay)
+        if state == AlarmState.exit_delay:
+            self._exit_delay_timer = threading.Timer(delay, self._complete_exit_delay)
+            self._exit_delay_timer.daemon = True
+            self._exit_delay_timer.start()
+        return state
+
+    def _complete_exit_delay(self) -> None:
+        try:
+            self.state_machine.complete_exit_delay()
+        except InvalidAlarmTransition:
+            # Already disarmed or otherwise moved on before the timer fired.
+            pass
+
+    def trigger(self, entry_delay_seconds: int = 0) -> AlarmState:
+        """Record a qualifying detection while armed. Raises
+        InvalidAlarmTransition under the same conditions as
+        AlarmStateMachine.trigger() (e.g. not armed) -- callers already
+        handle that (see AlarmDetectionThread)."""
+        state = self.state_machine.trigger(entry_delay_seconds=entry_delay_seconds)
+        if state == AlarmState.entry_delay:
+            self._entry_delay_timer = threading.Timer(
+                entry_delay_seconds, self._complete_entry_delay
+            )
+            self._entry_delay_timer.daemon = True
+            self._entry_delay_timer.start()
+        return state
+
+    def _complete_entry_delay(self) -> None:
+        try:
+            self.state_machine.complete_entry_delay()
+        except InvalidAlarmTransition:
+            # Already disarmed before the timer fired.
+            pass
+        else:
+            logger.warning("alarm entry delay expired without disarming")
 
     def disarm(self) -> AlarmState:
+        self._cancel_timers()
         return self.state_machine.disarm()
 
     def clear(self) -> AlarmState:
+        self._cancel_timers()
         return self.state_machine.clear()
+
+    def stop(self) -> None:
+        """Cancel any pending delay timers. Safe to call even if none are
+        pending."""
+        self._cancel_timers()
+
+    def _cancel_timers(self) -> None:
+        if self._exit_delay_timer is not None:
+            self._exit_delay_timer.cancel()
+            self._exit_delay_timer = None
+        if self._entry_delay_timer is not None:
+            self._entry_delay_timer.cancel()
+            self._entry_delay_timer = None
 
     def record_event(self, event: AlarmEvent) -> None:
         """Log an event and hand it to the reporting queue, if configured.

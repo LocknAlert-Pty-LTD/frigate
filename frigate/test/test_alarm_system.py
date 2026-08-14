@@ -1,5 +1,6 @@
 """Tests for the AlarmSystem orchestrator."""
 
+import time
 import unittest
 
 from frigate.alarm.event import AlarmEvent, AlarmEventType
@@ -45,6 +46,52 @@ class TestArmDisarmClear(unittest.TestCase):
         system.state_machine.trigger(entry_delay_seconds=0)
         self.assertEqual(system.disarm(), AlarmState.alarm_memory)
         self.assertEqual(system.clear(), AlarmState.disarmed)
+
+
+class TestDelayTimers(unittest.TestCase):
+    """AlarmStateMachine deliberately doesn't time its own delay states
+    (callers own the timer, see engine.py); these tests prove AlarmSystem
+    is actually that caller, not just documentation saying it should be.
+    A live end-to-end test against a real running instance caught this as
+    a real bug: arm() -> exit_delay never auto-completed because nothing
+    called complete_exit_delay()."""
+
+    def test_exit_delay_completes_automatically(self) -> None:
+        system = AlarmSystem(_rules(), default_exit_delay_seconds=0.05)
+        system.arm(ArmedMode.away)
+        self.assertEqual(system.state_machine.state, AlarmState.exit_delay)
+        time.sleep(0.3)
+        self.assertEqual(system.state_machine.state, AlarmState.armed_away)
+
+    def test_disarm_during_exit_delay_cancels_the_timer(self) -> None:
+        system = AlarmSystem(_rules(), default_exit_delay_seconds=0.05)
+        system.arm(ArmedMode.away)
+        system.disarm()
+        time.sleep(0.3)
+        self.assertEqual(system.state_machine.state, AlarmState.disarmed)
+
+    def test_entry_delay_completes_automatically(self) -> None:
+        system = AlarmSystem(_rules())
+        system.arm(ArmedMode.away, exit_delay_seconds=0)
+        system.trigger(entry_delay_seconds=0.05)
+        self.assertEqual(system.state_machine.state, AlarmState.entry_delay)
+        time.sleep(0.3)
+        self.assertEqual(system.state_machine.state, AlarmState.alarm)
+
+    def test_disarm_during_entry_delay_cancels_the_timer(self) -> None:
+        system = AlarmSystem(_rules())
+        system.arm(ArmedMode.away, exit_delay_seconds=0)
+        system.trigger(entry_delay_seconds=0.05)
+        system.disarm()
+        time.sleep(0.3)
+        self.assertEqual(system.state_machine.state, AlarmState.disarmed)
+
+    def test_stop_cancels_pending_exit_delay_timer(self) -> None:
+        system = AlarmSystem(_rules(), default_exit_delay_seconds=0.05)
+        system.arm(ArmedMode.away)
+        system.stop()
+        time.sleep(0.3)
+        self.assertEqual(system.state_machine.state, AlarmState.exit_delay)
 
 
 class TestEventHistory(unittest.TestCase):

@@ -740,11 +740,10 @@ class FrigateApp:
 
         if self.alarm_detection_thread is not None:
             self.alarm_detection_thread.stop()
-        if (
-            self.alarm_system is not None
-            and self.alarm_system.reporting_queue is not None
-        ):
-            self.alarm_system.reporting_queue.stop()
+        if self.alarm_system is not None:
+            self.alarm_system.stop()
+            if self.alarm_system.reporting_queue is not None:
+                self.alarm_system.reporting_queue.stop()
 
         self.dispatcher.stop()
         self.ptz_autotracker_thread.join()

@@ -83,7 +83,7 @@ class AlarmDetectionThread(threading.Thread):
             rule = self.alarm_system.adapter.get_rule(camera, zone)
             entry_delay = rule.entry_delay_seconds if rule else 0
             try:
-                self.alarm_system.state_machine.trigger(entry_delay_seconds=entry_delay)
+                self.alarm_system.trigger(entry_delay_seconds=entry_delay)
             except InvalidAlarmTransition:
                 # Expected when e.g. an alarm is already active and another
                 # qualifying detection comes in; still record/report it.
