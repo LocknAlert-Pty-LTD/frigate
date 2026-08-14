@@ -12,6 +12,7 @@ status" -- neither one needs to know about Frigate detections or FastAPI.
 import logging
 import threading
 from collections import deque
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from frigate.alarm.adapter import DetectionAlarmAdapter
@@ -55,6 +56,14 @@ class AlarmSystem:
         self._exit_delay_timer: threading.Timer | None = None
         self._entry_delay_timer: threading.Timer | None = None
 
+        # Set by the wiring layer once it exists (e.g. an AlarmMqttBridge's
+        # publish_status/publish_event) so every mutator -- HTTP API, an
+        # inbound MQTT command, or a real detection -- keeps external state
+        # in sync the same way, instead of each caller having to remember
+        # to publish after calling arm()/disarm()/etc itself.
+        self.on_change: Callable[[], None] | None = None
+        self.on_event: Callable[[AlarmEvent], None] | None = None
+
     def arm(self, mode: ArmedMode, exit_delay_seconds: int | None = None) -> AlarmState:
         self._cancel_timers()
         delay = (
@@ -67,6 +76,7 @@ class AlarmSystem:
             self._exit_delay_timer = threading.Timer(delay, self._complete_exit_delay)
             self._exit_delay_timer.daemon = True
             self._exit_delay_timer.start()
+        self._notify()
         return state
 
     def _complete_exit_delay(self) -> None:
@@ -75,6 +85,8 @@ class AlarmSystem:
         except InvalidAlarmTransition:
             # Already disarmed or otherwise moved on before the timer fired.
             pass
+        else:
+            self._notify()
 
     def trigger(self, entry_delay_seconds: int = 0) -> AlarmState:
         """Record a qualifying detection while armed. Raises
@@ -88,6 +100,7 @@ class AlarmSystem:
             )
             self._entry_delay_timer.daemon = True
             self._entry_delay_timer.start()
+        self._notify()
         return state
 
     def _complete_entry_delay(self) -> None:
@@ -98,14 +111,19 @@ class AlarmSystem:
             pass
         else:
             logger.warning("alarm entry delay expired without disarming")
+            self._notify()
 
     def disarm(self) -> AlarmState:
         self._cancel_timers()
-        return self.state_machine.disarm()
+        state = self.state_machine.disarm()
+        self._notify()
+        return state
 
     def clear(self) -> AlarmState:
         self._cancel_timers()
-        return self.state_machine.clear()
+        state = self.state_machine.clear()
+        self._notify()
+        return state
 
     def stop(self) -> None:
         """Cancel any pending delay timers. Safe to call even if none are
@@ -120,6 +138,10 @@ class AlarmSystem:
             self._entry_delay_timer.cancel()
             self._entry_delay_timer = None
 
+    def _notify(self) -> None:
+        if self.on_change is not None:
+            self.on_change()
+
     def record_event(self, event: AlarmEvent) -> None:
         """Log an event and hand it to the reporting queue, if configured.
 
@@ -130,6 +152,8 @@ class AlarmSystem:
         self._events.append(event)
         if self.reporting_queue is not None:
             self.reporting_queue.enqueue(event)
+        if self.on_event is not None:
+            self.on_event(event)
 
     def recent_events(self, limit: int = 50) -> list[AlarmEvent]:
         return list(self._events)[-limit:][::-1]
@@ -147,7 +171,8 @@ class AlarmSystem:
         """
         if self.state_machine.state in (
             AlarmState.armed_away,
-            AlarmState.armed_stay,
+            AlarmState.armed_home,
+            AlarmState.armed_night,
             AlarmState.entry_delay,
             AlarmState.alarm,
         ):
@@ -160,7 +185,8 @@ class AlarmSystem:
             if self.state_machine.state
             in (
                 AlarmState.armed_away,
-                AlarmState.armed_stay,
+                AlarmState.armed_home,
+                AlarmState.armed_night,
                 AlarmState.entry_delay,
                 AlarmState.exit_delay,
             )

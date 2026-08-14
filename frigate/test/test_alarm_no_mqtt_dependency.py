@@ -7,16 +7,20 @@ set, not available in this sandbox -- see the phase 4/8/9 caveats), this
 statically proves the constraint by parsing each core module's imports and
 asserting none of them reference mqtt or the Dispatcher.
 
-frigate/alarm/factory.py (needs frigate.config) and
-frigate/alarm/detection_thread.py (needs frigate.comms.events_updater, the
-internal ZMQ bus, plus a reference to mqtt_bridge to publish through) are
-exempt -- those are explicitly the wiring/integration glue that connects
-the alarm engine to the rest of Frigate, and are expected to depend on it.
-Note detection_thread.py depends on the ZMQ event bus, not MQTT the
-protocol -- that's the intended architecture (see AGENTS.md phase 1: "the
-alarm engine subsystem should instantiate an EventUpdateSubscriber
-directly"), it's just that "mqtt_bridge" as an import name trips this
-scan's substring check, hence the exemption rather than a smarter check.
+frigate/alarm/factory.py and frigate/alarm/ha_discovery.py (both need
+frigate.config to build rules/discovery configs from the validated config)
+are exempt -- those are explicitly the wiring/integration glue that
+connects the alarm engine to the rest of Frigate, and are expected to
+depend on it.
+
+frigate/alarm/detection_thread.py needs frigate.comms.events_updater (the
+internal ZMQ bus, not MQTT -- the intended architecture, see AGENTS.md
+phase 1: "the alarm engine subsystem should instantiate an
+EventUpdateSubscriber directly") but no longer needs an exemption: it no
+longer holds a reference to AlarmMqttBridge at all (AlarmSystem calls
+on_change/on_event itself now, see system.py), so its own imports pass the
+substring check cleanly on their own merits.
+
 Everything else in frigate/alarm/ is the protocol-agnostic core (the state
 machine, the detection adapter, the protocol encoders, the reporting queue,
 the orchestrator) and must stay free of both MQTT and the ZMQ bus.
@@ -30,7 +34,7 @@ from pathlib import Path
 ALARM_PACKAGE_DIR = Path(__file__).resolve().parent.parent / "alarm"
 
 # The wiring/integration glue layer, exempt from this constraint by design.
-EXEMPT_MODULES = {"factory", "detection_thread"}
+EXEMPT_MODULES = {"factory", "ha_discovery"}
 
 _FORBIDDEN_SUBSTRINGS = ("mqtt", "dispatcher")
 

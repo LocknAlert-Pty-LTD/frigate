@@ -97,21 +97,26 @@ class TestEvaluate(unittest.TestCase):
 
         self.assertEqual(system.state_machine.state.value, "entry_delay")
 
-    def test_publishes_via_mqtt_bridge_when_provided(self) -> None:
+    def test_triggering_invokes_alarm_system_on_change_and_on_event(self) -> None:
+        """AlarmSystem itself owns notification (see system.py); this thread
+        just needs to drive state through it, not remember to publish."""
         system = _system()
         system.arm(ArmedMode.away, exit_delay_seconds=0)
-        bridge = MagicMock()
-        thread = AlarmDetectionThread(system, MagicMock(), mqtt_bridge=bridge)
+        on_change = MagicMock()
+        on_event = MagicMock()
+        system.on_change = on_change
+        system.on_event = on_event
+        thread = AlarmDetectionThread(system, MagicMock())
 
         thread._evaluate("front", _tracked_object_dict())
 
-        bridge.publish_event.assert_called_once()
-        bridge.publish_status.assert_called_once()
+        on_change.assert_called()
+        on_event.assert_called_once()
 
-    def test_no_mqtt_bridge_does_not_raise(self) -> None:
+    def test_no_callbacks_configured_does_not_raise(self) -> None:
         system = _system()
         system.arm(ArmedMode.away, exit_delay_seconds=0)
-        thread = AlarmDetectionThread(system, MagicMock(), mqtt_bridge=None)
+        thread = AlarmDetectionThread(system, MagicMock())
 
         thread._evaluate("front", _tracked_object_dict())
 

@@ -8,9 +8,9 @@ import json
 import unittest
 
 from frigate.alarm.event import AlarmEvent, AlarmEventType
-from frigate.alarm.mqtt_bridge import AlarmMqttBridge
+from frigate.alarm.mqtt_bridge import AlarmMqttBridge, translate_state_for_ha
 from frigate.alarm.rules import ZoneAlarmRule
-from frigate.alarm.state import ArmedMode
+from frigate.alarm.state import AlarmState, ArmedMode
 from frigate.alarm.system import AlarmSystem
 
 
@@ -66,6 +66,78 @@ class TestPublishStatus(unittest.TestCase):
         topics = [call[0] for call in publisher.calls]
         self.assertIn("front/alarm_zone/driveway/state", topics)
         self.assertNotIn("alarm/zone/driveway/state", topics)
+
+    def test_publishes_ha_state_topic_as_plain_translated_string(self) -> None:
+        publisher = _RecordingPublisher()
+        system = _system()
+        system.arm(ArmedMode.home, exit_delay_seconds=0)
+        bridge = AlarmMqttBridge(system, publisher)
+        bridge.publish_status()
+
+        payload = next(c[1] for c in publisher.calls if c[0] == "alarm/ha/state")
+        self.assertEqual(payload, "armed_home")
+
+    def test_publishes_ha_fault_topic_off_when_no_fault(self) -> None:
+        publisher = _RecordingPublisher()
+        bridge = AlarmMqttBridge(_system(), publisher)
+        bridge.publish_status()
+
+        payload = next(c[1] for c in publisher.calls if c[0] == "alarm/ha/fault")
+        self.assertEqual(payload, "OFF")
+
+    def test_publishes_ha_fault_topic_on_when_faulted(self) -> None:
+        publisher = _RecordingPublisher()
+        system = _system()
+        system.state_machine.enter_fault("camera offline")
+        bridge = AlarmMqttBridge(system, publisher)
+        bridge.publish_status()
+
+        payload = next(c[1] for c in publisher.calls if c[0] == "alarm/ha/fault")
+        self.assertEqual(payload, "ON")
+
+    def test_publishes_ha_zone_topic_reflecting_armed_status(self) -> None:
+        publisher = _RecordingPublisher()
+        system = _system()
+        system.arm(ArmedMode.away, exit_delay_seconds=0)
+        bridge = AlarmMqttBridge(system, publisher)
+        bridge.publish_status()
+
+        payload = next(
+            c[1] for c in publisher.calls if c[0] == "alarm/ha/zone/front_driveway"
+        )
+        self.assertEqual(payload, "ON")
+
+    def test_ha_topics_are_retained(self) -> None:
+        publisher = _RecordingPublisher()
+        bridge = AlarmMqttBridge(_system(), publisher)
+        bridge.publish_status()
+
+        retained = {call[0]: call[2] for call in publisher.calls}
+        self.assertTrue(retained["alarm/ha/state"])
+        self.assertTrue(retained["alarm/ha/fault"])
+
+
+class TestTranslateStateForHa(unittest.TestCase):
+    def test_delay_states_map_to_ha_delay_states(self) -> None:
+        self.assertEqual(translate_state_for_ha(AlarmState.exit_delay), "arming")
+        self.assertEqual(translate_state_for_ha(AlarmState.entry_delay), "pending")
+
+    def test_alarm_maps_to_triggered(self) -> None:
+        self.assertEqual(translate_state_for_ha(AlarmState.alarm), "triggered")
+
+    def test_alarm_memory_maps_to_disarmed(self) -> None:
+        """HA doesn't model 'disarmed but remembers the last alarm' -- that
+        detail is only available via the API/frontend."""
+        self.assertEqual(translate_state_for_ha(AlarmState.alarm_memory), "disarmed")
+
+    def test_all_three_armed_modes_map_directly(self) -> None:
+        self.assertEqual(translate_state_for_ha(AlarmState.armed_away), "armed_away")
+        self.assertEqual(translate_state_for_ha(AlarmState.armed_home), "armed_home")
+        self.assertEqual(translate_state_for_ha(AlarmState.armed_night), "armed_night")
+
+    def test_every_alarm_state_has_a_mapping(self) -> None:
+        for state in AlarmState:
+            translate_state_for_ha(state)  # must not raise KeyError
 
 
 class TestPublishEvent(unittest.TestCase):

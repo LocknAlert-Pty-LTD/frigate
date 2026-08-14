@@ -38,6 +38,22 @@ class MqttClient(Communicator):
             retain=retain,
         )
 
+    def publish_absolute(self, topic: str, payload: Any, retain: bool = False) -> None:
+        """Publish without the topic_prefix, for topics that must be exact
+        (e.g. Home Assistant MQTT discovery configs, which are always under
+        the literal "homeassistant/" tree regardless of Frigate's own
+        prefix)."""
+        if not self.connected:
+            logger.debug(f"Unable to publish to {topic}: client is not connected")
+            return
+
+        self.client.publish(
+            topic,
+            payload,
+            qos=self.config.mqtt.qos,
+            retain=retain,
+        )
+
     def stop(self) -> None:
         self.publish("available", "stopped", retain=True)
         self.client.disconnect()

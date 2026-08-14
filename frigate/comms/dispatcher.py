@@ -6,9 +6,12 @@ import logging
 from collections.abc import Callable, Iterable
 from typing import Any, cast
 
+from frigate.alarm.state import ArmedMode, InvalidAlarmTransition
+from frigate.alarm.system import AlarmSystem
 from frigate.camera import PTZMetrics
 from frigate.camera.activity_manager import AudioActivityManager, CameraActivityManager
 from frigate.comms.base_communicator import Communicator
+from frigate.comms.mqtt import MqttClient
 from frigate.comms.runtime_state import RuntimeStatePersistence
 from frigate.comms.webpush import WebPushClient
 from frigate.config import BirdseyeModeEnum, FrigateConfig
@@ -96,14 +99,23 @@ class Dispatcher:
         self._global_settings_handlers: dict[str, Callable] = {
             "notifications": self._on_global_notification_command,
             "profile": self._on_profile_command,
+            "alarm": self._on_alarm_command,
         }
         self.profile_manager: ProfileManager | None = None
+        # Set by FrigateApp.init_alarm_system() once the alarm engine exists,
+        # the same post-construction-attribute pattern as profile_manager
+        # above. None (the default) means the alarm/set handler below is a
+        # no-op, e.g. when alarm.enabled is false.
+        self.alarm_system: AlarmSystem | None = None
 
         for comm in self.comms:
             comm.subscribe(self._receive)
 
         self.web_push_client = next(
             (comm for comm in communicators if isinstance(comm, WebPushClient)), None
+        )
+        self.mqtt_client = next(
+            (comm for comm in communicators if isinstance(comm, MqttClient)), None
         )
         if self.web_push_client is not None:
             self.web_push_client.set_suspension_broadcaster(self.publish)
@@ -397,6 +409,14 @@ class Dispatcher:
         """Handle publishing to communicators."""
         for comm in self.comms:
             comm.publish(topic, payload, retain)
+
+    def publish_absolute(self, topic: str, payload: Any, retain: bool = False) -> None:
+        """Publish an exact topic with no prefix, bypassing MqttClient's
+        normal topic_prefix. Only meaningful for MQTT (e.g. Home Assistant
+        discovery configs, which must be under the literal "homeassistant/"
+        tree); a no-op if MQTT isn't configured."""
+        if self.mqtt_client is not None:
+            self.mqtt_client.publish_absolute(topic, payload, retain)
 
     def stop(self) -> None:
         self.camera_activity.stop()
@@ -733,6 +753,35 @@ class Dispatcher:
             return
 
         self.publish("profile/state", payload.strip() or "none", retain=True)
+
+    def _on_alarm_command(self, payload: str) -> None:
+        """Callback for alarm/set. Matches Home Assistant's
+        alarm_control_panel command payloads (ARM_AWAY/ARM_HOME/ARM_NIGHT/
+        DISARM, see the discovery config in frigate/alarm/ha_discovery.py)
+        so this is usable directly from an HA alarm panel card, not just
+        Frigate's own UI. Publishing updated state back out is
+        AlarmSystem's job (see on_change/on_event in system.py), not this
+        handler's."""
+        if self.alarm_system is None:
+            logger.debug("Received alarm command but alarm is not enabled")
+            return
+
+        command = payload.strip().upper()
+        mode_by_command = {
+            "ARM_AWAY": ArmedMode.away,
+            "ARM_HOME": ArmedMode.home,
+            "ARM_NIGHT": ArmedMode.night,
+        }
+
+        try:
+            if command == "DISARM":
+                self.alarm_system.disarm()
+            elif command in mode_by_command:
+                self.alarm_system.arm(mode_by_command[command])
+            else:
+                logger.warning("Unrecognized alarm command: %s", payload)
+        except InvalidAlarmTransition as e:
+            logger.warning("Rejected alarm command %s: %s", command, e)
 
     def _on_audio_command(self, camera_name: str, payload: str) -> None:
         """Callback for audio topic."""

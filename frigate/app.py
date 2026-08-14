@@ -17,6 +17,7 @@ from playhouse.sqlite_ext import SqliteExtDatabase
 
 from frigate.alarm.detection_thread import AlarmDetectionThread
 from frigate.alarm.factory import build_alarm_system
+from frigate.alarm.ha_discovery import publish_ha_discovery
 from frigate.alarm.mqtt_bridge import AlarmMqttBridge
 from frigate.api.auth import hash_password
 from frigate.api.fastapi_app import create_fastapi_app
@@ -355,14 +356,29 @@ class FrigateApp:
         # AlarmSystem itself has zero MQTT/Dispatcher dependency (see
         # frigate/test/test_alarm_no_mqtt_dependency.py); the bridge below
         # is the only piece that knows about publishing, and it only takes
-        # a plain callable, not the Dispatcher class.
+        # a plain callable, not the Dispatcher class. AlarmSystem calls
+        # on_change/on_event itself (see system.py) so every mutator --
+        # HTTP API, an inbound MQTT command, or a real detection -- publishes
+        # the same way without each caller having to remember to.
         self.alarm_system = build_alarm_system(self.config)
-        self.alarm_mqtt_bridge = (
-            AlarmMqttBridge(self.alarm_system, self.dispatcher.publish)
-            if self.alarm_system is not None
-            else None
-        )
         self.alarm_detection_thread: AlarmDetectionThread | None = None
+
+        if self.alarm_system is None:
+            self.alarm_mqtt_bridge = None
+            return
+
+        self.alarm_mqtt_bridge = AlarmMqttBridge(
+            self.alarm_system, self.dispatcher.publish
+        )
+        self.alarm_system.on_change = self.alarm_mqtt_bridge.publish_status
+        self.alarm_system.on_event = self.alarm_mqtt_bridge.publish_event
+        # Lets the dispatcher route inbound alarm/set commands (from MQTT,
+        # e.g. a Home Assistant alarm_control_panel card) to alarm_system,
+        # the same post-construction-attribute pattern already used for
+        # dispatcher.profile_manager.
+        self.dispatcher.alarm_system = self.alarm_system
+        publish_ha_discovery(self.config, self.dispatcher.publish)
+        self.alarm_mqtt_bridge.publish_status()
 
     def start_alarm_system(self) -> None:
         if self.alarm_system is None:
@@ -372,7 +388,7 @@ class FrigateApp:
             self.alarm_system.reporting_queue.start()
 
         self.alarm_detection_thread = AlarmDetectionThread(
-            self.alarm_system, self.stop_event, self.alarm_mqtt_bridge
+            self.alarm_system, self.stop_event
         )
         self.alarm_detection_thread.start()
 

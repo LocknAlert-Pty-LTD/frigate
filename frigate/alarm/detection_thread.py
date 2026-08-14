@@ -12,6 +12,10 @@ Field names (event_data["current_zones"], ["entered_zones"], ["id"],
 are read directly from TrackedObject.to_dict()
 (frigate/track/tracked_object.py), not guessed.
 
+Does not publish to MQTT/WS itself -- AlarmSystem.trigger()/record_event()
+call alarm_system.on_change/on_event automatically (see system.py), so this
+thread only needs to drive state, not remember to publish it too.
+
 Not executable/testable in this sandbox: needs pyzmq, not installed here
 (see AGENTS.md phase 9 caveat).
 """
@@ -21,7 +25,6 @@ import threading
 from multiprocessing.synchronize import Event as MpEvent
 from typing import Any
 
-from frigate.alarm.mqtt_bridge import AlarmMqttBridge
 from frigate.alarm.state import InvalidAlarmTransition
 from frigate.alarm.system import AlarmSystem
 from frigate.comms.events_updater import EventUpdateSubscriber
@@ -31,15 +34,9 @@ logger = logging.getLogger(__name__)
 
 
 class AlarmDetectionThread(threading.Thread):
-    def __init__(
-        self,
-        alarm_system: AlarmSystem,
-        stop_event: MpEvent,
-        mqtt_bridge: AlarmMqttBridge | None = None,
-    ) -> None:
+    def __init__(self, alarm_system: AlarmSystem, stop_event: MpEvent) -> None:
         super().__init__(name="alarm_detection")
         self.alarm_system = alarm_system
-        self.mqtt_bridge = mqtt_bridge
         self.stop_event = stop_event
         self.event_subscriber = EventUpdateSubscriber()
 
@@ -95,9 +92,6 @@ class AlarmDetectionThread(threading.Thread):
                 )
 
             self.alarm_system.record_event(alarm_event)
-            if self.mqtt_bridge is not None:
-                self.mqtt_bridge.publish_event(alarm_event)
-                self.mqtt_bridge.publish_status()
 
     def stop(self) -> None:
         self.join()

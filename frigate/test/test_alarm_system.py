@@ -37,8 +37,8 @@ class TestArmDisarmClear(unittest.TestCase):
 
     def test_arm_can_override_exit_delay(self) -> None:
         system = AlarmSystem(_rules(), default_exit_delay_seconds=15)
-        state = system.arm(ArmedMode.stay, exit_delay_seconds=0)
-        self.assertEqual(state, AlarmState.armed_stay)
+        state = system.arm(ArmedMode.home, exit_delay_seconds=0)
+        self.assertEqual(state, AlarmState.armed_home)
 
     def test_disarm_and_clear(self) -> None:
         system = AlarmSystem(_rules())
@@ -159,9 +159,9 @@ class TestArmedModeForEvaluation(unittest.TestCase):
 
     def test_set_during_entry_delay(self) -> None:
         system = AlarmSystem(_rules())
-        system.arm(ArmedMode.stay, exit_delay_seconds=0)
+        system.arm(ArmedMode.home, exit_delay_seconds=0)
         system.state_machine.trigger(entry_delay_seconds=30)
-        self.assertEqual(system.armed_mode_for_evaluation, ArmedMode.stay)
+        self.assertEqual(system.armed_mode_for_evaluation, ArmedMode.home)
 
     def test_set_during_active_alarm(self) -> None:
         system = AlarmSystem(_rules())
@@ -192,7 +192,7 @@ class TestZoneStatus(unittest.TestCase):
 
     def test_zone_not_armed_when_mode_does_not_match(self) -> None:
         system = AlarmSystem(_rules(arm_modes=frozenset({ArmedMode.away})))
-        system.arm(ArmedMode.stay, exit_delay_seconds=0)
+        system.arm(ArmedMode.home, exit_delay_seconds=0)
         statuses = system.zone_status()
         self.assertFalse(statuses[0].armed)
 
@@ -226,6 +226,70 @@ class TestStatus(unittest.TestCase):
         rq = ReportingQueue(send=lambda e: True, retry_delay_seconds=0)
         system = AlarmSystem(_rules(), reporting_queue=rq)
         self.assertTrue(system.status()["reporting_healthy"])
+
+
+class TestOnChangeNotification(unittest.TestCase):
+    """AlarmSystem calls on_change itself on every state-changing method, so
+    the wiring layer (MQTT bridge, API, an inbound MQTT command) doesn't
+    have to remember to publish after each call -- see system.py."""
+
+    def test_arm_triggers_on_change(self) -> None:
+        system = AlarmSystem(_rules())
+        calls = []
+        system.on_change = lambda: calls.append(1)
+        system.arm(ArmedMode.away, exit_delay_seconds=0)
+        self.assertEqual(len(calls), 1)
+
+    def test_disarm_triggers_on_change(self) -> None:
+        system = AlarmSystem(_rules())
+        system.arm(ArmedMode.away, exit_delay_seconds=0)
+        calls = []
+        system.on_change = lambda: calls.append(1)
+        system.disarm()
+        self.assertEqual(len(calls), 1)
+
+    def test_clear_triggers_on_change(self) -> None:
+        system = AlarmSystem(_rules())
+        system.arm(ArmedMode.away, exit_delay_seconds=0)
+        system.trigger(entry_delay_seconds=0)
+        system.disarm()
+        calls = []
+        system.on_change = lambda: calls.append(1)
+        system.clear()
+        self.assertEqual(len(calls), 1)
+
+    def test_trigger_triggers_on_change(self) -> None:
+        system = AlarmSystem(_rules())
+        system.arm(ArmedMode.away, exit_delay_seconds=0)
+        calls = []
+        system.on_change = lambda: calls.append(1)
+        system.trigger(entry_delay_seconds=0)
+        self.assertEqual(len(calls), 1)
+
+    def test_no_on_change_configured_does_not_raise(self) -> None:
+        system = AlarmSystem(_rules())
+        system.arm(ArmedMode.away, exit_delay_seconds=0)  # should not raise
+
+    def test_exit_delay_completion_triggers_on_change(self) -> None:
+        system = AlarmSystem(_rules(), default_exit_delay_seconds=0.05)
+        calls = []
+        system.on_change = lambda: calls.append(1)
+        system.arm(ArmedMode.away)
+        self.assertEqual(len(calls), 1)  # from arm() itself, entering exit_delay
+        time.sleep(0.3)
+        self.assertEqual(len(calls), 2)  # from the timer completing
+
+    def test_record_event_triggers_on_event(self) -> None:
+        system = AlarmSystem(_rules())
+        events = []
+        system.on_event = events.append
+        system.record_event(_event())
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0].camera_id, "front")
+
+    def test_no_on_event_configured_does_not_raise(self) -> None:
+        system = AlarmSystem(_rules())
+        system.record_event(_event())  # should not raise
 
 
 if __name__ == "__main__":
