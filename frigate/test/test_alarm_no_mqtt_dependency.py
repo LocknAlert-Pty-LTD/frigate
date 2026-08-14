@@ -97,16 +97,27 @@ class TestCoreModulesImportCleanlyWithoutFrigateComms(unittest.TestCase):
     def test_importing_core_modules_does_not_pull_in_frigate_comms(self) -> None:
         import sys
 
+        # Compare before/after rather than asserting an absolute empty
+        # state: under full test-suite discovery, unrelated test modules
+        # (e.g. test_dispatcher_runtime_state.py) may have already
+        # legitimately imported frigate.comms.* earlier in the same
+        # process. What matters is that *importing the alarm core* doesn't
+        # add any new ones, not that the process-wide sys.modules is
+        # pristine.
+        comms_before = {
+            name for name in sys.modules if name.startswith("frigate.comms")
+        }
+
         for module_name in self.CORE_MODULES:
             importlib.import_module(module_name)
 
-        comms_modules = [
-            name for name in sys.modules if name.startswith("frigate.comms")
-        ]
+        comms_after = {name for name in sys.modules if name.startswith("frigate.comms")}
+        newly_imported = comms_after - comms_before
+
         self.assertEqual(
-            comms_modules,
-            [],
-            f"Importing the alarm core pulled in frigate.comms modules: {comms_modules}",
+            newly_imported,
+            set(),
+            f"Importing the alarm core pulled in new frigate.comms modules: {newly_imported}",
         )
 
 

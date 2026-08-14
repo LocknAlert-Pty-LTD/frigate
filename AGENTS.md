@@ -903,7 +903,42 @@ Alarm engine core has zero MQTT dependency; MQTT is one optional output path.
       `npm run dev`, open Settings → Alarm, and confirm arm/disarm/clear
       actually work end-to-end against a real backend with
       `alarm.enabled: true`.
-11. Full test suite run, fix regressions — not started
+11. Full test suite run, fix regressions — **DONE**.
+    - `python3 -u -m unittest discover -s frigate/test`: 217 tests
+      collected, 75 errors — confirmed by name that exactly 2 are
+      alarm-related (`test_alarm_config`, `test_http_alarm`, both the
+      already-documented cv2/fastapi-missing gaps from phases 4/8) and the
+      remaining 73 are the pre-existing baseline unrelated to this branch
+      (same count as before phase 1 started). Zero new backend regressions.
+    - **A real regression was caught by this run, not before**:
+      `test_alarm_no_mqtt_dependency.py`'s
+      `TestCoreModulesImportCleanlyWithoutFrigateComms` passed in isolation
+      but failed under full-suite `discover`, because other unrelated test
+      files (e.g. `test_dispatcher_runtime_state.py`) legitimately import
+      `frigate.comms.*` earlier in the same test process, and the test was
+      asserting an absolute-empty `sys.modules` state rather than "did
+      *importing the alarm core* add anything new." Fixed to snapshot
+      `sys.modules` before/after and diff, which is what the test actually
+      meant to assert. Good illustration of why isolated per-file test runs
+      aren't sufficient — this phase existed for exactly this reason.
+    - `ruff check frigate/` and `ruff format --check frigate/`: clean
+      across the whole backend (356 files), not just alarm files.
+    - `python3 -u -m mypy --config-file frigate/mypy.ini frigate/`: 111
+      errors in 28 files, all outside anything created/modified this
+      project (confirmed by grepping the output for
+      `frigate/alarm|frigate/api/alarm|frigate/app.py|frigate/config/alarm`
+      — zero matches). Same pre-existing numpy/stub-version gap noted in
+      phase 9, now confirmed against the *entire* codebase, not just the
+      files this branch touches.
+    - Frontend: `npx eslint --ext .jsx,.js,.tsx,.ts --ignore-path
+      .gitignore .` across the whole `web/` tree — clean, no output.
+    - **Still not done, carried forward as the real "phase 11" for
+      whoever picks this up next**: none of the backend caveats from
+      phases 4/8/9 (run the config/API/http_alarm tests, boot a real
+      FrigateApp instance) have been resolved — this phase only confirms
+      *this sandbox's* tests are internally consistent and regression-free,
+      not that the untested-here code actually works. That full
+      dev/CI-environment verification pass is still outstanding.
 12. Final architecture review against phase 1 — not started
 
 **Proposed architecture (pending sign-off, see phase 1 analysis in conversation)**:
