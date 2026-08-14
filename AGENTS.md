@@ -837,14 +837,14 @@ Alarm engine core has zero MQTT dependency; MQTT is one optional output path.
      `license_plate/mixin.py`, almost certainly a numpy/stub version
      mismatch between this sandbox and the real dev container — verified
      by grepping mypy's output for any file this session created/edited
-     and finding none). **This is the single most important thing to
-     verify before trusting this branch**: boot a real Frigate instance
-     (with and without `alarm.enabled`) off this branch and confirm it
-     starts, stops cleanly, and (with alarm enabled) that arm/disarm via
-     the API actually changes state and MQTT topics actually publish. None
-     of that has been observed — only that the code compiles, lints, and
-     type-checks, and that every non-`frigate.app`/`frigate.config`
-     piece's *logic* is unit-tested.
+     and finding none).
+     - **UPDATE (see "Live verification" below, post phase-12 review):**
+       the "boot a real instance" step this caveat called for has now
+       actually been done, in the user's real devcontainer, not this
+       sandbox. It found and this branch now fixes a real bug (exit/entry
+       delay never completing — see that section). MQTT topic publishing
+       itself still hasn't been observed (no MQTT broker was configured in
+       that test), so that specific piece is still open.
 10. Frontend components — **DONE, and this is the first phase with real
     tooling verification** (`node_modules` wasn't installed; ran
     `npm install` in this sandbox specifically to unlock `tsc`/`eslint`/
@@ -1002,9 +1002,63 @@ Alarm engine core has zero MQTT dependency; MQTT is one optional output path.
       be wired (unhealthy reporting -> fault) but that wiring itself
       was never done. This is a real functional gap, not just an
       unverified-in-this-sandbox one.
-    - See the git log on this branch (17 commits, phase 1 through this
+    - See the git log on this branch (18 commits, phase 1 through this
       one) for the full history; this file is the durable summary if that
       conversation is gone.
+
+**Live verification (post-review, in the user's real devcontainer, not this
+sandbox)**: after writing up phase 12 as done, the user's own devcontainer
+(`frigate-devcontainer`, docker) turned out to be running with nginx (port
+5000) getting 502s because the actual `python3 -m frigate` process had never
+been started in that session — the s6-supervised "frigate" service in dev
+images is a placeholder sleep loop by design (`docker/main/fake_frigate_run`),
+the real process is meant to be started manually (`.vscode/launch.json`'s
+"Python: Launch Frigate", or `python3 -m frigate` in a terminal). Started it
+directly (`docker start` + `docker exec`, real `cv2`/`fastapi`/`zmq`/`peewee`
+all present) and ran real end-to-end checks that this sandbox could never do:
+
+- Confirmed all 5 alarm routes are live in the real `/openapi.json`.
+- Confirmed `allow_any_authenticated()` actually rejects unauthenticated
+  requests (403) and `require_role(["admin"])` gates POST correctly.
+- Confirmed the "alarm disabled" 400 response shape matches
+  `_not_enabled_response()` exactly, against a real default config.
+- Set `alarm: {enabled: true, exit_delay_seconds: 5}` in the real
+  `/config/config.yaml`, restarted, and drove a full `POST /alarm/arm` ->
+  `GET /alarm/status` (`exit_delay`) -> ... cycle over real HTTP.
+- **This caught a real bug the entire unit-test suite missed**: after the
+  configured exit delay, the state never advanced past `exit_delay`.
+  `AlarmStateMachine` deliberately doesn't time its own delay states (by
+  design, for testability — callers own the timer), but no caller was ever
+  actually built to own it; `AlarmDetectionThread` only handles detection
+  events, not delay completion. Every unit test that touched exit/entry
+  delay called `complete_exit_delay()`/`complete_entry_delay()` manually,
+  so this was invisible to 100% of the test suite. Fixed in the commit
+  right after this one (`AlarmSystem` now owns a `threading.Timer` per
+  delay; see that commit message for the full explanation) and
+  **re-verified live after the fix**: arm -> exit_delay -> (5 real seconds
+  later, automatically, no manual intervention) -> armed_away -> disarm ->
+  disarmed, confirmed by polling `GET /alarm/status` over real HTTP.
+- Confirmed `disarm()`/`clear()`/other existing endpoints (`/config`,
+  `/version`) still work, and confirmed through the actual nginx proxy on
+  port 5000 too (the same path the user's 502s came from) — 200s across
+  the board once the process was running.
+- **Not yet observed live**: MQTT topic publishing (no broker configured in
+  this test), a real camera/detection triggering the alarm end-to-end
+  (`cameras: {}` in this test), the frontend in a browser (Vite wasn't
+  started — intentionally not started by the agent, per the "never start
+  the dev server unless asked" instruction).
+- The test config used (`alarm: {enabled: true, exit_delay_seconds: 5}`,
+  no cameras) is still in `/config/config.yaml` in that devcontainer, with
+  the original backed up alongside it as `config.yaml.bak` — the user may
+  want to restore or keep it depending on whether they want to keep poking
+  at the feature.
+
+This is the strongest evidence in the whole project that the phase 11/12
+process (full suite + review) is not just a formality: it directly led to
+finding this bug, and the fix would not exist without actually running the
+software, which no amount of `ruff`/`mypy`/unit testing in this sandbox
+could have caught, precisely because the unit tests all called the
+timer-completion methods manually instead of waiting for a real timer.
 
 **Proposed architecture (pending sign-off, see phase 1 analysis in conversation)**:
 - New package `frigate/alarm/` — protocol-agnostic engine (state machine, zone
