@@ -1060,6 +1060,186 @@ software, which no amount of `ruff`/`mypy`/unit testing in this sandbox
 could have caught, precisely because the unit tests all called the
 timer-completion methods manually instead of waiting for a real timer.
 
+## Post-phase-12 addition: Home Assistant integration
+
+Requested after the original 12-phase plan was already complete: three-way
+arm modes matching Home Assistant's own vocabulary, full MQTT auto-discovery
+so the alarm panel and its zones appear in HA without any manual YAML, and a
+friendlier zone setup UI (the generic schema-driven config form was
+functional but not "simple," per the request). Not part of the original
+spec's phase numbering, so tracked here as its own section rather than
+shoehorned into phase 10/12.
+
+**Three-way arm modes (away/home/night)**: `ArmedMode`/`AlarmState` renamed
+`stay`/`armed_stay` -> `home`/`armed_home`, plus a new `night`/`armed_night`.
+"night" is what's shown to users as "Sleep" (the user's own wording) --
+same concept, Home Assistant's literal state name for it, used internally so
+the MQTT bridge needs no translation table for these three. Rippled through
+every layer: `frigate/alarm/state.py` (enum + transition table),
+`engine.py` (`_complete_arming`'s mode->state dict), `rules.py`/
+`frigate/config/camera/alarm.py` (`arm_modes` default is now all three,
+was away+stay), `frigate/api/defs/request/alarm_body.py` (`Literal["away",
+"home", "night"]`), `frigate/api/alarm.py` (`ArmedMode(body.mode)`, simpler
+than the old two-way ternary), and every test file that constructed an
+`ArmedMode`/`AlarmState`. `armed_mode_for_evaluation`/`zone_status()` in
+`system.py` already enumerated states explicitly rather than using a
+catch-all, so both needed the third state added by hand -- a case where the
+original design's explicitness (rather than e.g. `state.value.startswith
+("armed_")`) made the rename mechanical and safe to verify by reading, not
+a place a state could be silently missed.
+
+**A real architecture improvement fell out of the MQTT work, not just the
+MQTT work itself**: wiring inbound `alarm/set` MQTT commands (so a Home
+Assistant alarm card can arm/disarm, not just Frigate's own UI) surfaced
+that arm/disarm via the HTTP API never actually pushed updated state out
+over MQTT/WS either -- `frigate/api/alarm.py`'s handlers only ever called
+`alarm_system.arm()`/`.disarm()` and returned; nothing published until the
+*next* real detection happened to run `AlarmDetectionThread`, which was the
+only caller that remembered to publish. Fixed at the root instead of adding
+a third remember-to-publish call site: `AlarmSystem` now owns `on_change`/
+`on_event` callbacks (`system.py`) invoked automatically by `arm()`/
+`disarm()`/`clear()`/`trigger()`/the delay-timer completions/
+`record_event()`. The wiring layer (`frigate/app.py`'s `init_alarm_system`)
+assigns these once to the MQTT bridge's `publish_status`/`publish_event`,
+and every mutator -- HTTP API, an inbound MQTT command, or a real detection
+-- now publishes the same way with no risk of a caller forgetting. Net
+effect: `AlarmDetectionThread` got *simpler* (no longer holds an
+`AlarmMqttBridge` reference at all) while covering strictly more cases than
+before.
+
+**Home Assistant MQTT discovery** (`frigate/alarm/ha_discovery.py`,
+`frigate/alarm/mqtt_bridge.py`'s `HA_*` topics/`translate_state_for_ha`):
+unlike SIA DC-09, this is a stable, well-documented public protocol
+(home-assistant.io/integrations/mqtt/#mqtt-discovery), so there's no
+"unverified stub" caveat on the protocol shape itself -- only on whether
+it's actually been observed working against a real HA instance (see live
+verification below, it hasn't).
+- One HA `device` ("Frigate Alarm") groups: an `alarm_control_panel`
+  (state topic `alarm/ha/state`, command topic `alarm/set`, payloads
+  `ARM_AWAY`/`ARM_HOME`/`ARM_NIGHT`/`DISARM`, no code required since access
+  control is Frigate's own auth), a `binary_sensor` per enabled alarm zone
+  (device_class `safety`), a fault `binary_sensor` (device_class
+  `problem`), and a reporting-health `binary_sensor` (device_class
+  `connectivity`).
+- Deliberately new dedicated bare-value topics (`alarm/ha/state`,
+  `alarm/ha/fault`, `alarm/ha/reporting`, `alarm/ha/zone/<camera>_<zone>`)
+  rather than reusing the existing rich-JSON `alarm/state` topic with a
+  Jinja2 `value_template` translation. A Python mapping function
+  (`translate_state_for_ha`) is unit-testable exactly; a Jinja2
+  dict-literal-lookup expression embedded in a discovery JSON payload is
+  not verifiable from here and is exactly the kind of "looks right, can't
+  confirm the fine syntax" guess this project has avoided all session
+  (see the SIA DC-09 posture). The existing JSON topics are untouched, so
+  nothing already working (the frontend, the API) was put at risk.
+- **A real, non-obvious technical constraint discovered while building
+  this**: `MqttClient.publish()` (`frigate/comms/mqtt.py`) unconditionally
+  prefixes every topic with `mqtt.topic_prefix` (default `frigate`) --
+  fine for Frigate's own topics, but HA discovery configs *must* be under
+  the literal `homeassistant/` tree regardless of Frigate's prefix, or HA
+  never sees them. Fixed with a small additive `publish_absolute()` method
+  on both `MqttClient` and `Dispatcher` (mirrors the existing
+  `web_push_client`-lookup pattern in `Dispatcher.__init__` --
+  `self.mqtt_client = next((c for c in communicators if isinstance(c,
+  MqttClient)), None)`) that bypasses the prefix. This is genuinely new
+  capability, not a workaround; the regular `publish()` path was
+  structurally incapable of reaching an unprefixed topic at all.
+- `Dispatcher` gained an `alarm_system: AlarmSystem | None` attribute (same
+  post-construction-assignment pattern as the existing `profile_manager`)
+  and a `"alarm"` entry in `_global_settings_handlers`, so an inbound
+  `<prefix>/alarm/set` MQTT message routes to `_on_alarm_command` exactly
+  the way `profile/set` routes to `_on_profile_command`. This is the one
+  place `frigate/comms/dispatcher.py` now imports from `frigate.alarm.*`
+  (`AlarmSystem`, `ArmedMode`, `InvalidAlarmTransition`) -- a one-way
+  dependency (comms depends on alarm, not the reverse) that does not
+  violate the alarm engine's "zero MQTT dependency" constraint, which is
+  about the alarm core never needing MQTT to function, not about MQTT
+  code being disallowed from knowing about the alarm domain. Confirmed by
+  rerunning `test_alarm_no_mqtt_dependency.py`, which only scans
+  `frigate/alarm/*` and is unaffected by what `frigate/comms/dispatcher.py`
+  imports.
+- `frigate/alarm/detection_thread.py` lost its `AlarmMqttBridge` reference
+  as a side effect of the `on_change`/`on_event` refactor above, which
+  means it no longer needs the "wiring/glue, exempt from the no-MQTT-import
+  scan" carve-out it had in phase 9 -- it now passes
+  `test_alarm_no_mqtt_dependency.py`'s static import check on its own
+  merits. `factory.py` and the new `ha_discovery.py` (both need
+  `frigate.config`) remain the only exemptions.
+
+**Friendly zone setup UI** (`web/src/views/settings/AlarmZoneSetup.tsx`,
+embedded in `AlarmView.tsx`): replaces reliance on the generic
+schema-driven config form for the one thing it renders awkwardly -- a
+dict of zones, each with object/arm-mode lists and numeric delays. Lists
+every camera's existing Frigate zones (from `config.zones`, not a
+separate alarm-specific zone list -- alarm zones are just Frigate zones
+with alarm behavior turned on) as a card with a single "Protect this
+zone" switch; enabling one reveals object-type and arm-mode pickers
+(`ToggleGroup type="multiple"`) and two number inputs (entry delay,
+verification seconds). Saves every pending change in one `PUT config/set`
+call using its `config_data` body form (discovered via `TriggerView.tsx`'s
+precedent -- much simpler than building dotted-query-string params for
+list-valued fields, which is what `MotionTunerView.tsx`'s scalar-only
+pattern would have required). Saving implicitly sets both the per-camera
+and global `alarm.enabled: true`, so turning on one zone is enough to
+activate the whole feature -- no separate "enable alarm" step to forget.
+- **A real first-run UX bug was caught before it shipped, not after**:
+  the live status/control section's original design returned early with
+  just a "not enabled" message whenever `alarm.enabled` was false --
+  which is *always* true for a brand new install, since alarm defaults
+  off. That would have made the zone setup UI (the only thing that can
+  turn it on) unreachable from the same page for a first-time user.
+  Restructured so zone setup always renders; only the live status/arm
+  buttons are conditional on `isEnabled`.
+- `web/src/types/frigateConfig.ts` (the hand-maintained TS mirror of the
+  Pydantic config, no shared codegen between them) gained `alarm` on both
+  `FrigateConfig` and `CameraConfig` -- this had been missed in phase 10,
+  caught only now because this component actually reads
+  `camera.alarm.zones` and `tsc` failed until the type existed.
+
+**Tests**: every renamed/added Python surface has matching test coverage,
+following exactly the same "actually runs here" vs. "needs cv2/zmq, written
+correctly but unverified in this sandbox" split as the rest of this project.
+New test files: `test_alarm_dispatcher_command.py` (needs `frigate.config`
+via `frigate.comms.dispatcher`, blocked by the same cv2 gap as
+`test_dispatcher_runtime_state.py`, its precedent), `test_alarm_ha_discovery.py`
+(needs `frigate.config` via `factory.build_alarm_rules`, same gap --
+its mock had to give `camera.alarm.build_rules` a real return value rather
+than mocking the whole Pydantic chain, since `build_alarm_rules()` calls
+that method for real). `test_alarm_mqtt_bridge.py`,
+`test_alarm_system.py`, `test_alarm_detection_thread.py`,
+`test_alarm_adapter.py`, `test_alarm_state_machine.py` all gained new
+cases and **do** run here (pure `frigate.alarm.*`, no config/comms
+dependency) -- 245 tests collected total now, 168 actually run and pass,
+the other 77 are exactly the pre-existing 73-error baseline plus these 4
+new config/comms-dependent files, confirmed by name, zero unexplained
+regressions.
+
+**Live verification status, read before trusting this**: mid-way through
+verifying this in the user's real devcontainer (the same one from the
+phase-9/502-error session), the container started stopping and restarting
+outside of anything this session did -- strong signal the user was
+actively working in it themselves (opened it and found a real camera,
+zone, and alarm-zone config already set up, with `arm_modes: [away]`,
+which validates fine against the rename). Confirmed before that started:
+Frigate boots cleanly with all of this session's changes against that real
+config, no new errors (the only errors present -- an ONNX/OpenVINO
+model-format mismatch on the detector, and the camera's RTSP stream being
+unreachable from this sandbox -- are pre-existing and unrelated to any of
+this). **Not confirmed live**: the arm/disarm HTTP roundtrip with the new
+three modes (was confirmed for the old two-mode version in the phase-9
+session; the rename itself is only verified by the 168 passing unit tests
+plus this clean boot, not by a fresh live HTTP round-trip), and HA
+discovery / inbound MQTT commands over a real broker -- MQTT is disabled
+(`mqtt.enabled: false`) in the config that's actually in that devcontainer,
+and standing up a broker on the same docker network was judged more
+infrastructure than this warranted without being asked. **Before trusting
+the Home Assistant integration specifically**: point Frigate at a real
+MQTT broker with `mqtt.enabled: true`, connect a real Home Assistant
+instance to the same broker, and confirm the alarm panel and zone sensors
+actually appear and that arming from the HA card actually works --
+none of that has been observed, only that the discovery payloads are
+correctly shaped per unit tests and the publish-side wiring compiles,
+lints, and type-checks clean.
+
 **Proposed architecture (pending sign-off, see phase 1 analysis in conversation)**:
 - New package `frigate/alarm/` — protocol-agnostic engine (state machine, zone
   verification, alarm memory), zero MQTT/ZMQ imports inside the state machine
