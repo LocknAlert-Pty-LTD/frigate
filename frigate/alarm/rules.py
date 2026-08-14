@@ -35,5 +35,8 @@ class ZoneAlarmRule:
     # trigger().
     entry_delay_seconds: int = 0
     # Which arm modes this zone is active in, e.g. an interior zone that
-    # should only trigger when armed away, not armed stay.
-    arm_modes: frozenset[ArmedMode] = frozenset({ArmedMode.away, ArmedMode.stay})
+    # should only trigger when armed away, not when armed home or night.
+    # Defaults to all three (maximally armed; users narrow per zone).
+    arm_modes: frozenset[ArmedMode] = frozenset(
+        {ArmedMode.away, ArmedMode.home, ArmedMode.night}
+    )

@@ -87,7 +87,7 @@ class TestAlarmArmDisarmClear(BaseTestHttp):
         with AuthTestClient(self.app) as client:
             client.post("/alarm/arm", json={"mode": "away", "exit_delay_seconds": 0})
             response = client.post(
-                "/alarm/arm", json={"mode": "stay", "exit_delay_seconds": 0}
+                "/alarm/arm", json={"mode": "home", "exit_delay_seconds": 0}
             )
             self.assertEqual(response.status_code, 400)
             self.assertFalse(response.json()["success"])

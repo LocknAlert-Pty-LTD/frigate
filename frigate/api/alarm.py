@@ -82,7 +82,7 @@ def arm(request: Request, body: AlarmArmBody):
     if alarm_system is None:
         return _not_enabled_response()
 
-    mode = ArmedMode.away if body.mode == "away" else ArmedMode.stay
+    mode = ArmedMode(body.mode)
     try:
         state = alarm_system.arm(mode, exit_delay_seconds=body.exit_delay_seconds)
     except InvalidAlarmTransition as e:

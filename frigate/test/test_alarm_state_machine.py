@@ -13,10 +13,16 @@ class TestArming(unittest.TestCase):
         self.assertEqual(state, AlarmState.armed_away)
         self.assertEqual(machine.armed_mode, ArmedMode.away)
 
-    def test_arm_stay_immediate(self) -> None:
+    def test_arm_home_immediate(self) -> None:
         machine = AlarmStateMachine()
-        state = machine.arm(ArmedMode.stay, exit_delay_seconds=0)
-        self.assertEqual(state, AlarmState.armed_stay)
+        state = machine.arm(ArmedMode.home, exit_delay_seconds=0)
+        self.assertEqual(state, AlarmState.armed_home)
+
+    def test_arm_night_immediate(self) -> None:
+        machine = AlarmStateMachine()
+        state = machine.arm(ArmedMode.night, exit_delay_seconds=0)
+        self.assertEqual(state, AlarmState.armed_night)
+        self.assertEqual(machine.armed_mode, ArmedMode.night)
 
     def test_arm_with_exit_delay_waits_for_completion(self) -> None:
         machine = AlarmStateMachine()
@@ -26,7 +32,7 @@ class TestArming(unittest.TestCase):
 
     def test_disarm_cancels_exit_delay(self) -> None:
         machine = AlarmStateMachine()
-        machine.arm(ArmedMode.stay, exit_delay_seconds=30)
+        machine.arm(ArmedMode.home, exit_delay_seconds=30)
         state = machine.disarm()
         self.assertEqual(state, AlarmState.disarmed)
         self.assertIsNone(machine.armed_mode)
@@ -35,7 +41,7 @@ class TestArming(unittest.TestCase):
         machine = AlarmStateMachine()
         machine.arm(ArmedMode.away, exit_delay_seconds=0)
         with self.assertRaises(InvalidAlarmTransition):
-            machine.arm(ArmedMode.stay, exit_delay_seconds=0)
+            machine.arm(ArmedMode.home, exit_delay_seconds=0)
 
     def test_complete_exit_delay_requires_exit_delay_state(self) -> None:
         machine = AlarmStateMachine()
@@ -57,7 +63,7 @@ class TestTriggerAndEntryDelay(unittest.TestCase):
 
     def test_trigger_with_entry_delay_waits_for_completion(self) -> None:
         machine = AlarmStateMachine()
-        machine.arm(ArmedMode.stay, exit_delay_seconds=0)
+        machine.arm(ArmedMode.home, exit_delay_seconds=0)
         state = machine.trigger(entry_delay_seconds=30)
         self.assertEqual(state, AlarmState.entry_delay)
         self.assertEqual(machine.complete_entry_delay(), AlarmState.alarm)
@@ -102,8 +108,8 @@ class TestAlarmMemory(unittest.TestCase):
         machine.arm(ArmedMode.away, exit_delay_seconds=0)
         machine.trigger(entry_delay_seconds=0)
         machine.disarm()
-        state = machine.arm(ArmedMode.stay, exit_delay_seconds=0)
-        self.assertEqual(state, AlarmState.armed_stay)
+        state = machine.arm(ArmedMode.home, exit_delay_seconds=0)
+        self.assertEqual(state, AlarmState.armed_home)
 
 
 class TestFault(unittest.TestCase):
@@ -123,11 +129,11 @@ class TestFault(unittest.TestCase):
 
     def test_repeated_fault_updates_reason_without_losing_prior_state(self) -> None:
         machine = AlarmStateMachine()
-        machine.arm(ArmedMode.stay, exit_delay_seconds=0)
+        machine.arm(ArmedMode.home, exit_delay_seconds=0)
         machine.enter_fault("camera offline")
         machine.enter_fault("comms down")
         self.assertEqual(machine.fault_reason, "comms down")
-        self.assertEqual(machine.clear_fault(), AlarmState.armed_stay)
+        self.assertEqual(machine.clear_fault(), AlarmState.armed_home)
 
     def test_clear_fault_requires_fault_state(self) -> None:
         machine = AlarmStateMachine()

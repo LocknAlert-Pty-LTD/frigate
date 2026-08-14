@@ -76,7 +76,8 @@ class TestAlarmZoneValidation(unittest.TestCase):
         self.assertEqual(rule.zone, "driveway")
         self.assertEqual(rule.event_type, AlarmEventType.burglary)
         self.assertIn(ArmedMode.away, rule.arm_modes)
-        self.assertIn(ArmedMode.stay, rule.arm_modes)
+        self.assertIn(ArmedMode.home, rule.arm_modes)
+        self.assertIn(ArmedMode.night, rule.arm_modes)
 
     def test_alarm_zone_must_reference_existing_zone(self) -> None:
         config = _minimal(

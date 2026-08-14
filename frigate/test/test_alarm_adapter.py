@@ -230,7 +230,7 @@ class TestArmModeGating(unittest.TestCase):
             label="person",
             score=0.9,
             timestamp=100.0,
-            armed_mode=ArmedMode.stay,
+            armed_mode=ArmedMode.home,
         )
         self.assertIsNone(event)
 
@@ -249,6 +249,40 @@ class TestArmModeGating(unittest.TestCase):
             armed_mode=ArmedMode.away,
         )
         self.assertIsNotNone(event)
+
+    def test_interior_zone_excluded_from_night_mode_ignored(self) -> None:
+        """An interior zone configured to skip 'night' (e.g. bypassed while
+        occupants sleep) must not qualify when armed night."""
+        rule = _rule(
+            objects=frozenset({"person"}),
+            arm_modes=frozenset({ArmedMode.away, ArmedMode.home}),
+        )
+        adapter = DetectionAlarmAdapter({("front", "driveway"): rule})
+        event = adapter.evaluate(
+            camera="front",
+            zone="driveway",
+            object_id="1",
+            label="person",
+            score=0.9,
+            timestamp=100.0,
+            armed_mode=ArmedMode.night,
+        )
+        self.assertIsNone(event)
+
+    def test_zone_armed_by_default_in_all_three_modes(self) -> None:
+        rule = _rule(objects=frozenset({"person"}))
+        adapter = DetectionAlarmAdapter({("front", "driveway"): rule})
+        for mode in (ArmedMode.away, ArmedMode.home, ArmedMode.night):
+            event = adapter.evaluate(
+                camera="front",
+                zone="driveway",
+                object_id="1",
+                label="person",
+                score=0.9,
+                timestamp=100.0,
+                armed_mode=mode,
+            )
+            self.assertIsNotNone(event, f"expected zone armed in {mode}")
 
 
 class TestEventTypeOverrides(unittest.TestCase):

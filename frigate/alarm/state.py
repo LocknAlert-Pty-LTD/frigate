@@ -8,7 +8,8 @@ class AlarmState(str, Enum):
     arming = "arming"
     exit_delay = "exit_delay"
     armed_away = "armed_away"
-    armed_stay = "armed_stay"
+    armed_home = "armed_home"
+    armed_night = "armed_night"
     entry_delay = "entry_delay"
     alarm = "alarm"
     alarm_memory = "alarm_memory"
@@ -16,8 +17,14 @@ class AlarmState(str, Enum):
 
 
 class ArmedMode(str, Enum):
+    """Matches Home Assistant's alarm_control_panel arm modes (away/home/
+    night) so the MQTT bridge can map 1:1 with no translation table for
+    these three. "night" is what's surfaced to users as "Sleep" in the UI
+    -- same concept, HA's literal name for it."""
+
     away = "away"
-    stay = "stay"
+    home = "home"
+    night = "night"
 
 
 class InvalidAlarmTransition(Exception):
@@ -39,17 +46,26 @@ ALLOWED_TRANSITIONS: dict[AlarmState, frozenset[AlarmState]] = {
         {
             AlarmState.exit_delay,
             AlarmState.armed_away,
-            AlarmState.armed_stay,
+            AlarmState.armed_home,
+            AlarmState.armed_night,
             AlarmState.disarmed,
         }
     ),
     AlarmState.exit_delay: frozenset(
-        {AlarmState.armed_away, AlarmState.armed_stay, AlarmState.disarmed}
+        {
+            AlarmState.armed_away,
+            AlarmState.armed_home,
+            AlarmState.armed_night,
+            AlarmState.disarmed,
+        }
     ),
     AlarmState.armed_away: frozenset(
         {AlarmState.entry_delay, AlarmState.alarm, AlarmState.disarmed}
     ),
-    AlarmState.armed_stay: frozenset(
+    AlarmState.armed_home: frozenset(
+        {AlarmState.entry_delay, AlarmState.alarm, AlarmState.disarmed}
+    ),
+    AlarmState.armed_night: frozenset(
         {AlarmState.entry_delay, AlarmState.alarm, AlarmState.disarmed}
     ),
     AlarmState.entry_delay: frozenset({AlarmState.alarm, AlarmState.disarmed}),

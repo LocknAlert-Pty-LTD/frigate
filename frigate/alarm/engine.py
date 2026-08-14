@@ -55,11 +55,13 @@ class AlarmStateMachine:
         return self.state
 
     def _complete_arming(self) -> None:
-        target = (
-            AlarmState.armed_away
-            if self.armed_mode == ArmedMode.away
-            else AlarmState.armed_stay
-        )
+        # arm() always sets armed_mode immediately before calling this.
+        assert self.armed_mode is not None
+        target = {
+            ArmedMode.away: AlarmState.armed_away,
+            ArmedMode.home: AlarmState.armed_home,
+            ArmedMode.night: AlarmState.armed_night,
+        }[self.armed_mode]
         self._transition(target)
 
     def complete_exit_delay(self) -> AlarmState:

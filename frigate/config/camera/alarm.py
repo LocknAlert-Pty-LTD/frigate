@@ -52,9 +52,9 @@ class AlarmZoneConfig(FrigateBaseModel):
         description="Entry delay (seconds) applied when this zone triggers while the system is armed, giving time to disarm before an alarm is raised.",
     )
     arm_modes: list[ArmedMode] = Field(
-        default_factory=lambda: [ArmedMode.away, ArmedMode.stay],
+        default_factory=lambda: [ArmedMode.away, ArmedMode.home, ArmedMode.night],
         title="Active arm modes",
-        description="Which arm modes this zone is active in. Remove 'stay' for an interior zone that should only trigger when armed away.",
+        description="Which arm modes this zone is active in. Remove 'home'/'night' for an interior zone that should only trigger when armed away.",
     )
 
     def to_rule(self, camera: str, zone: str) -> ZoneAlarmRule:
