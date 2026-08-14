@@ -8,7 +8,8 @@
     "arming": "Arming",
     "exit_delay": "Exit Delay",
     "armed_away": "Armed Away",
-    "armed_stay": "Armed Stay",
+    "armed_home": "Armed Home",
+    "armed_night": "Armed Sleep",
     "entry_delay": "Entry Delay",
     "alarm": "Alarm",
     "alarm_memory": "Alarm Memory",
@@ -16,11 +17,13 @@
   },
   "armedMode": {
     "away": "Away",
-    "stay": "Stay"
+    "home": "Home",
+    "night": "Sleep"
   },
   "actions": {
     "armAway": "Arm Away",
-    "armStay": "Arm Stay",
+    "armHome": "Arm Home",
+    "armNight": "Arm Sleep",
     "disarm": "Disarm",
     "clear": "Clear Memory"
   },
@@ -57,6 +60,25 @@
       "zone": "Zone",
       "object": "Object",
       "confidence": "Confidence"
+    }
+  },
+  "zoneSetup": {
+    "title": "Set Up Alarm Zones",
+    "description": "Turn any camera zone into an alarm zone. Pick what it should watch for, when it's active, and how long to wait before it triggers.",
+    "noCameraZones": "This camera has no zones yet. Add one under Masks / Zones first.",
+    "noZonesAnywhere": "No cameras have zones yet. Add a zone under Masks / Zones first, then come back here to turn it into an alarm zone.",
+    "protectThisZone": "Protect this zone",
+    "objects": "Trigger on",
+    "activeWhen": "Active when armed",
+    "entryDelay": "Entry delay (seconds)",
+    "entryDelayHint": "Time to disarm after entering before this zone raises an alarm.",
+    "verification": "Confirm for (seconds)",
+    "verificationHint": "0 triggers instantly. A few seconds can avoid false alarms from something passing through quickly.",
+    "save": "Save Zone Settings",
+    "unsavedChanges": "You have unsaved zone changes",
+    "toast": {
+      "success": "Zone settings saved",
+      "error": "Failed to save zone settings: {{errorMessage}}"
     }
   }
 }

@@ -7,13 +7,16 @@ export type AlarmState =
   | "arming"
   | "exit_delay"
   | "armed_away"
-  | "armed_stay"
+  | "armed_home"
+  | "armed_night"
   | "entry_delay"
   | "alarm"
   | "alarm_memory"
   | "fault";
 
-export type ArmedMode = "away" | "stay";
+// "night" is surfaced to users as "Sleep" -- same concept, Home Assistant's
+// literal name for the mode.
+export type ArmedMode = "away" | "home" | "night";
 
 export interface AlarmZoneStatus {
   camera: string;
