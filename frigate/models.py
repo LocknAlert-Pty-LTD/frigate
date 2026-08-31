@@ -177,3 +177,66 @@ class Trigger(Model):
 
     class Meta:
         primary_key = CompositeKey("camera", "name")
+
+
+class AlarmAuditLog(Model):
+    timestamp = DateTimeField(index=True)
+    action = CharField(
+        index=True, max_length=20
+    )  # arm, disarm, clear, bypass, unbypass, false_alarm
+    source = CharField(max_length=10)  # api, mqtt
+    actor = CharField(max_length=30, null=True)  # remote-user header; null for mqtt
+    camera = CharField(max_length=20, null=True)  # bypass/unbypass only
+    zone = CharField(max_length=50, null=True)  # bypass/unbypass only
+    details = JSONField(null=True)  # e.g. {"mode": "away"} for arm
+
+
+class AlarmEventLog(Model):
+    """Persisted history of qualifying alarm-triggered detections (not
+    operator actions -- see AlarmAuditLog for that). AlarmSystem's own
+    in-memory recent_events()/GET /alarm/events stays as-is for live,
+    low-latency display; this is the historical, restart-surviving,
+    false-alarm-annotatable counterpart."""
+
+    timestamp = DateTimeField(index=True)
+    event_type = CharField(index=True, max_length=30)
+    camera = CharField(max_length=20)
+    zone = CharField(max_length=50, null=True)
+    object_type = CharField(max_length=50, null=True)
+    confidence = FloatField(null=True)
+    source = CharField(max_length=10)
+    message = TextField(null=True)
+    false_alarm = BooleanField(default=False)
+    # The Frigate tracked-object id (== Event.id once persisted), so the
+    # trail lookup (frigate/alarm/trail.py) can resolve this entry back to
+    # the real detection. Null for entries recorded before this field
+    # existed, and for non-detection alarm events (arm/disarm/fault/etc).
+    object_id = CharField(max_length=30, null=True, index=True)
+
+
+class EventZone(Model):
+    """One row per (event, zone) the event's tracked object entered.
+
+    Additive-only index alongside Event.zones (a JSONField, unchanged and
+    still authoritative for display) so zone filtering can use a real
+    index instead of a LIKE scan over JSON text. Kept in sync at every
+    Event upsert in frigate/events/maintainer.py.
+    """
+
+    event = ForeignKeyField(Event, backref="zone_rows", column_name="event_id")
+    zone = CharField(max_length=100, index=True)
+
+    class Meta:
+        indexes = ((("event", "zone"), True),)  # unique, upsert-safe
+
+
+class ReviewSegmentZone(Model):
+    """Same purpose as EventZone, for ReviewSegment.data["zones"]."""
+
+    review_segment = ForeignKeyField(
+        ReviewSegment, backref="zone_rows", column_name="review_segment_id"
+    )
+    zone = CharField(max_length=100, index=True)
+
+    class Meta:
+        indexes = ((("review_segment", "zone"), True),)

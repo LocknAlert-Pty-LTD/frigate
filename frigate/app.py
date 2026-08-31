@@ -15,6 +15,17 @@ import uvicorn
 from peewee_migrate import Router
 from playhouse.sqlite_ext import SqliteExtDatabase
 
+from frigate.alarm.ai_verification import AlarmAiVerifier
+from frigate.alarm.detection_thread import AlarmDetectionThread
+from frigate.alarm.event import AlarmEvent
+from frigate.alarm.event_log import record_alarm_event_log
+from frigate.alarm.factory import (
+    build_ai_verifier,
+    build_alarm_rules,
+    build_alarm_system,
+)
+from frigate.alarm.mqtt_bridge import AlarmMqttBridge
+from frigate.alarm.scheduler import AlarmScheduler
 from frigate.api.auth import hash_password
 from frigate.api.fastapi_app import create_fastapi_app
 from frigate.camera import CameraMetrics, PTZMetrics
@@ -57,13 +68,17 @@ from frigate.jobs.export import reap_stale_exports
 from frigate.jobs.motion_search import stop_all_motion_search_jobs
 from frigate.log import _stop_logging
 from frigate.models import (
+    AlarmAuditLog,
+    AlarmEventLog,
     Event,
+    EventZone,
     Export,
     Previews,
     Recordings,
     RecordingsToDelete,
     Regions,
     ReviewSegment,
+    ReviewSegmentZone,
     Timeline,
     Trigger,
     User,
@@ -272,13 +287,17 @@ class FrigateApp:
             load_vec_extension=True,
         )
         models = [
+            AlarmAuditLog,
+            AlarmEventLog,
             Event,
+            EventZone,
             Export,
             Previews,
             Recordings,
             RecordingsToDelete,
             Regions,
             ReviewSegment,
+            ReviewSegmentZone,
             Timeline,
             User,
             Trigger,
@@ -335,6 +354,88 @@ class FrigateApp:
             self.ptz_metrics,
             comms,
         )
+
+    def init_alarm_system(self) -> None:
+        # AlarmSystem itself has zero MQTT/Dispatcher dependency (see
+        # frigate/test/test_alarm_no_mqtt_dependency.py); the bridge below
+        # is the only piece that knows about publishing, and it only takes
+        # a plain callable, not the Dispatcher class. AlarmSystem calls
+        # on_change/on_event itself (see system.py) so every mutator --
+        # HTTP API, an inbound MQTT command, or a real detection -- publishes
+        # the same way without each caller having to remember to.
+        self.alarm_system = build_alarm_system(self.config)
+        self.alarm_detection_thread: AlarmDetectionThread | None = None
+        self.alarm_ai_verifier: AlarmAiVerifier | None = None
+
+        if self.alarm_system is None:
+            self.alarm_mqtt_bridge = None
+            return
+
+        # build_alarm_rules() is cheap and pure (just config -> dataclasses);
+        # build_alarm_system() already called it internally to build the
+        # AlarmSystem itself, so calling it again here to decide whether an
+        # AI verifier is needed isn't wasteful.
+        self.alarm_ai_verifier = build_ai_verifier(
+            self.config, build_alarm_rules(self.config)
+        )
+
+        mqtt_bridge = AlarmMqttBridge(self.alarm_system, self.dispatcher.publish)
+        self.alarm_mqtt_bridge = mqtt_bridge
+        self.alarm_system.on_change = mqtt_bridge.publish_status
+
+        # on_event is a single-slot callback; the MQTT bridge already occupies
+        # it (and, via the "alarm/event" dispatcher topic it publishes,
+        # WebPushClient's push notifications ride along automatically with no
+        # extra wiring here). WhatsApp enqueueing lives inside
+        # AlarmSystem.record_event() itself now (alongside reporting_queue,
+        # see system.py) rather than here, so this closure only needs to
+        # cover the two things record_event() doesn't already do: MQTT/WS
+        # publishing and persisting to the historical event log.
+        # Closes over the local mqtt_bridge (not self.alarm_mqtt_bridge) so
+        # mypy keeps it narrowed to AlarmMqttBridge, not AlarmMqttBridge | None.
+        def _on_alarm_event(event: AlarmEvent) -> None:
+            mqtt_bridge.publish_event(event)
+            record_alarm_event_log(event)
+
+        self.alarm_system.on_event = _on_alarm_event
+        # Lets the dispatcher route inbound alarm/set commands (from MQTT,
+        # e.g. a Home Assistant alarm_control_panel card) to alarm_system,
+        # the same post-construction-attribute pattern already used for
+        # dispatcher.profile_manager.
+        self.dispatcher.alarm_system = self.alarm_system
+        # HA discovery is published from MqttClient's on-connect callback
+        # instead (frigate/comms/mqtt.py), since calling it synchronously
+        # here races the async MQTT connect and silently drops the publish.
+        self.alarm_mqtt_bridge.publish_status()
+
+    def start_alarm_system(self) -> None:
+        self.alarm_scheduler: AlarmScheduler | None = None
+
+        if self.alarm_system is None:
+            return
+
+        if self.alarm_system.reporting_queue is not None:
+            self.alarm_system.reporting_queue.start()
+        if self.alarm_system.whatsapp_queue is not None:
+            self.alarm_system.whatsapp_queue.start()
+
+        self.alarm_detection_thread = AlarmDetectionThread(
+            self.alarm_system,
+            self.stop_event,
+            self.config,
+            ai_verifier=self.alarm_ai_verifier,
+        )
+        self.alarm_detection_thread.start()
+
+        # build_entries() is cheap and pure (just config -> dataclasses),
+        # same reasoning as build_alarm_rules() above -- only construct the
+        # scheduler thread if there's actually something for it to do.
+        schedule_entries = self.config.alarm.schedule.build_entries()
+        if schedule_entries:
+            self.alarm_scheduler = AlarmScheduler(
+                self.alarm_system, schedule_entries, self.stop_event
+            )
+            self.alarm_scheduler.start()
 
     def init_profile_manager(self) -> None:
         self.profile_manager = ProfileManager(
@@ -589,6 +690,7 @@ class FrigateApp:
         self.init_inter_process_communicator()
         self.start_detectors()
         self.init_dispatcher()
+        self.init_alarm_system()
         self.init_profile_manager()
 
         # workers get a copy of the config and can miss the broadcast below, so
@@ -609,6 +711,7 @@ class FrigateApp:
         self.start_event_processor()
         self.start_event_cleanup()
         self.start_record_cleanup()
+        self.start_alarm_system()
         self.start_watchdog()
 
         # publish for the recording/review/embeddings processes, which start
@@ -634,6 +737,7 @@ class FrigateApp:
                     self.dispatcher,
                     self.profile_manager,
                     config_holder=self.config_holder,
+                    alarm_system=self.alarm_system,
                 ),
                 host="127.0.0.1",
                 port=5001,
@@ -694,6 +798,17 @@ class FrigateApp:
 
         self.review_segment_process.terminate()
         self.review_segment_process.join()
+
+        if self.alarm_detection_thread is not None:
+            self.alarm_detection_thread.stop()
+        if self.alarm_scheduler is not None:
+            self.alarm_scheduler.stop()
+        if self.alarm_system is not None:
+            self.alarm_system.stop()
+            if self.alarm_system.reporting_queue is not None:
+                self.alarm_system.reporting_queue.stop()
+            if self.alarm_system.whatsapp_queue is not None:
+                self.alarm_system.whatsapp_queue.stop()
 
         self.dispatcher.stop()
         self.ptz_autotracker_thread.join()

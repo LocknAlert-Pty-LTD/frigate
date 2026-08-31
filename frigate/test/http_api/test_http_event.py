@@ -6,7 +6,7 @@ from playhouse.shortcuts import model_to_dict
 
 from frigate.api.auth import get_allowed_cameras_for_filter, get_current_user
 from frigate.comms.event_metadata_updater import EventMetadataPublisher
-from frigate.models import Event, Recordings, ReviewSegment, Timeline
+from frigate.models import Event, EventZone, Recordings, ReviewSegment, Timeline
 from frigate.stats.emitter import StatsEmitter
 from frigate.test.http_api.base_http_test import AuthTestClient, BaseTestHttp, Request
 from frigate.test.test_storage import _insert_mock_event
@@ -481,3 +481,83 @@ class TestHttpApp(BaseTestHttp):
             'frigate_camera_events_total{camera="porch",label="Mock"} 2.0' in event.text
         )
         assert 'frigate_camera_events_total{camera="porch",label="inside"} 2.0'
+
+
+class TestEventZoneFilter(BaseTestHttp):
+    """GET /events?zones=... now goes through the EventZone join table
+    instead of a LIKE scan over Event.zones JSON -- these confirm the
+    rewritten query still returns the same results a caller would expect,
+    not just that the SQL doesn't error."""
+
+    def setUp(self):
+        super().setUp([Event, EventZone])
+        self.app = super().create_app()
+
+        async def mock_get_current_user(request: Request):
+            return {"username": "admin", "role": "admin"}
+
+        self.app.dependency_overrides[get_current_user] = mock_get_current_user
+
+        async def mock_get_allowed_cameras_for_filter(request: Request):
+            return ["front_door"]
+
+        self.app.dependency_overrides[get_allowed_cameras_for_filter] = (
+            mock_get_allowed_cameras_for_filter
+        )
+
+    def tearDown(self):
+        self.app.dependency_overrides.clear()
+        super().tearDown()
+
+    def _insert_event_with_zones(self, id: str, zones: list[str]) -> None:
+        super().insert_mock_event(id)
+        Event.update(zones=zones).where(Event.id == id).execute()
+        if zones:
+            EventZone.insert_many(
+                [{"event": id, "zone": z} for z in zones]
+            ).on_conflict_ignore().execute()
+
+    def test_filters_to_events_in_the_requested_zone(self):
+        self._insert_event_with_zones("evt1", ["driveway"])
+        self._insert_event_with_zones("evt2", ["yard"])
+
+        with AuthTestClient(self.app) as client:
+            events = client.get("/events", params={"zones": "driveway"}).json()
+
+        self.assertEqual([e["id"] for e in events], ["evt1"])
+
+    def test_any_match_across_multiple_requested_zones(self):
+        self._insert_event_with_zones("evt1", ["driveway"])
+        self._insert_event_with_zones("evt2", ["yard"])
+        self._insert_event_with_zones("evt3", ["porch"])
+
+        with AuthTestClient(self.app) as client:
+            events = client.get("/events", params={"zones": "driveway,yard"}).json()
+
+        self.assertEqual({e["id"] for e in events}, {"evt1", "evt2"})
+
+    def test_event_in_multiple_zones_matches_either(self):
+        self._insert_event_with_zones("evt1", ["driveway", "yard"])
+
+        with AuthTestClient(self.app) as client:
+            events = client.get("/events", params={"zones": "yard"}).json()
+
+        self.assertEqual([e["id"] for e in events], ["evt1"])
+
+    def test_none_filter_matches_only_zoneless_events(self):
+        self._insert_event_with_zones("evt1", ["driveway"])
+        self._insert_event_with_zones("evt2", [])
+
+        with AuthTestClient(self.app) as client:
+            events = client.get("/events", params={"zones": "None"}).json()
+
+        self.assertEqual([e["id"] for e in events], ["evt2"])
+
+    def test_all_returns_every_event_regardless_of_zone(self):
+        self._insert_event_with_zones("evt1", ["driveway"])
+        self._insert_event_with_zones("evt2", [])
+
+        with AuthTestClient(self.app) as client:
+            events = client.get("/events", params={"zones": "all"}).json()
+
+        self.assertEqual({e["id"] for e in events}, {"evt1", "evt2"})

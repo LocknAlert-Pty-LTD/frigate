@@ -72,7 +72,7 @@ def generate_config():
                         "ffmpeg": {
                             "inputs": [
                                 {
-                                    "path": f"rtsp://10.0.0.{i+1}:554/video",
+                                    "path": f"rtsp://10.0.0.{i + 1}:554/video",
                                     "roles": ["detect"],
                                 }
                             ]
@@ -209,9 +209,7 @@ def generate_reviews():
     result = [r.model_dump(mode="json") for r in reviews]
 
     # Verify mock data covers all Pydantic response model fields
-    check_pydantic_fields(
-        ReviewSegmentResponse, set(result[0].keys()), "ReviewSegment"
-    )
+    check_pydantic_fields(ReviewSegmentResponse, set(result[0].keys()), "ReviewSegment")
 
     return result
 

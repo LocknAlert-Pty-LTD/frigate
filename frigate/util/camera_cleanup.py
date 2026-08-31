@@ -8,11 +8,13 @@ import shutil
 from frigate.const import CLIPS_DIR, RECORD_DIR, THUMB_DIR
 from frigate.models import (
     Event,
+    EventZone,
     Export,
     Previews,
     Recordings,
     Regions,
     ReviewSegment,
+    ReviewSegmentZone,
     Timeline,
     Trigger,
 )
@@ -36,6 +38,15 @@ def cleanup_camera_db(
     export_paths: list[str] = []
 
     try:
+        # No FK cascade in effect (sqlite foreign_keys pragma isn't
+        # enabled), so EventZone rows need an explicit delete based on a
+        # subquery -- run before Event itself is deleted, since the
+        # subquery needs the still-existing camera->event relationship.
+        EventZone.delete().where(
+            EventZone.event.in_(
+                Event.select(Event.id).where(Event.camera == camera_name)
+            )
+        ).execute()
         counts["events"] = Event.delete().where(Event.camera == camera_name).execute()
     except Exception as e:
         logger.error("Failed to delete events for camera %s: %s", camera_name, e)
@@ -55,6 +66,13 @@ def cleanup_camera_db(
         logger.error("Failed to delete recordings for camera %s: %s", camera_name, e)
 
     try:
+        ReviewSegmentZone.delete().where(
+            ReviewSegmentZone.review_segment.in_(
+                ReviewSegment.select(ReviewSegment.id).where(
+                    ReviewSegment.camera == camera_name
+                )
+            )
+        ).execute()
         counts["review_segments"] = (
             ReviewSegment.delete().where(ReviewSegment.camera == camera_name).execute()
         )

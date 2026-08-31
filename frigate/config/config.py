@@ -37,6 +37,7 @@ from frigate.util.config import (
 from frigate.util.image import create_mask
 from frigate.util.services import auto_detect_hwaccel
 
+from .alarm import AlarmConfig
 from .auth import AuthConfig
 from .base import FrigateBaseModel
 from .camera import CameraConfig, CameraLiveConfig
@@ -404,6 +405,34 @@ def verify_objects_track(
             camera_config.objects.filters.pop(label, None)
 
 
+def verify_alarm_zones_exist(camera_config: CameraConfig) -> None:
+    for zone_name in camera_config.alarm.zones:
+        if zone_name not in camera_config.zones:
+            raise ValueError(
+                f"Camera {camera_config.name} has an alarm zone {zone_name} that is not defined in zones."
+            )
+
+
+def verify_alarm_zone_objects_are_tracked(camera_config: CameraConfig) -> None:
+    """Verify that alarm zone objects are not entered that are not in the tracking config."""
+    for zone_name, zone in camera_config.alarm.zones.items():
+        for obj in zone.objects:
+            if obj not in camera_config.objects.track:
+                raise ValueError(
+                    f"Alarm zone {zone_name} on camera {camera_config.name} is configured to track {obj} but that object type is not added to objects -> track."
+                )
+
+
+def verify_alarm_requires_global_enabled(
+    frigate_config: FrigateConfig, camera_config: CameraConfig
+) -> None:
+    """Verify that alarm is enabled at the global level if enabled at the camera level."""
+    if camera_config.alarm.enabled and not frigate_config.alarm.enabled:
+        raise ValueError(
+            f"Camera {camera_config.name} has alarm enabled but alarm is disabled at the global level of the config. You must enable alarm at the global level."
+        )
+
+
 def verify_lpr_and_face(
     frigate_config: FrigateConfig, camera_config: CameraConfig
 ) -> ValueError | None:
@@ -447,6 +476,11 @@ class FrigateConfig(FrigateBaseModel):
     )
 
     # Global config
+    alarm: AlarmConfig = Field(
+        default_factory=AlarmConfig,
+        title="Alarm",
+        description="Settings for the alarm engine; can be overridden per-camera.",
+    )
     auth: AuthConfig = Field(
         default_factory=AuthConfig,
         title="Authentication",
@@ -639,6 +673,9 @@ class FrigateConfig(FrigateBaseModel):
 
         # set notifications state
         self.notifications.enabled_in_config = self.notifications.enabled
+
+        # set alarm state
+        self.alarm.enabled_in_config = self.alarm.enabled
 
         # validate genai: each role (chat, descriptions, embeddings) at most once
         role_to_name: dict[GenAIRoleEnum, str] = {}
@@ -1007,6 +1044,9 @@ class FrigateConfig(FrigateBaseModel):
             verify_motion_and_detect(camera_config)
             verify_objects_track(camera_config, labelmap_objects)
             verify_lpr_and_face(self, camera_config)
+            verify_alarm_zones_exist(camera_config)
+            verify_alarm_zone_objects_are_tracked(camera_config)
+            verify_alarm_requires_global_enabled(self, camera_config)
 
         # Validate camera profiles reference top-level profile definitions
         for cam_name, cam_config in self.cameras.items():

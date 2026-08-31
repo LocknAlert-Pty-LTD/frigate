@@ -23,6 +23,7 @@
     "i18n:status": "i18next-cli status"
   },
   "dependencies": {
+    "2": "^3.0.0",
     "@cycjimmy/jsmpeg-player": "^6.1.2",
     "@hookform/resolvers": "^3.10.0",
     "@melloware/react-logviewer": "^6.1.2",

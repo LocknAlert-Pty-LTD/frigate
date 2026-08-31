@@ -19,6 +19,7 @@ import {
   Job,
 } from "@/types/ws";
 import { FrigateStats } from "@/types/stats";
+import { AlarmEvent, AlarmStatus } from "@/types/alarm";
 import { isEqual } from "lodash";
 import { WsSendContext } from "./wsContext";
 import type { Update, WsSend } from "./wsContext";
@@ -479,6 +480,28 @@ export function useFrigateEvents(): { payload: FrigateEvent } {
   const {
     value: { payload },
   } = useWs("events", "");
+  const parsed = useMemo(
+    () => (payload ? JSON.parse(payload as string) : undefined),
+    [payload],
+  );
+  return { payload: parsed };
+}
+
+export function useAlarmEvents(): { payload: AlarmEvent } {
+  const {
+    value: { payload },
+  } = useWs("alarm/event", "");
+  const parsed = useMemo(
+    () => (payload ? JSON.parse(payload as string) : undefined),
+    [payload],
+  );
+  return { payload: parsed };
+}
+
+export function useAlarmState(): { payload: AlarmStatus } {
+  const {
+    value: { payload },
+  } = useWs("alarm/state", "");
   const parsed = useMemo(
     () => (payload ? JSON.parse(payload as string) : undefined),
     [payload],

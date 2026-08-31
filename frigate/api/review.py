@@ -34,7 +34,12 @@ from frigate.api.defs.response.review_response import (
 )
 from frigate.api.defs.tags import Tags
 from frigate.embeddings import EmbeddingsContext
-from frigate.models import Recordings, ReviewSegment, UserReviewStatus
+from frigate.models import (
+    Recordings,
+    ReviewSegment,
+    ReviewSegmentZone,
+    UserReviewStatus,
+)
 from frigate.review.types import SeverityEnum
 from frigate.util.time import get_dst_transitions
 
@@ -99,16 +104,19 @@ async def review(
         clauses.append(reduce(operator.or_, label_clauses))
 
     if zones != "all":
-        # use matching so segments with multiple zones
-        # still match on a search where any zone matches
-        zone_clauses = []
+        # use matching so segments with multiple zones still match on a
+        # search where any zone matches. Goes through the
+        # ReviewSegmentZone join table (indexed on zone) instead of a
+        # LIKE scan over the data["zones"] JSON blob -- see
+        # ReviewSegmentZone in frigate/models.py for why.
         filtered_zones = zones.split(",")
-
-        for zone in filtered_zones:
-            zone_clauses.append(
-                ReviewSegment.data["zones"].cast("text") % f'*"{zone}"*'
+        clauses.append(
+            ReviewSegment.id.in_(
+                ReviewSegmentZone.select(ReviewSegmentZone.review_segment).where(
+                    ReviewSegmentZone.zone << filtered_zones
+                )
             )
-        clauses.append(reduce(operator.or_, zone_clauses))
+        )
 
     if severity:
         clauses.append(ReviewSegment.severity == severity)
@@ -242,16 +250,19 @@ async def review_summary(
             )
         clauses.append(reduce(operator.or_, label_clauses))
     if zones != "all":
-        # use matching so segments with multiple zones
-        # still match on a search where any zone matches
-        zone_clauses = []
+        # use matching so segments with multiple zones still match on a
+        # search where any zone matches. Goes through the
+        # ReviewSegmentZone join table (indexed on zone) instead of a
+        # LIKE scan over the data["zones"] JSON blob -- see
+        # ReviewSegmentZone in frigate/models.py for why.
         filtered_zones = zones.split(",")
-
-        for zone in filtered_zones:
-            zone_clauses.append(
-                ReviewSegment.data["zones"].cast("text") % f'*"{zone}"*'
+        clauses.append(
+            ReviewSegment.id.in_(
+                ReviewSegmentZone.select(ReviewSegmentZone.review_segment).where(
+                    ReviewSegmentZone.zone << filtered_zones
+                )
             )
-        clauses.append(reduce(operator.or_, zone_clauses))
+        )
 
     last_24_query = (
         ReviewSegment.select(
@@ -568,6 +579,11 @@ def delete_reviews(body: ReviewModifyMultipleBody):
     # delete recordings and review segments
     Recordings.delete().where(Recordings.id << recording_ids).execute()
     ReviewSegment.delete().where(ReviewSegment.id << list_of_ids).execute()
+    # No FK cascade in effect (sqlite foreign_keys pragma isn't enabled),
+    # so ReviewSegmentZone rows need an explicit delete alongside.
+    ReviewSegmentZone.delete().where(
+        ReviewSegmentZone.review_segment << list_of_ids
+    ).execute()
     UserReviewStatus.delete().where(
         UserReviewStatus.review_segment << list_of_ids
     ).execute()

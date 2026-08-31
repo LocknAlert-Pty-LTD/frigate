@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class Tags(Enum):
+    alarm = "Alarm"
     app = "App"
     auth = "Auth"
     camera = "Camera"

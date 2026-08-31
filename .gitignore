@@ -23,6 +23,8 @@ core
 !/web/**/*.ts
 .idea/*
 .ipynb_checkpoints
+*graphify*
+/graphify/
 
 # Auto-generated Docker Compose Generator config files
 docs/src/components/DockerComposeGenerator/config/devices.ts

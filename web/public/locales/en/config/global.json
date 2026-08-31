@@ -23,6 +23,110 @@
       "description": "Per-component log level overrides to increase or decrease verbosity for specific modules."
     }
   },
+  "alarm": {
+    "label": "Alarm",
+    "description": "Settings for the alarm engine; can be overridden per-camera.",
+    "enabled": {
+      "label": "Enable alarm engine",
+      "description": "Enable or disable the alarm engine; can be overridden per-camera."
+    },
+    "exit_delay_seconds": {
+      "label": "Exit delay",
+      "description": "Default seconds to wait after arming before the system is fully armed, giving time to leave."
+    },
+    "reporting": {
+      "label": "Reporting",
+      "description": "Central station reporting settings (SIA DC-09 or Contact ID over IP).",
+      "protocol": {
+        "label": "Reporting protocol",
+        "description": "Central station reporting protocol. sia_dc09 is an unverified best-effort implementation (no spec was available); contact_id's event codes are verified against a real reference. none disables reporting."
+      },
+      "host": {
+        "label": "Receiver host",
+        "description": "Central monitoring station receiver hostname or IP."
+      },
+      "port": {
+        "label": "Receiver port",
+        "description": "Central monitoring station receiver port."
+      },
+      "account": {
+        "label": "Account number",
+        "description": "Account number registered with the central monitoring station."
+      },
+      "timeout_seconds": {
+        "label": "Connection timeout",
+        "description": "Timeout (seconds) for connecting to and sending to the receiver."
+      },
+      "max_attempts": {
+        "label": "Max delivery attempts",
+        "description": "Number of attempts before an alarm report is marked failed."
+      },
+      "retry_delay_seconds": {
+        "label": "Retry delay",
+        "description": "Base delay (seconds) between delivery attempts; multiplied by the attempt number."
+      }
+    },
+    "schedule": {
+      "label": "Schedule",
+      "description": "Automatic arm/disarm schedule.",
+      "enabled": {
+        "label": "Enable schedule",
+        "description": "Automatically arm/disarm the alarm system on a schedule."
+      },
+      "entries": {
+        "label": "Schedule entries",
+        "description": "Time-based arm/disarm actions.",
+        "time": {
+          "label": "Time",
+          "description": "24-hour time (HH:MM) this entry fires at."
+        },
+        "mode": {
+          "label": "Arm mode",
+          "description": "Arm mode to switch to at this time. Leave unset to disarm instead."
+        },
+        "days": {
+          "label": "Days",
+          "description": "Days this entry applies on (0=Monday..6=Sunday). Empty applies every day."
+        }
+      }
+    },
+    "whatsapp": {
+      "label": "WhatsApp notifications",
+      "description": "Send a WhatsApp message on qualifying alarm events via a self-hosted OpenWA instance.",
+      "enabled": {
+        "label": "Enable WhatsApp notifications",
+        "description": "Send a WhatsApp message on qualifying alarm events via a self-hosted OpenWA instance."
+      },
+      "api_base_url": {
+        "label": "OpenWA API base URL",
+        "description": "Base URL of your self-hosted OpenWA instance, e.g. https://your-openwa-host/api. No default; must point at your own instance."
+      },
+      "session_id": {
+        "label": "OpenWA session ID",
+        "description": "The OpenWA session ID to send messages from."
+      },
+      "api_key": {
+        "label": "OpenWA API key",
+        "description": "API key for your OpenWA instance."
+      },
+      "to_numbers": {
+        "label": "Destination numbers",
+        "description": "WhatsApp numbers to notify, e.g. +15551234567."
+      },
+      "cooldown_seconds": {
+        "label": "Cooldown",
+        "description": "Minimum seconds between WhatsApp notifications for the same camera/zone, to avoid spamming a phone during a burst of qualifying detections."
+      },
+      "timeout_seconds": {
+        "label": "Request timeout",
+        "description": "Timeout (seconds) for the OpenWA API request."
+      }
+    },
+    "enabled_in_config": {
+      "label": "Original alarm state",
+      "description": "Indicates whether the alarm engine was enabled in the original static configuration."
+    }
+  },
   "auth": {
     "label": "Authentication",
     "description": "Authentication and session-related settings including cookie and rate limit options.",

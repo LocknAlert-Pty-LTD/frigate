@@ -43,6 +43,7 @@ import { PolygonType } from "@/types/canvas";
 import CameraManagementView from "@/views/settings/CameraManagementView";
 import MotionTunerView from "@/views/settings/MotionTunerView";
 import MasksAndZonesView from "@/views/settings/MasksAndZonesView";
+import AlarmView from "@/views/settings/AlarmView";
 import UsersView from "@/views/settings/UsersView";
 import RolesView from "@/views/settings/RolesView";
 import UiSettingsView from "@/views/settings/UiSettingsView";
@@ -174,6 +175,9 @@ const allSettingsViews = [
   "cameraManagement",
   "masksAndZones",
   "motionTuner",
+  "alarmStatus",
+  "globalAlarm",
+  "cameraAlarm",
   "enrichments",
   "triggers",
   "debug",
@@ -293,6 +297,8 @@ const CameraFaceRecognitionSettingsPage = createSectionPage(
   "camera",
 );
 const CameraLprSettingsPage = createSectionPage("lpr", "camera");
+const GlobalAlarmSettingsPage = createSectionPage("alarm", "global");
+const CameraAlarmSettingsPage = createSectionPage("alarm", "camera");
 const CameraMqttConfigSettingsPage = createSectionPage("mqtt", "camera", {
   showOverrideIndicator: false,
 });
@@ -369,6 +375,14 @@ const settingsGroups = [
         key: "cameraTimestampStyle",
         component: CameraTimestampStyleSettingsPage,
       },
+    ],
+  },
+  {
+    label: "alarm",
+    items: [
+      { key: "alarmStatus", component: AlarmView },
+      { key: "globalAlarm", component: GlobalAlarmSettingsPage },
+      { key: "cameraAlarm", component: CameraAlarmSettingsPage },
     ],
   },
   {

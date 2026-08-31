@@ -4,7 +4,13 @@ from fastapi import Request
 from peewee import DoesNotExist
 
 from frigate.api.auth import get_allowed_cameras_for_filter, get_current_user
-from frigate.models import Event, Recordings, ReviewSegment, UserReviewStatus
+from frigate.models import (
+    Event,
+    Recordings,
+    ReviewSegment,
+    ReviewSegmentZone,
+    UserReviewStatus,
+)
 from frigate.review.types import SeverityEnum
 from frigate.test.http_api.base_http_test import AuthTestClient, BaseTestHttp
 
@@ -749,3 +755,72 @@ class TestHttpReview(BaseTestHttp):
                     UserReviewStatus.user_id == self.user_id,
                     UserReviewStatus.review_segment == review_id,
                 )
+
+
+class TestReviewZoneFilter(BaseTestHttp):
+    """GET /review?zones=... now goes through the ReviewSegmentZone join
+    table instead of a LIKE scan over data["zones"] JSON -- these confirm
+    the rewritten query still returns the expected results."""
+
+    def setUp(self):
+        super().setUp([ReviewSegment, ReviewSegmentZone])
+        self.app = super().create_app()
+
+        async def mock_get_current_user(request: Request):
+            return {"username": "admin", "role": "admin"}
+
+        self.app.dependency_overrides[get_current_user] = mock_get_current_user
+
+        async def mock_get_allowed_cameras_for_filter(request: Request):
+            return ["front_door"]
+
+        self.app.dependency_overrides[get_allowed_cameras_for_filter] = (
+            mock_get_allowed_cameras_for_filter
+        )
+
+    def tearDown(self):
+        self.app.dependency_overrides.clear()
+        super().tearDown()
+
+    def _insert_review_with_zones(self, id: str, zones: list[str]) -> None:
+        ReviewSegment.insert(
+            id=id,
+            camera="front_door",
+            start_time=datetime.now().timestamp(),
+            end_time=datetime.now().timestamp() + 20,
+            severity=SeverityEnum.alert,
+            thumb_path="",
+            data={"zones": zones, "objects": [], "audio": []},
+        ).execute()
+        if zones:
+            ReviewSegmentZone.insert_many(
+                [{"review_segment": id, "zone": z} for z in zones]
+            ).on_conflict_ignore().execute()
+
+    def test_filters_to_reviews_in_the_requested_zone(self):
+        self._insert_review_with_zones("rev1", ["driveway"])
+        self._insert_review_with_zones("rev2", ["yard"])
+
+        with AuthTestClient(self.app) as client:
+            reviews = client.get("/review", params={"zones": "driveway"}).json()
+
+        self.assertEqual([r["id"] for r in reviews], ["rev1"])
+
+    def test_any_match_across_multiple_requested_zones(self):
+        self._insert_review_with_zones("rev1", ["driveway"])
+        self._insert_review_with_zones("rev2", ["yard"])
+        self._insert_review_with_zones("rev3", ["porch"])
+
+        with AuthTestClient(self.app) as client:
+            reviews = client.get("/review", params={"zones": "driveway,yard"}).json()
+
+        self.assertEqual({r["id"] for r in reviews}, {"rev1", "rev2"})
+
+    def test_all_returns_every_review_regardless_of_zone(self):
+        self._insert_review_with_zones("rev1", ["driveway"])
+        self._insert_review_with_zones("rev2", [])
+
+        with AuthTestClient(self.app) as client:
+            reviews = client.get("/review", params={"zones": "all"}).json()
+
+        self.assertEqual({r["id"] for r in reviews}, {"rev1", "rev2"})
