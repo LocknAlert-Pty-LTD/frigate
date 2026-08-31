@@ -1,0 +1,1 @@
+{"nodes": [{"id": "comms_webpush_webpushclient", "label": "WebPushClient", "file_type": "code", "source_file": "frigate/comms/webpush.py", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}], "edges": [], "hyperedges": []}

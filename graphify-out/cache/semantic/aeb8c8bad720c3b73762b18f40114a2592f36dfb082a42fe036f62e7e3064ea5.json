@@ -1,0 +1,1 @@
+{"nodes": [{"id": "indicators_restartrequiredindicator_restartrequiredindicator", "label": "RestartRequiredIndicator", "file_type": "code", "source_file": "web/src/components/indicators/RestartRequiredIndicator.tsx", "source_location": "L12-38", "source_url": null, "captured_at": null, "author": null, "contributor": null}], "edges": [], "hyperedges": []}

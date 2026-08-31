@@ -1,0 +1,1 @@
+{"nodes": [{"id": "labelmap_coco", "label": "COCO 90-index labelmap", "file_type": "document", "source_file": "docker/main/rootfs/labelmap/coco.txt", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}], "edges": [], "hyperedges": []}

@@ -1,0 +1,1 @@
+{"nodes": [{"id": "api_fastapi_app_create_fastapi_app", "label": "create_fastapi_app", "file_type": "code", "source_file": "frigate/api/fastapi_app.py", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}], "edges": [], "hyperedges": []}

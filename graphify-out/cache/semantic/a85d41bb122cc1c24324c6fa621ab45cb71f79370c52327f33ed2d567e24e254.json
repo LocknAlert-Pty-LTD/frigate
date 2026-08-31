@@ -1,0 +1,1 @@
+{"nodes": [{"id": "mock_data_reviews", "label": "reviews.json fixture", "file_type": "document", "source_file": "web/e2e/fixtures/mock-data/reviews.json", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}], "edges": [], "hyperedges": []}

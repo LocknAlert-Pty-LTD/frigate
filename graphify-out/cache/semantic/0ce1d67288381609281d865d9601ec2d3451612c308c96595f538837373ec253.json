@@ -1,0 +1,1 @@
+{"nodes": [{"id": "jobs_job_job", "label": "Job (background job base dataclass)", "file_type": "code", "source_file": "frigate/jobs/job.py", "source_location": "L7-L21", "source_url": null, "captured_at": null, "author": null, "contributor": null}], "edges": [], "hyperedges": []}

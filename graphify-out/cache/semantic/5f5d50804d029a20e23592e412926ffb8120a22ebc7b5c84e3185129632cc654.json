@@ -1,0 +1,1 @@
+{"nodes": [{"id": "types_graph_graphdata", "label": "GraphData Type", "file_type": "code", "source_file": "web/src/types/graph.ts", "source_location": "6-9"}, {"id": "types_graph_threshold", "label": "Threshold Type", "file_type": "code", "source_file": "web/src/types/graph.ts", "source_location": "11-14"}], "edges": [], "hyperedges": []}

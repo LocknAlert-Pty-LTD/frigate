@@ -1,0 +1,1 @@
+{"nodes": [{"id": "comms_base_communicator_communicator", "label": "Communicator (pub/sub ABC)", "file_type": "code", "source_file": "frigate/comms/base_communicator.py", "source_location": "L6-22", "source_url": null, "captured_at": null, "author": null, "contributor": null}], "edges": [], "hyperedges": []}

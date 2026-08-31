@@ -1,0 +1,1 @@
+{"nodes": [{"id": "response_export_case_response_exportcasemodel", "label": "ExportCaseModel", "file_type": "code", "source_file": "frigate/api/defs/response/export_case_response.py", "source_location": "L4-17", "source_url": null, "captured_at": null, "author": null, "contributor": null}], "edges": [], "hyperedges": []}

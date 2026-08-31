@@ -1,0 +1,1 @@
+{"nodes": [{"id": "config_telemetry_telemetryconfig", "label": "TelemetryConfig", "file_type": "code", "source_file": "frigate/config/telemetry.py", "source_location": "31", "source_url": null, "captured_at": null, "author": null, "contributor": null}], "edges": [], "hyperedges": []}
