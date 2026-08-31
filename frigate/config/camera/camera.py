@@ -23,6 +23,7 @@ from ..classification import (
     CameraLicensePlateRecognitionConfig,
     CameraSemanticSearchConfig,
 )
+from .alarm import CameraAlarmConfig
 from .audio import AudioConfig
 from .birdseye import BirdseyeCameraConfig
 from .detect import DetectConfig
@@ -73,6 +74,11 @@ class CameraConfig(FrigateBaseModel):
     enabled: bool = Field(default=True, title="Enabled", description="Enabled")
 
     # Options with global fallback
+    alarm: CameraAlarmConfig = Field(
+        default_factory=CameraAlarmConfig,
+        title="Alarm",
+        description="Alarm zone settings for this camera; requires alarm to also be enabled at the global level.",
+    )
     audio: AudioConfig = Field(
         default_factory=AudioConfig,
         title="Audio detection",

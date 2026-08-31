@@ -11,6 +11,7 @@ import { Redirect } from "./components/navigation/Redirect";
 import { cn } from "./lib/utils";
 import { isPWA } from "./utils/isPWA";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import AlarmAlertOverlay from "@/components/alarm/AlarmAlertOverlay";
 import useSWR from "swr";
 import { FrigateConfig } from "./types/frigateConfig";
 import ActivityIndicator from "@/components/indicators/activity-indicator";
@@ -73,6 +74,7 @@ function DefaultAppView() {
       {isDesktop && <Sidebar />}
       {isDesktop && <Statusbar />}
       {isMobile && <Bottombar />}
+      {config?.alarm?.enabled && <AlarmAlertOverlay />}
       <div
         id="pageRoot"
         className={cn(

@@ -47,8 +47,8 @@ from fastapi.routing import APIRoute
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import LiteralScalarString
 
-from frigate.api import app as main_app
 from frigate.api import (
+    alarm,
     auth,
     camera,
     chat,
@@ -63,6 +63,7 @@ from frigate.api import (
     record,
     review,
 )
+from frigate.api import app as main_app
 from frigate.api.auth import require_admin_by_default
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -94,6 +95,7 @@ SPEC_SERVERS = [
 PUBLIC = "public"
 AUTHENTICATED = "any"
 CAMERA = "camera"
+ALL_CAMERAS = "all_cameras"
 ADMIN = "admin"
 
 ADMIN_SCHEME = "frigateAdminAuth"
@@ -128,6 +130,7 @@ ACCESS_NOTES = {
     PUBLIC: "**Access:** Public — no authentication required.",
     AUTHENTICATED: "**Access:** Any authenticated user.",
     CAMERA: "**Access:** Authenticated user with access to the referenced camera.",
+    ALL_CAMERAS: "**Access:** Authenticated user with access to all cameras.",
     ADMIN: "**Access:** Admin role required.",
 }
 
@@ -141,6 +144,7 @@ def build_app() -> FastAPI:
     """
     app = FastAPI()
     routers = [
+        alarm.router,
         auth.router,
         camera.router,
         chat.router,
@@ -197,6 +201,8 @@ def _route_markers(route: APIRoute) -> tuple[set[str], list[str] | None]:
                 pass
         elif name in ("require_camera_access", "require_go2rtc_stream_access"):
             markers.add(CAMERA)
+        elif name == "require_full_camera_access":
+            markers.add(ALL_CAMERAS)
         elif "auth_checker" in qualname:
             markers.add(AUTHENTICATED)
         elif "public_checker" in qualname:
@@ -254,6 +260,8 @@ def _classify_base(
     # Explicit route-level markers win, in order of specificity.
     if ADMIN in markers:
         return ADMIN, admin_roles or ["admin"], None
+    if ALL_CAMERAS in markers:
+        return ALL_CAMERAS, None, None
     if CAMERA in markers:
         return CAMERA, None, None
     if AUTHENTICATED in markers:
@@ -337,8 +345,8 @@ def security_for(level: str) -> list:
         return []
     if level == ADMIN:
         return [{ADMIN_SCHEME: []}]
-    # AUTHENTICATED and CAMERA both require any authenticated session; the
-    # camera-specific scoping is conveyed in the note and x-required-role.
+    # AUTHENTICATED, CAMERA and ALL_CAMERAS all require any authenticated
+    # session; the camera scoping is conveyed in the note and x-required-role.
     return [{USER_SCHEME: []}]
 
 

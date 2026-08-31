@@ -1,0 +1,178 @@
+{
+  "documentTitle": "Alarm - Frigate",
+  "title": "Alarm",
+  "description": "Arm, disarm, and monitor the alarm engine.",
+  "notEnabled": "Alarm is not enabled. Enable it in Global Alarm settings.",
+  "state": {
+    "disarmed": "Disarmed",
+    "arming": "Arming",
+    "exit_delay": "Exit Delay",
+    "armed_away": "Armed Away",
+    "armed_home": "Armed Home",
+    "armed_night": "Armed Sleep",
+    "entry_delay": "Entry Delay",
+    "alarm": "Alarm",
+    "alarm_memory": "Alarm Memory",
+    "fault": "Fault"
+  },
+  "armedMode": {
+    "away": "Away",
+    "home": "Home",
+    "night": "Sleep"
+  },
+  "actions": {
+    "armAway": "Arm Away",
+    "armHome": "Arm Home",
+    "armNight": "Arm Sleep",
+    "disarm": "Disarm",
+    "clear": "Clear Memory"
+  },
+  "toast": {
+    "armSuccess": "Alarm armed",
+    "disarmSuccess": "Alarm disarmed",
+    "clearSuccess": "Alarm memory cleared",
+    "bypassSuccess": "Zone bypassed",
+    "unbypassSuccess": "Zone bypass removed",
+    "error": "Failed to update alarm: {{errorMessage}}"
+  },
+  "fault": {
+    "title": "Fault",
+    "reason": "Reason: {{reason}}"
+  },
+  "reporting": {
+    "title": "Reporting",
+    "healthy": "Healthy",
+    "unhealthy": "Delivery failing",
+    "notConfigured": "Not configured"
+  },
+  "whatsapp": {
+    "title": "WhatsApp"
+  },
+  "zones": {
+    "title": "Zones",
+    "empty": "No alarm zones configured.",
+    "armed": "Armed",
+    "disarmed": "Disarmed",
+    "disabled": "Disabled",
+    "bypassed": "Bypassed",
+    "bypass": "Bypass"
+  },
+  "events": {
+    "title": "Recent Events",
+    "empty": "No alarm events yet.",
+    "columns": {
+      "time": "Time",
+      "type": "Type",
+      "camera": "Camera",
+      "zone": "Zone",
+      "object": "Object",
+      "confidence": "Confidence"
+    }
+  },
+  "audit": {
+    "title": "Audit Log",
+    "empty": "No operator actions yet.",
+    "columns": {
+      "time": "Time",
+      "action": "Action",
+      "source": "Source",
+      "actor": "User",
+      "zone": "Zone"
+    },
+    "actions": {
+      "arm": "Armed",
+      "disarm": "Disarmed",
+      "clear": "Cleared Memory",
+      "bypass": "Bypassed Zone",
+      "unbypass": "Removed Bypass",
+      "false_alarm": "Marked False Alarm"
+    },
+    "sources": {
+      "api": "UI/API",
+      "mqtt": "MQTT",
+      "schedule": "Schedule"
+    }
+  },
+  "cameraUptime": {
+    "title": "Camera Uptime",
+    "empty": "No cameras have alarm zones configured yet.",
+    "noData": "No data yet"
+  },
+  "eventLog": {
+    "title": "Event History & False-Alarm Rate",
+    "description": "Historical alarm events, persisted across restarts. Mark an event as a false alarm to keep the rate below accurate.",
+    "empty": "No alarm events recorded yet.",
+    "markFalseAlarm": "False alarm",
+    "summary": {
+      "total": "Total Events",
+      "falseAlarms": "False Alarms",
+      "rate": "False-Alarm Rate"
+    },
+    "columns": {
+      "realAlarm": "Real",
+      "falseAlarm": "False alarm"
+    },
+    "toast": {
+      "markedSuccess": "Marked as false alarm",
+      "unmarkedSuccess": "Unmarked as false alarm"
+    }
+  },
+  "scheduleSetup": {
+    "title": "Schedule",
+    "description": "Automatically arm or disarm on a schedule, e.g. armed away every night at 23:00.",
+    "enable": "Enable schedule",
+    "days": {
+      "0": "Mon",
+      "1": "Tue",
+      "2": "Wed",
+      "3": "Thu",
+      "4": "Fri",
+      "5": "Sat",
+      "6": "Sun"
+    },
+    "everyDay": "Every day",
+    "time": "Time",
+    "action": "Action",
+    "disarmOption": "Disarm",
+    "addEntry": "Add entry",
+    "removeEntry": "Remove entry",
+    "noEntries": "No schedule entries yet.",
+    "nextAction": "Next: {{action}} at {{time}}",
+    "save": "Save Schedule",
+    "unsavedChanges": "You have unsaved schedule changes",
+    "toast": {
+      "success": "Schedule saved",
+      "error": "Failed to save schedule: {{errorMessage}}"
+    }
+  },
+  "zoneSetup": {
+    "title": "Set Up Alarm Zones",
+    "description": "Turn any camera zone into an alarm zone. Pick what it should watch for, when it's active, and how long to wait before it triggers.",
+    "noCameraZones": "This camera has no zones yet. Add one under Masks / Zones first.",
+    "noZonesAnywhere": "No cameras have zones yet. Add a zone under Masks / Zones first, then come back here to turn it into an alarm zone.",
+    "protectThisZone": "Protect this zone",
+    "objects": "Trigger on",
+    "activeWhen": "Active when armed",
+    "entryDelay": "Entry delay (seconds)",
+    "entryDelayHint": "Time to disarm after entering before this zone raises an alarm.",
+    "verification": "Confirm for (seconds)",
+    "verificationHint": "0 triggers instantly. A few seconds can avoid false alarms from something passing through quickly.",
+    "save": "Save Zone Settings",
+    "unsavedChanges": "You have unsaved zone changes",
+    "toast": {
+      "success": "Zone settings saved",
+      "error": "Failed to save zone settings: {{errorMessage}}"
+    }
+  },
+  "alert": {
+    "view": "View Camera",
+    "incidentTitle": "Active Alert",
+    "more_one": "+{{count}} more",
+    "more_other": "+{{count}} more",
+    "trail": {
+      "title": "Also seen on",
+      "namedMatch": "{{camera}} · {{label}}",
+      "visualMatch": "{{camera}} · possible match"
+    }
+  }
+}

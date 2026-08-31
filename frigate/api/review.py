@@ -17,6 +17,7 @@ from frigate.api.auth import (
     get_allowed_cameras_for_filter,
     get_current_user,
     require_camera_access,
+    require_full_camera_access,
     require_role,
 )
 from frigate.api.defs.query.review_query_parameters import (
@@ -33,7 +34,12 @@ from frigate.api.defs.response.review_response import (
 )
 from frigate.api.defs.tags import Tags
 from frigate.embeddings import EmbeddingsContext
-from frigate.models import Recordings, ReviewSegment, UserReviewStatus
+from frigate.models import (
+    Recordings,
+    ReviewSegment,
+    ReviewSegmentZone,
+    UserReviewStatus,
+)
 from frigate.review.types import SeverityEnum
 from frigate.util.time import get_dst_transitions
 
@@ -98,16 +104,19 @@ async def review(
         clauses.append(reduce(operator.or_, label_clauses))
 
     if zones != "all":
-        # use matching so segments with multiple zones
-        # still match on a search where any zone matches
-        zone_clauses = []
+        # use matching so segments with multiple zones still match on a
+        # search where any zone matches. Goes through the
+        # ReviewSegmentZone join table (indexed on zone) instead of a
+        # LIKE scan over the data["zones"] JSON blob -- see
+        # ReviewSegmentZone in frigate/models.py for why.
         filtered_zones = zones.split(",")
-
-        for zone in filtered_zones:
-            zone_clauses.append(
-                ReviewSegment.data["zones"].cast("text") % f'*"{zone}"*'
+        clauses.append(
+            ReviewSegment.id.in_(
+                ReviewSegmentZone.select(ReviewSegmentZone.review_segment).where(
+                    ReviewSegmentZone.zone << filtered_zones
+                )
             )
-        clauses.append(reduce(operator.or_, zone_clauses))
+        )
 
     if severity:
         clauses.append(ReviewSegment.severity == severity)
@@ -241,16 +250,19 @@ async def review_summary(
             )
         clauses.append(reduce(operator.or_, label_clauses))
     if zones != "all":
-        # use matching so segments with multiple zones
-        # still match on a search where any zone matches
-        zone_clauses = []
+        # use matching so segments with multiple zones still match on a
+        # search where any zone matches. Goes through the
+        # ReviewSegmentZone join table (indexed on zone) instead of a
+        # LIKE scan over the data["zones"] JSON blob -- see
+        # ReviewSegmentZone in frigate/models.py for why.
         filtered_zones = zones.split(",")
-
-        for zone in filtered_zones:
-            zone_clauses.append(
-                ReviewSegment.data["zones"].cast("text") % f'*"{zone}"*'
+        clauses.append(
+            ReviewSegment.id.in_(
+                ReviewSegmentZone.select(ReviewSegmentZone.review_segment).where(
+                    ReviewSegmentZone.zone << filtered_zones
+                )
             )
-        clauses.append(reduce(operator.or_, zone_clauses))
+        )
 
     last_24_query = (
         ReviewSegment.select(
@@ -567,6 +579,11 @@ def delete_reviews(body: ReviewModifyMultipleBody):
     # delete recordings and review segments
     Recordings.delete().where(Recordings.id << recording_ids).execute()
     ReviewSegment.delete().where(ReviewSegment.id << list_of_ids).execute()
+    # No FK cascade in effect (sqlite foreign_keys pragma isn't enabled),
+    # so ReviewSegmentZone rows need an explicit delete alongside.
+    ReviewSegmentZone.delete().where(
+        ReviewSegmentZone.review_segment << list_of_ids
+    ).execute()
     UserReviewStatus.delete().where(
         UserReviewStatus.review_segment << list_of_ids
     ).execute()
@@ -709,6 +726,7 @@ async def get_review(request: Request, review_id: str):
     dependencies=[Depends(allow_any_authenticated())],
 )
 async def set_not_reviewed(
+    request: Request,
     review_id: str,
     current_user: dict = Depends(get_current_user),
 ):
@@ -727,6 +745,8 @@ async def set_not_reviewed(
             status_code=404,
         )
 
+    await require_camera_access(review.camera, request=request)
+
     try:
         user_review = UserReviewStatus.get(
             UserReviewStatus.user_id == user_id,
@@ -743,9 +763,12 @@ async def set_not_reviewed(
     )
 
 
+# Intentionally not camera scoped, as the summary correlates each flagged event
+# with overlapping activity on other cameras. Restricted to callers who can
+# already see every camera, so the unscoped query discloses nothing.
 @router.post(
     "/review/summarize/start/{start_ts}/end/{end_ts}",
-    dependencies=[Depends(require_role(["admin"]))],
+    dependencies=[Depends(require_full_camera_access)],
     description="Use GenAI to summarize review items over a period of time.",
 )
 def generate_review_summary(request: Request, start_ts: float, end_ts: float):

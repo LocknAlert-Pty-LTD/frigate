@@ -19,6 +19,7 @@ import {
   Job,
 } from "@/types/ws";
 import { FrigateStats } from "@/types/stats";
+import { AlarmEvent, AlarmStatus } from "@/types/alarm";
 import { isEqual } from "lodash";
 import { WsSendContext } from "./wsContext";
 import type { Update, WsSend } from "./wsContext";
@@ -205,7 +206,7 @@ function applyCameraActivity(payload: string) {
     );
     applyTopicUpdate(
       `${name}/notifications/suspended`,
-      notifications_suspended || 0,
+      String(notifications_suspended ?? 0),
     );
     applyTopicUpdate(
       `${name}/ptz_autotracker/state`,
@@ -479,6 +480,28 @@ export function useFrigateEvents(): { payload: FrigateEvent } {
   const {
     value: { payload },
   } = useWs("events", "");
+  const parsed = useMemo(
+    () => (payload ? JSON.parse(payload as string) : undefined),
+    [payload],
+  );
+  return { payload: parsed };
+}
+
+export function useAlarmEvents(): { payload: AlarmEvent } {
+  const {
+    value: { payload },
+  } = useWs("alarm/event", "");
+  const parsed = useMemo(
+    () => (payload ? JSON.parse(payload as string) : undefined),
+    [payload],
+  );
+  return { payload: parsed };
+}
+
+export function useAlarmState(): { payload: AlarmStatus } {
+  const {
+    value: { payload },
+  } = useWs("alarm/state", "");
   const parsed = useMemo(
     () => (payload ? JSON.parse(payload as string) : undefined),
     [payload],
@@ -806,7 +829,7 @@ export function useNotificationSuspend(camera: string): {
     `${camera}/notifications/suspended`,
     `${camera}/notifications/suspend`,
   );
-  return { payload: payload as string, send };
+  return { payload: String(payload ?? 0), send };
 }
 
 export function useNotificationTest(): {
