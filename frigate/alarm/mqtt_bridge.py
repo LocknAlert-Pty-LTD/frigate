@@ -125,6 +125,7 @@ class AlarmMqttBridge:
                     "confidence": event.confidence,
                     "source": event.source,
                     "message": event.message,
+                    "object_id": event.object_id,
                 }
             ),
             False,

@@ -13,7 +13,13 @@ from playhouse.sqlite_ext import SqliteExtDatabase
 
 from frigate.config import CameraConfig, FrigateConfig, RetainModeEnum
 from frigate.const import CACHE_DIR, CLIPS_DIR, MAX_WAL_SIZE, RECORD_DIR
-from frigate.models import Previews, Recordings, ReviewSegment, UserReviewStatus
+from frigate.models import (
+    Previews,
+    Recordings,
+    ReviewSegment,
+    ReviewSegmentZone,
+    UserReviewStatus,
+)
 from frigate.util.builtin import clear_and_unlink
 from frigate.util.media import remove_empty_directories
 
@@ -97,12 +103,16 @@ class RecordingCleanup(threading.Thread):
         max_deletes = 100000
         deleted_reviews_list = list(map(lambda x: x[0], expired_reviews))
         for i in range(0, len(deleted_reviews_list), max_deletes):
-            ReviewSegment.delete().where(
-                ReviewSegment.id << deleted_reviews_list[i : i + max_deletes]
+            chunk = deleted_reviews_list[i : i + max_deletes]
+            ReviewSegment.delete().where(ReviewSegment.id << chunk).execute()
+            # No FK cascade in effect (sqlite foreign_keys pragma isn't
+            # enabled), so ReviewSegmentZone rows need an explicit delete
+            # alongside, same as UserReviewStatus already does below.
+            ReviewSegmentZone.delete().where(
+                ReviewSegmentZone.review_segment << chunk
             ).execute()
             UserReviewStatus.delete().where(
-                UserReviewStatus.review_segment
-                << deleted_reviews_list[i : i + max_deletes]
+                UserReviewStatus.review_segment << chunk
             ).execute()
 
         return maybe_empty_dirs

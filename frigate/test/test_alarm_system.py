@@ -141,6 +141,36 @@ class TestEventHistory(unittest.TestCase):
         system = AlarmSystem(_rules(), reporting_queue=None)
         system.record_event(_event())  # should not raise
 
+    def test_record_event_enqueues_to_whatsapp_queue(self) -> None:
+        sent = []
+        wq = ReportingQueue(
+            send=lambda e: sent.append(e) or True, retry_delay_seconds=0
+        )
+        system = AlarmSystem(_rules(), whatsapp_queue=wq)
+        system.record_event(_event())
+        wq._deliver_with_retry(wq._queue.get_nowait())
+        self.assertEqual(len(sent), 1)
+
+    def test_record_event_without_whatsapp_queue_does_not_raise(self) -> None:
+        system = AlarmSystem(_rules(), whatsapp_queue=None)
+        system.record_event(_event())  # should not raise
+
+    def test_record_event_enqueues_to_both_queues_independently(self) -> None:
+        reporting_sent = []
+        whatsapp_sent = []
+        rq = ReportingQueue(
+            send=lambda e: reporting_sent.append(e) or True, retry_delay_seconds=0
+        )
+        wq = ReportingQueue(
+            send=lambda e: whatsapp_sent.append(e) or True, retry_delay_seconds=0
+        )
+        system = AlarmSystem(_rules(), reporting_queue=rq, whatsapp_queue=wq)
+        system.record_event(_event())
+        rq._deliver_with_retry(rq._queue.get_nowait())
+        wq._deliver_with_retry(wq._queue.get_nowait())
+        self.assertEqual(len(reporting_sent), 1)
+        self.assertEqual(len(whatsapp_sent), 1)
+
 
 class TestArmedModeForEvaluation(unittest.TestCase):
     def test_none_when_disarmed(self) -> None:
@@ -202,6 +232,72 @@ class TestZoneStatus(unittest.TestCase):
         statuses = system.zone_status()
         self.assertFalse(statuses[0].armed)
 
+    def test_bypassed_zone_not_armed_even_when_system_armed(self) -> None:
+        system = AlarmSystem(_rules(arm_modes=frozenset({ArmedMode.away})))
+        system.arm(ArmedMode.away, exit_delay_seconds=0)
+        system.bypass_zone("front", "driveway")
+
+        statuses = system.zone_status()
+
+        self.assertFalse(statuses[0].armed)
+        self.assertTrue(statuses[0].bypassed)
+
+
+class TestBypass(unittest.TestCase):
+    def test_bypass_and_unbypass_round_trip(self) -> None:
+        system = AlarmSystem(_rules())
+        self.assertFalse(system.is_bypassed("front", "driveway"))
+
+        system.bypass_zone("front", "driveway")
+        self.assertTrue(system.is_bypassed("front", "driveway"))
+
+        system.unbypass_zone("front", "driveway")
+        self.assertFalse(system.is_bypassed("front", "driveway"))
+
+    def test_bypass_can_be_set_while_armed(self) -> None:
+        system = AlarmSystem(_rules())
+        system.arm(ArmedMode.away, exit_delay_seconds=0)
+
+        system.bypass_zone("front", "driveway")
+
+        self.assertTrue(system.is_bypassed("front", "driveway"))
+        self.assertEqual(system.state_machine.state, AlarmState.armed_away)
+
+    def test_disarm_clears_bypass(self) -> None:
+        system = AlarmSystem(_rules())
+        system.arm(ArmedMode.away, exit_delay_seconds=0)
+        system.bypass_zone("front", "driveway")
+
+        system.disarm()
+
+        self.assertFalse(system.is_bypassed("front", "driveway"))
+
+    def test_disarm_during_active_alarm_does_not_clear_bypass(self) -> None:
+        """disarm() during ALARM silences into alarm_memory, not disarmed
+        -- bypass should survive until the system is genuinely stood down
+        (a later disarm() from alarm_memory, or clear())."""
+        system = AlarmSystem(_rules())
+        system.arm(ArmedMode.away, exit_delay_seconds=0)
+        system.bypass_zone("front", "driveway")
+        system.trigger()
+        self.assertEqual(system.state_machine.state, AlarmState.alarm)
+
+        system.disarm()
+
+        self.assertEqual(system.state_machine.state, AlarmState.alarm_memory)
+        self.assertTrue(system.is_bypassed("front", "driveway"))
+
+    def test_clear_clears_bypass(self) -> None:
+        system = AlarmSystem(_rules())
+        system.arm(ArmedMode.away, exit_delay_seconds=0)
+        system.bypass_zone("front", "driveway")
+        system.trigger()
+        system.disarm()  # -> alarm_memory, bypass still set (see above)
+
+        system.clear()
+
+        self.assertFalse(system.is_bypassed("front", "driveway"))
+
 
 class TestStatus(unittest.TestCase):
     def test_status_reflects_disarmed_defaults(self) -> None:
@@ -226,6 +322,15 @@ class TestStatus(unittest.TestCase):
         rq = ReportingQueue(send=lambda e: True, retry_delay_seconds=0)
         system = AlarmSystem(_rules(), reporting_queue=rq)
         self.assertTrue(system.status()["reporting_healthy"])
+
+    def test_status_whatsapp_healthy_none_when_unconfigured(self) -> None:
+        system = AlarmSystem(_rules())
+        self.assertIsNone(system.status()["whatsapp_healthy"])
+
+    def test_status_reflects_whatsapp_health(self) -> None:
+        wq = ReportingQueue(send=lambda e: True, retry_delay_seconds=0)
+        system = AlarmSystem(_rules(), whatsapp_queue=wq)
+        self.assertTrue(system.status()["whatsapp_healthy"])
 
 
 class TestOnChangeNotification(unittest.TestCase):
@@ -256,6 +361,13 @@ class TestOnChangeNotification(unittest.TestCase):
         calls = []
         system.on_change = lambda: calls.append(1)
         system.clear()
+        self.assertEqual(len(calls), 1)
+
+    def test_bypass_zone_triggers_on_change(self) -> None:
+        system = AlarmSystem(_rules())
+        calls = []
+        system.on_change = lambda: calls.append(1)
+        system.bypass_zone("front", "driveway")
         self.assertEqual(len(calls), 1)
 
     def test_trigger_triggers_on_change(self) -> None:

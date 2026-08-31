@@ -1,6 +1,7 @@
 import Heading from "@/components/ui/heading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -12,113 +13,25 @@ import {
 import { Separator } from "@/components/ui/separator";
 import ActivityIndicator from "@/components/indicators/activity-indicator";
 import AlarmZoneSetup from "@/views/settings/AlarmZoneSetup";
+import AlarmScheduleSetup from "@/views/settings/AlarmScheduleSetup";
+import AlarmHealthDashboard from "@/views/settings/AlarmHealthDashboard";
 import { useTranslation } from "react-i18next";
-import useSWR from "swr";
-import axios from "axios";
-import { useCallback, useState } from "react";
-import { toast } from "sonner";
-import { AlarmEvent, AlarmState, AlarmStatus, ArmedMode } from "@/types/alarm";
+import useAlarmActions from "@/hooks/use-alarm-actions";
+import { ALARM_STATE_BADGE_CLASSES } from "@/utils/alarmUtil";
 import { cn } from "@/lib/utils";
-
-const STATE_BADGE_CLASSES: Record<AlarmState, string> = {
-  disarmed: "bg-secondary text-secondary-foreground",
-  arming: "bg-yellow-500 text-white",
-  exit_delay: "bg-yellow-500 text-white",
-  armed_away: "bg-blue-600 text-white",
-  armed_home: "bg-blue-600 text-white",
-  armed_night: "bg-indigo-600 text-white",
-  entry_delay: "bg-yellow-500 text-white",
-  alarm: "bg-destructive text-destructive-foreground",
-  alarm_memory: "bg-orange-500 text-white",
-  fault: "bg-destructive text-destructive-foreground",
-};
 
 export default function AlarmView() {
   const { t } = useTranslation(["views/alarm"]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const { data: status, mutate: mutateStatus } = useSWR<AlarmStatus>(
-    "alarm/status",
-    { refreshInterval: 5000 },
-  );
-  const { data: events, mutate: mutateEvents } = useSWR<AlarmEvent[]>(
-    "alarm/events",
-    { refreshInterval: 5000 },
-  );
-
-  const refresh = useCallback(() => {
-    mutateStatus();
-    mutateEvents();
-  }, [mutateStatus, mutateEvents]);
-
-  const handleError = useCallback(
-    (error: unknown) => {
-      const errorMessage =
-        (axios.isAxiosError(error) && error.response?.data?.message) ||
-        "unknown error";
-      toast.error(t("toast.error", { errorMessage }), {
-        position: "top-center",
-      });
-    },
-    [t],
-  );
-
-  const arm = useCallback(
-    (mode: ArmedMode) => {
-      setIsSubmitting(true);
-      axios
-        .post("alarm/arm", { mode })
-        .then((res) => {
-          if (res.status === 200 && res.data.success) {
-            toast.success(t("toast.armSuccess"), { position: "top-center" });
-            refresh();
-          } else {
-            toast.error(t("toast.error", { errorMessage: res.data.message }), {
-              position: "top-center",
-            });
-          }
-        })
-        .catch(handleError)
-        .finally(() => setIsSubmitting(false));
-    },
-    [t, refresh, handleError],
-  );
-
-  const disarm = useCallback(() => {
-    setIsSubmitting(true);
-    axios
-      .post("alarm/disarm")
-      .then((res) => {
-        if (res.status === 200 && res.data.success) {
-          toast.success(t("toast.disarmSuccess"), { position: "top-center" });
-          refresh();
-        } else {
-          toast.error(t("toast.error", { errorMessage: res.data.message }), {
-            position: "top-center",
-          });
-        }
-      })
-      .catch(handleError)
-      .finally(() => setIsSubmitting(false));
-  }, [t, refresh, handleError]);
-
-  const clear = useCallback(() => {
-    setIsSubmitting(true);
-    axios
-      .post("alarm/clear")
-      .then((res) => {
-        if (res.status === 200 && res.data.success) {
-          toast.success(t("toast.clearSuccess"), { position: "top-center" });
-          refresh();
-        } else {
-          toast.error(t("toast.error", { errorMessage: res.data.message }), {
-            position: "top-center",
-          });
-        }
-      })
-      .catch(handleError)
-      .finally(() => setIsSubmitting(false));
-  }, [t, refresh, handleError]);
+  const {
+    status,
+    events,
+    auditLog,
+    isSubmitting,
+    arm,
+    disarm,
+    clear,
+    setZoneBypass,
+  } = useAlarmActions();
 
   if (status === undefined) {
     return <ActivityIndicator />;
@@ -150,7 +63,7 @@ export default function AlarmView() {
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-3">
-            <Badge className={cn(STATE_BADGE_CLASSES[status.state])}>
+            <Badge className={cn(ALARM_STATE_BADGE_CLASSES[status.state])}>
               {t(`state.${status.state}`)}
             </Badge>
             {status.armed_mode && (
@@ -164,6 +77,16 @@ export default function AlarmView() {
               >
                 {t("reporting.title")}:{" "}
                 {status.reporting_healthy
+                  ? t("reporting.healthy")
+                  : t("reporting.unhealthy")}
+              </Badge>
+            )}
+            {status.whatsapp_healthy !== null && (
+              <Badge
+                variant={status.whatsapp_healthy ? "secondary" : "destructive"}
+              >
+                {t("whatsapp.title")}:{" "}
+                {status.whatsapp_healthy
                   ? t("reporting.healthy")
                   : t("reporting.unhealthy")}
               </Badge>
@@ -221,28 +144,50 @@ export default function AlarmView() {
           {status.zones.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("zones.empty")}</p>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col gap-2">
               {status.zones.map((zone) => (
-                <Badge
+                <div
                   key={`${zone.camera}/${zone.zone}`}
-                  variant={
-                    !zone.enabled
-                      ? "outline"
-                      : zone.armed
-                        ? "secondary"
-                        : "outline"
-                  }
+                  className="flex flex-wrap items-center gap-2"
                 >
-                  {zone.camera}/{zone.zone}:{" "}
-                  {!zone.enabled
-                    ? t("zones.disabled")
-                    : zone.armed
-                      ? t("zones.armed")
-                      : t("zones.disarmed")}
-                </Badge>
+                  <Badge
+                    variant={
+                      !zone.enabled
+                        ? "outline"
+                        : zone.armed
+                          ? "secondary"
+                          : "outline"
+                    }
+                  >
+                    {zone.camera}/{zone.zone}:{" "}
+                    {!zone.enabled
+                      ? t("zones.disabled")
+                      : zone.bypassed
+                        ? t("zones.bypassed")
+                        : zone.armed
+                          ? t("zones.armed")
+                          : t("zones.disarmed")}
+                  </Badge>
+                  {zone.enabled && (
+                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Switch
+                        checked={zone.bypassed}
+                        disabled={isSubmitting}
+                        onCheckedChange={(checked) =>
+                          setZoneBypass(zone.camera, zone.zone, checked)
+                        }
+                      />
+                      {t("zones.bypass")}
+                    </label>
+                  )}
+                </div>
               ))}
             </div>
           )}
+
+          <Separator className="my-4 bg-secondary" />
+
+          <AlarmHealthDashboard zones={status.zones} />
 
           <Separator className="my-4 bg-secondary" />
 
@@ -281,12 +226,52 @@ export default function AlarmView() {
               </TableBody>
             </Table>
           )}
+
+          <Separator className="my-4 bg-secondary" />
+
+          <div className="mb-2 text-lg font-medium">{t("audit.title")}</div>
+          {!auditLog || auditLog.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("audit.empty")}</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("audit.columns.time")}</TableHead>
+                  <TableHead>{t("audit.columns.action")}</TableHead>
+                  <TableHead>{t("audit.columns.source")}</TableHead>
+                  <TableHead>{t("audit.columns.actor")}</TableHead>
+                  <TableHead>{t("audit.columns.zone")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {auditLog.map((entry, index) => (
+                  <TableRow key={`${entry.timestamp}-${index}`}>
+                    <TableCell>
+                      {new Date(entry.timestamp * 1000).toLocaleString()}
+                    </TableCell>
+                    <TableCell>{t(`audit.actions.${entry.action}`)}</TableCell>
+                    <TableCell>{t(`audit.sources.${entry.source}`)}</TableCell>
+                    <TableCell>{entry.actor ?? "-"}</TableCell>
+                    <TableCell>
+                      {entry.camera && entry.zone
+                        ? `${entry.camera}/${entry.zone}`
+                        : "-"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </>
       )}
 
       <Separator className="my-4 bg-secondary" />
 
       <AlarmZoneSetup />
+
+      <Separator className="my-4 bg-secondary" />
+
+      <AlarmScheduleSetup />
     </div>
   );
 }

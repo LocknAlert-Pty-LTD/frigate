@@ -40,3 +40,10 @@ class ZoneAlarmRule:
     arm_modes: frozenset[ArmedMode] = frozenset(
         {ArmedMode.away, ArmedMode.home, ArmedMode.night}
     )
+    # When set, a qualifying detection is not triggered immediately -- the
+    # caller (AlarmDetectionThread) instead asks the GenAI description
+    # provider to confirm it first. This rule doesn't perform the check
+    # itself (see frigate/alarm/ai_verification.py); it just carries the
+    # opt-in flag, the same way entry_delay_seconds carries a caller-applied
+    # setting rather than being applied here.
+    ai_verification: bool = False

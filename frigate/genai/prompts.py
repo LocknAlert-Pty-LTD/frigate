@@ -196,6 +196,52 @@ Guidelines:
     return prompt
 
 
+def build_alarm_verification_prompt(
+    *,
+    camera: str,
+    zone: str,
+    label: str,
+    confidence: float,
+    event_type: str,
+) -> str:
+    """Build the prompt for alarm detection verification.
+
+    Deliberately takes plain primitives rather than a Frigate detection or
+    Event object -- this runs against a live, not-yet-finalized tracked
+    object, and the alarm engine's adapter/detection-thread layer never
+    passes Frigate-internal objects across the boundary into GenAI code.
+    """
+    return f"""You are reviewing a single frame from a home security camera to help decide whether to raise a "{event_type}" alarm.
+
+The motion-detection system has already flagged a "{label}" in the "{zone}" zone on camera "{camera}" with {confidence:.0%} confidence, and is asking you to confirm this is a genuine trigger before the alarm sounds.
+
+Look at the attached image and answer:
+- Is there really a {label} visible in the frame, doing something consistent with a genuine "{event_type}" alarm (not a false detection, reflection, shadow, pet, delivery in progress, or someone who plausibly belongs there)?
+
+Respond with strict JSON matching the schema: {{"confirmed": boolean, "reason": string}}. Keep "reason" to one short sentence. If you are uncertain, prefer confirmed: true -- your job is only to catch obvious false detections, not to make the final security call."""
+
+
+def build_alarm_verification_response_format() -> dict[str, Any]:
+    """Structured-output schema for alarm verification, so providers that
+    support it return guaranteed-valid JSON instead of free text to parse."""
+    return {
+        "type": "json_schema",
+        "json_schema": {
+            "name": "alarm_verification",
+            "strict": True,
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "confirmed": {"type": "boolean"},
+                    "reason": {"type": "string"},
+                },
+                "required": ["confirmed", "reason"],
+                "additionalProperties": False,
+            },
+        },
+    }
+
+
 def build_object_description_prompt(
     camera_config: CameraConfig,
     event: Event,

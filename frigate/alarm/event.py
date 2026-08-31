@@ -34,3 +34,9 @@ class AlarmEvent:
     confidence: float | None = None
     source: str = "detection"
     message: str | None = None
+    # The Frigate tracked-object id, which becomes Event.id once persisted
+    # (see frigate/events/maintainer.py) -- lets a downstream consumer
+    # (e.g. frigate/alarm/trail.py) correlate this alarm event back to the
+    # real detection it came from. None for non-detection events (arm/
+    # disarm/fault/etc).
+    object_id: str | None = None

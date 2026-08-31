@@ -1279,3 +1279,1064 @@ lints, and type-checks clean.
 Full phase-1 analysis with file:line citations lives in the conversation that
 produced this file; re-derive from the codebase if that conversation is gone
 and this summary is insufficient.
+
+## Post-HA-integration session: live verification, and two real inbound/discovery bugs found and fixed
+
+Requested: resume the specific live-verification items the HA integration
+section above left open (3-mode arm/disarm HTTP roundtrip, HA discovery
+against a real broker, inbound `alarm/set` commands). Found real bugs in the
+process, not just confirmed things worked.
+
+**Environment note, read first if picking this up again**: the
+`frigate-devcontainer` (VS Code dev container, `docker compose --profile`
+target `devcontainer`, s6 placeholder "fake Frigate" service +
+`python3 -m frigate` started by hand) turned out to be unusable for
+extended live testing -- not because of anything alarm-related, but because
+of a **pre-existing, unrelated bug**: `config/config.yaml`'s
+`detectors.ov.type` was set to `onnx` while `model.path` pointed at an
+OpenVINO IR file (`ssdlite_mobilenet_v2.xml`). ONNX Runtime can't parse an
+OpenVINO IR XML as a `.onnx` protobuf (`InvalidProtobuf` on every load), so
+the detector subprocess died immediately, every time, and Frigate's own
+watchdog (`frigate/watchdog.py` -> `frigate/util/services.py:restart_frigate`)
+correctly treats "detector process is dead" as fatal and calls
+`psutil.Process(1).terminate()` -- a deliberate, by-design SIGTERM to the
+container's own PID 1 (s6-svscan) to force a clean restart, documented
+in the source as `# if this is running via s6, sigterm pid 1`. In the
+devcontainer this has no `restart:` policy, so the whole container just
+died and stayed dead every ~20-100s (the ONNX load + watchdog timeout
+window) whenever the real Frigate process was started manually. This
+produced about an hour of misleading symptoms this session (nginx cache
+noise, apparent GET/POST state desync, "the container keeps dying for no
+reason") before the actual cause was traced with a 1s-resolution process
+trace showing the s6-supervised placeholder process disappearing in lockstep
+with the container's death. **Fixed** by changing `detectors.ov.type` from
+`onnx` to `openvino` in `config/config.yaml` (Frigate has a dedicated
+`frigate/detectors/plugins/openvino.py` plugin for IR-format models) --
+this is a local dev config fix, not a code change, and only applies to this
+one devcontainer's `config/config.yaml`.
+- Given that instability, live verification for this session was done
+  against a **new, separate path**: `docker-compose.yml`'s `frigate` +
+  `mqtt` services (production image, `target: frigate`, no source
+  bind-mount, `restart: unless-stopped`, real `eclipse-mosquitto:2.0`
+  broker) rather than the devcontainer. That compose file already had an
+  uncommitted, half-finished edit (not from this session, found as-is,
+  intent stated in its own comments) replacing the old `devcontainer`-only
+  service with this production `frigate` + `mqtt` pair; it was completed
+  by actually bringing it up (`docker compose up -d --build frigate mqtt`),
+  not further redesigned. `config/config.yaml` was backed up
+  (`config.yaml.pre-mqtt-verify.bak`) before flipping `mqtt.enabled: true`
+  / `mqtt.host: mqtt` for this test. An unrelated crash-looping container,
+  `locknalert-mqtt` (a different project's mosquitto, exit code 13,
+  `restart: unless-stopped`), was found squatting near port 1883 on this
+  same host; it never actually held the port stably so it didn't conflict,
+  but worth knowing about if MQTT setup ever seems flaky on this machine
+  again -- it's unrelated to Frigate.
+- The apparent "GET /alarm/status doesn't reflect what POST /alarm/arm just
+  did" behavior seen early in this session, before the detector fix, was
+  **not a bug**: it was nginx's existing, intentional `/api/` location
+  cache (`docker/main/rootfs/usr/local/nginx/conf/nginx.conf`:
+  `proxy_cache_valid 200 5s` on all JSON GETs, bypassed only when a real
+  `$cookie_session` is present). Un-authenticated curl testing (no session
+  cookie) hits this cache like any other anonymous `/api/*` GET; a real
+  logged-in browser session bypasses it. Confirmed by re-running the same
+  test with `curl -H "X-Cache-Bypass: 1"` (the existing
+  `proxy_cache_bypass $http_x_cache_bypass` escape hatch) -- all 3 arm
+  modes (away/home/night) and disarm behaved correctly on every call. No
+  code change needed here; noted only so a future session doesn't re-chase
+  this as a phantom bug.
+- Exit-delay auto-completion (the `threading.Timer`-based fix from the
+  phase-9 live-verification note above) reconfirmed live: `POST
+  alarm/arm {"exit_delay_seconds": 3}` -> automatically -> `armed_away`
+  after 3 real seconds, no manual `complete_exit_delay()` call.
+
+**Two real, previously-undiscovered bugs found and fixed in the HA/MQTT
+wiring** (both silent -- no exceptions, no log errors, just nothing
+happening -- which is exactly why unit tests never caught either one: the
+unit tests call the relevant methods directly rather than going through a
+real connected MQTT client):
+
+1. **HA discovery configs were never actually reaching Home Assistant's
+   `homeassistant/` tree.** `frigate/app.py`'s `init_alarm_system()` called
+   `publish_ha_discovery(self.config, self.dispatcher.publish)` -- the
+   regular, topic-prefixing `publish`, not `publish_absolute`, despite
+   `publish_ha_discovery`'s own parameter being named `publish_absolute`
+   and its docstring explicitly saying discovery topics must bypass the
+   prefix. Confirmed live: subscribing to `homeassistant/#` on a real
+   broker returned nothing at all (not even under the wrong
+   `frigate/homeassistant/#` prefix), which pointed at a second,
+   independent problem: `init_alarm_system()` runs synchronously right
+   after `init_dispatcher()`, before the async paho-mqtt connection
+   completes, so `MqttClient.publish`/`publish_absolute` silently no-op
+   (`if not self.connected: return`) every time -- a pure race, not
+   something that would even work by luck. **Fixed** by moving the
+   `publish_ha_discovery` call out of `app.py` entirely and into
+   `MqttClient._on_connect` (`frigate/comms/mqtt.py`), right after the
+   existing `_set_initial_topics()` call -- the exact same "must run after
+   `self.connected = True`" precedent already established for Frigate's
+   own default-state publishing, so this now also correctly re-publishes
+   on every reconnect, not just first boot. `app.py` still calls
+   `self.alarm_mqtt_bridge.publish_status()` once at startup (unchanged --
+   benefits WS listeners too, and gets naturally refreshed by the first
+   real `on_change`), but no longer imports or calls `publish_ha_discovery`
+   itself. Live-reconfirmed after the fix: `homeassistant/alarm_control_panel/
+   frigate_alarm/panel/config` plus 3 `binary_sensor` configs (fault,
+   reporting, one per enabled alarm zone) all appear correctly on a real
+   mosquitto broker with correct `state_topic`/`command_topic`/`device`
+   grouping.
+2. **Home Assistant's alarm card could never actually arm/disarm Frigate.**
+   `Dispatcher._on_alarm_command` (the handler for inbound `alarm/set`,
+   added in the HA-integration work above) was correctly implemented and
+   correctly registered in `_global_settings_handlers`, but `MqttClient`
+   never told paho-mqtt to route the `<prefix>/alarm/set` topic to
+   `on_mqtt_command` in the first place -- every other global command topic
+   (`profile/set`, `notifications/set`, `onConnect`, `restart`) gets an
+   explicit `self.client.message_callback_add(...)` in `MqttClient._start()`
+   (`frigate/comms/mqtt.py`), and `alarm/set` was simply missing from that
+   list, so paho-mqtt silently dropped every message published to it before
+   it ever reached the dispatcher. This is the same class of gap as the
+   `ws.py` classifier registration miss the phase-12 review already found
+   once for outbound topics -- this time on the inbound side, in a
+   different file, and it slipped through because `test_alarm_dispatcher_
+   command.py` tests `_on_alarm_command` directly rather than through a
+   real subscribed MQTT client. **Fixed** with one added
+   `message_callback_add(f"{prefix}/alarm/set", self.on_mqtt_command)` call,
+   mirroring `profile/set`'s registration exactly. Live-reconfirmed:
+   `mosquitto_pub -t frigate/alarm/set -m ARM_NIGHT` -> real `armed_mode:
+   night` / `exit_delay` state change and matching `alarm/ha/state: arming`
+   publish; `DISARM` -> back to `disarmed`. This is the first time in the
+   whole project "arming from the HA card actually works" (flagged
+   unconfirmed in the HA-integration section above) has actually been
+   exercised end-to-end.
+
+**Test suite note**: `frigate.test.test_alarm_dispatcher_command`'s 4
+`test_arm_*_command` tests fail against current code
+(`AssertionError: 'exit_delay' != 'armed_away'` etc.) -- confirmed
+**pre-existing, not caused by this session's changes** (git-clean before
+these edits; the test file itself was never touched). The tests construct
+`AlarmSystem(...)` without passing `default_exit_delay_seconds`, which
+defaults to 30, so `arm()` correctly lands on `exit_delay` first rather than
+jumping straight to `armed_*` -- the test assertions are stale against the
+by-design non-instant-arm behavior documented in phase 2. Not fixed this
+session (out of scope for the HA/MQTT live-verification ask); a one-line
+fix per test (assert `exit_delay` + `armed_mode`, or construct with
+`default_exit_delay_seconds=0`) whenever someone picks it up. Full alarm
+suite otherwise green: 76 collected in-container (real `cv2`/`zmq`/etc.),
+72 pass, 4 pre-existing failures, 0 regressions from this session's 2 file
+changes (`frigate/app.py`, `frigate/comms/mqtt.py` -- both `ruff`/`mypy`
+clean, confirmed against the real in-container dependency set, not just
+`py_compile`).
+
+**Still open** (carried forward, nothing new): a real camera/detection
+actually triggering the alarm end-to-end (this session's test config has
+one camera whose RTSP source is unreachable from this host, pre-existing
+and unrelated), and the frontend `AlarmView.tsx` in a real browser (Vite
+was not started, per the "never start the dev server unless asked"
+instruction).
+
+## "Control room" session: camera auto-surface on alert + AI verification
+
+Requested as a deliberate product-direction push, planned via EnterPlanMode
+before any code (plan saved at the time to
+`~/.claude/plans/typed-popping-pearl.md`), two ordered slices.
+
+**Part 1 -- camera auto-surfaces on alert (frontend only, no backend
+changes needed)**: `web/src/api/ws.ts` gained `useAlarmEvents()`/
+`useAlarmState()`, mirroring the existing `useFrigateEvents()` pattern
+exactly. New `web/src/components/alarm/AlarmAlertOverlay.tsx`: a global,
+route-independent component (mounted once in `App.tsx`'s `DefaultAppView`,
+gated on `config.alarm.enabled`) that watches those two topics and pops a
+fixed bottom-right card with the triggering camera's live feed (reusing
+`LivePlayer` + `useCameraLiveMode`, the exact hooks the grid dashboard
+already uses) plus zone/object/confidence context. Surfaces as early as
+`alarm/event` fires (entry-delay, not only full `alarm` state -- the point
+is seeing the camera before the alarm finishes triggering), escalates
+visually when `is_alarm_active`, and only clears on manual dismiss or the
+alarm actually clearing/disarming -- no auto-timeout, matching how a real
+panel behaves. `alarm/event` was already correctly scoped per-camera and
+`alarm/state` global in `frigate/comms/ws.py`'s classifier (confirmed
+working live in the previous session), so this needed zero backend work.
+
+**Part 2 -- smarter AI verification (opt-in per zone, backend)**: adds one
+more check after the existing confidence/persistence gates in
+`DetectionAlarmAdapter.evaluate()`, using Frigate's *existing* GenAI
+provider abstraction (`frigate/genai/`, already used for object/review
+descriptions) -- not a new AI integration.
+- `ZoneAlarmRule.ai_verification: bool = False` (`frigate/alarm/rules.py`)
+  and the matching `AlarmZoneConfig.ai_verification` field
+  (`frigate/config/camera/alarm.py`, threaded through `to_rule()`).
+  Default off, backwards compatible like every other alarm knob.
+- `GenAIClient.generate_alarm_verification()` (`frigate/genai/__init__.py`)
+  is the new public entry point -- takes camera/zone/label/confidence/
+  event_type/thumbnail, returns `(confirmed, reason) | None`. Uses new
+  `build_alarm_verification_prompt()` / `_response_format()`
+  (`frigate/genai/prompts.py`), the latter using GenAI structured-output
+  JSON schema (same mechanism `build_review_description_response_format`
+  already uses) rather than free-text parsing.
+- New `frigate/alarm/ai_verification.py`: `AlarmAiVerifier` wraps
+  `GenAIClientManager.description_client` with a background
+  `threading.Thread` per verification call, mirroring
+  `frigate/data_processing/post/object_descriptions.py`'s exact pattern
+  for the same reason (network-bound GenAI calls must never run on a
+  hot-path thread). **Fails open by design**: no provider configured, a
+  request exception, or an unparseable response all resolve to
+  `confirmed=True`. This was a deliberate security-domain call, not left
+  for the user to decide -- an optional AI layer must never become a
+  silent single point of failure that disables the alarm; it can only
+  suppress false positives, never mask a real one.
+- **Getting a live thumbnail required real tracing, not a guess**: the ZMQ
+  tuple `AlarmDetectionThread.run()` unpacks already carried a `frame_name`
+  that was being discarded. `frigate/embeddings/maintainer.py` was traced
+  as the exact live precedent for turning that into pixels
+  (`SharedMemoryFrameManager.get(frame_name, camera_config.frame_shape_yuv)`),
+  and `frigate/util/image.py`'s existing `create_thumbnail(yuv_frame, box)`
+  helper -- found by reading the file, not written from scratch -- does
+  the crop/pad/resize/JPEG-encode in one call, better fit than the
+  lower-level `yuv_region_2_bgr` the plan originally named.
+- **Wiring** (`frigate/alarm/detection_thread.py`): when a rule has
+  `ai_verification` set and a verifier is configured, the thumbnail is
+  cropped *synchronously* (the shared-memory frame is only valid for this
+  update's lifetime) before handing off to the background thread;
+  `state_machine.trigger()`/`record_event()` are deferred to the
+  verifier's callback via `functools.partial(self._on_verified,
+  entry_delay=entry_delay)` (a plain lambda-with-default-arg mypy couldn't
+  type -- caught by running mypy for real in-container, not guessed
+  around). No frame available, no verifier configured, or the flag unset
+  all fall through to the original immediate-trigger path unchanged --
+  confirmed by dedicated regression tests, not just reasoning about it.
+  `frigate/alarm/factory.py` gained `build_ai_verifier()`, only
+  constructing a `GenAIClientManager` at all if at least one rule actually
+  uses the flag. `frigate/app.py` wires it into
+  `AlarmDetectionThread.__init__`, which now also takes the live
+  `FrigateConfig` (needed for `camera_config.frame_shape_yuv`).
+- **A real testability property was knowingly given up, not accidentally
+  broken**: `test_alarm_detection_thread.py` used to import cleanly in the
+  bare local sandbox (no cv2) because `detection_thread.py` didn't touch
+  `frigate.config`. It now imports `FrigateConfig` and
+  `frigate.util.image` (cv2), so that file needs the real container now --
+  same tier as `test_alarm_config.py` already was. Documented in both
+  files' docstrings rather than left to be rediscovered.
+- **Tests, all actually run in-container against real cv2/genai deps, not
+  just syntax-checked**: new `frigate/test/test_alarm_ai_verification.py`
+  (7 tests -- confirmed/rejected/exception-fail-open/unparseable-fail-open/
+  no-provider-fail-open, plus a real threading.Event-synchronized
+  non-blocking-call test mirroring `test_alarm_queue.py`'s precedent for
+  the same reason: proving the thread genuinely doesn't block, not just
+  asserting a mock was called). `test_alarm_detection_thread.py` gained 5
+  new cases for the deferred-trigger path. `test_alarm_config.py` gained 2
+  for the new field. **Two of the new detection-thread tests failed on
+  first real run** (asserted `"disarmed"` right after arming with
+  `exit_delay_seconds=0`, which actually lands on `"armed_away"` -- a
+  copy-paste mistake in the test, not the implementation) and were fixed
+  before landing -- left in here as the concrete evidence that these ran
+  for real rather than being assumed correct.
+- 189 alarm tests collected in-container, 34 of the new/touched ones
+  individually re-confirmed green after the fix; the only other failures
+  are the 4 pre-existing `test_alarm_dispatcher_command.py` failures
+  already documented above (untouched by this session). `ruff`/`mypy`
+  clean on every touched file against the real dependency set -- mypy
+  caught one genuine issue (`Cannot infer type of lambda`) which is why
+  the deferred-trigger callback uses `functools.partial` instead.
+- **Live-verified**: enabled `ai_verification: true` on the existing test
+  zone in the real devcontainer's `config/config.yaml` (no GenAI provider
+  configured there), restarted, confirmed a clean boot (`build_ai_verifier`
+  / `GenAIClientManager` construction, `AlarmDetectionThread` taking the
+  live config) and a normal `GET /alarm/status` response -- then reverted
+  the config line since it was test-only and no real GenAI provider is
+  set up in that environment. **Not verified live** (no path to a real
+  detection in this environment, documented as an existing gap above):
+  an actual AI judgment call, or the fail-open behavior specifically
+  triggered by a real detection event rather than by unit test.
+- Frontend: `npx tsc --noEmit`, `npx eslint`, `npx i18next-cli extract
+  --ci`, `npx vite build` all clean. New `alert.view` i18n key added to
+  `web/public/locales/en/views/alarm.json`. Not opened in a browser (dev
+  server not started, per standing instruction).
+
+## Easy alarm control UI: quick arm/disarm + zone bypass
+
+Requested directly: arm/disarm existed but only inside Settings -> Alarm,
+several clicks deep; zone bypass (temporarily exclude one zone from the
+current arm cycle -- a window left open, contractors in one room) didn't
+exist at all. Planned via EnterPlanMode; two design questions were asked
+and answered up front since they genuinely changed the backend shape:
+bypass is **per-arm-cycle** (auto-clears the instant the system actually
+disarms, matching real alarm panel convention -- no risk of a forgotten
+permanent bypass) and can be **toggled anytime, including while already
+armed**, not only before arming.
+
+**Backend** (`frigate/alarm/system.py`): `AlarmSystem` gained
+`_bypassed_zones: set[tuple[str, str]]` plus `bypass_zone()`/
+`unbypass_zone()`/`is_bypassed()`. Auto-clear is deliberately conditional,
+not unconditional: `disarm()` only clears it when the state machine
+actually lands on `disarmed` -- `disarm()` during an active alarm silences
+into `alarm_memory` instead (existing behavior), and bypass has to survive
+that until the operator genuinely stands the system down via a second
+`disarm()` or `clear()` (both verified with dedicated tests, including the
+alarm_memory case explicitly). `ZoneStatus`/`zone_status()` gained
+`bypassed`, and `armed` was made additionally conditional on *not*
+bypassed -- meaning `status()`'s existing per-zone dict (already fed
+as-is into `AlarmMqttBridge.publish_status()` via `json.dumps(zone)`,
+per the phase-9 design) needed no changes at all to get bypass onto the
+`<camera>/alarm_zone/<zone>/state` MQTT/WS topic; confirmed live rather
+than just reasoned about (see below). `AlarmDetectionThread._evaluate()`
+skips a zone entirely (before it ever reaches `DetectionAlarmAdapter`) if
+`alarm_system.is_bypassed(camera, zone)` -- the adapter itself stays
+completely unaware bypass exists, consistent with its existing "static
+rules + armed_mode, nothing else" boundary.
+
+**API**: new `POST /alarm/zones/{camera}/{zone}/bypass` (body
+`{"bypassed": bool}`), admin-gated like arm/disarm/clear, 404 (not the
+generic 400 "not enabled" body) for an unknown camera/zone pair --
+distinguishing "bad request" from "alarm disabled globally".
+`AlarmZoneStatusResponse` gained `bypassed: bool`.
+
+**A real, unrelated gap was found and fixed as a side effect of
+regenerating the OpenAPI spec**: `docs/static/frigate-api.yaml` had never
+actually contained the `/alarm/*` paths at all -- not because this
+change broke it, but because this is the first time in the whole project
+`generate_api_auth_spec.py` could actually be *run* (every earlier phase
+noted "could not run here, no fastapi" and deferred it). Running it now
+added all 6 alarm endpoints (the 5 pre-existing ones plus the new bypass
+one) in one pass, confirmed by `git diff` showing pure insertions, zero
+deletions, nothing outside `/alarm/*` touched. `--check` now passes
+clean. Generated inside the running `frigate` container (script + prior
+yaml copied in via `docker cp`, since the runtime image doesn't ship
+repo-root dev scripts) and copied back out to the host.
+
+**Frontend**: arm/disarm/clear mutation logic (previously inline in
+`AlarmView.tsx`) extracted into `web/src/hooks/use-alarm-actions.ts`,
+gaining `setZoneBypass` alongside it -- both `AlarmView.tsx` and the new
+quick-control widget key off the same `"alarm/status"` SWR cache, so
+mutating from either place refreshes both with no extra wiring. New
+`web/src/components/menu/AlarmControl.tsx`, modeled directly on
+`AccountSettings.tsx`'s `Container`/`Trigger`/`Content` polymorphic
+pattern (`DropdownMenu` on desktop, `Drawer` on mobile via `isDesktop`
+from `react-device-detect`) rather than built from scratch -- that
+pattern already solves "reachable from every page, desktop and mobile"
+exactly. Deliberately does *not* wrap its buttons/switches in
+`DropdownMenuItem`/`DrawerClose` (unlike `GeneralSettings.tsx`'s nav-item
+precedent) since those auto-close on click, which is wrong for a bypass
+`Switch` you might flip several times in a row. Trigger shows a shield
+icon with a small colored dot reflecting current state, reusing the same
+`ALARM_STATE_BADGE_CLASSES` map now hoisted to `web/src/utils/alarmUtil.ts`
+so `AlarmView.tsx` and `AlarmControl.tsx` can't drift apart. Mounted in
+both `Sidebar.tsx` (desktop) and `Bottombar.tsx` (mobile) next to
+`GeneralSettings`/`AccountSettings` -- confirmed those two are the
+complete desktop+mobile mount set by grepping for every place they
+render, not assumed. `AlarmView.tsx` itself also gained a bypass
+`Switch` per zone in its existing zone list, next to the existing status
+badge.
+
+**Tests, all run in-container against real deps**: `test_alarm_system.py`
+gained a `TestBypass` class (round-trip, settable-while-armed, disarm
+clears it, disarm-during-active-alarm does *not* clear it, clear() does,
+on_change fires) plus a zone_status case;
+`test_alarm_detection_thread.py` gained bypassed/unbypassed-zone cases;
+`test_http_alarm.py` gained a `TestAlarmZoneBypass` class (bypass,
+unbypass, unknown zone -> 404, admin-gating, disabled -> 400, status
+reflects it). 91 tests collected across the full touched set, all green,
+zero regressions. `ruff`/mypy clean on every touched backend file.
+
+**Live-verified end to end**, not just unit-tested: armed the real test
+zone over HTTP, confirmed `armed: true, bypassed: false`; bypassed it,
+confirmed `armed: false, bypassed: true` in the same `GET /alarm/status`
+call; subscribed to the real MQTT broker and confirmed
+`frigate/dehothouse/alarm_zone/driveway/state` carries the new
+`bypassed` field with no code changes needed there; disarmed and
+confirmed bypass cleared automatically on the next status check.
+
+**Frontend**: `tsc`/`eslint`/`i18next-cli extract --ci`/`vite build` all
+clean. Not opened in a browser (dev server not started, per standing
+instruction) -- the quick-control widget's actual look/feel and the
+Drawer-vs-DropdownMenu responsive switch have not been visually
+confirmed, only that they compile and type-check against the real
+component APIs.
+
+---
+
+## Security Command Centre roadmap
+
+**STATUS: ALL 5 PARTS DONE.** Parts 1-5 below are all complete and
+live-verified; the roadmap as originally scoped is finished. If the user
+wants to extend this further, that's new scope -- treat it as a fresh
+roadmap addition (its own EnterPlanMode + sign-off), not a continuation
+of "part 6" implicitly.
+
+**Goal, stated by the user**: turn the alarm engine (done, above) into "a
+full security command centre type of program" -- not one feature, a
+product direction. Explicitly requested to persist across sessions: this
+section is that persistence. **Read this section first** if picking up
+new work here with no memory of the conversation that produced it;
+update it (status + one-line outcome note, following the style already
+used for every phase above) immediately after finishing each part, the
+same discipline the original 12-phase alarm-engine plan used.
+
+Working agreement: **part for part** -- one part fully designed
+(EnterPlanMode, written plan, user sign-off), built, tested against real
+dependencies inside the running `frigate`+`mqtt` containers, and
+live-verified before starting the next. Do not batch multiple parts in
+one sitting. Order below is a recommendation made when the roadmap was
+proposed, not a hard commitment -- confirm with the user before starting
+a part if priorities may have shifted since this was written.
+
+1. **Incident / operator-action audit log** -- STATUS: **done**, live-
+   verified. New `AlarmAuditLog` table (`frigate/models.py`, migration
+   `036`), written via `frigate/alarm/audit.py`'s `record_alarm_audit()`
+   from the two call sites that mutate alarm state --
+   `frigate/api/alarm.py` (arm/disarm/clear/bypass, `actor` = the
+   `remote-user` header) and `frigate/comms/dispatcher.py`'s
+   `_on_alarm_command` (MQTT-driven arm/disarm, `actor=None`). Only
+   successful actions are recorded, not rejected attempts -- a deliberate
+   scope line, not an oversight (failed attempts already go to the
+   application log). New `GET /alarm/audit`, mirrors `/alarm/events`
+   exactly. `AlarmView.tsx` gained an Audit Log table alongside the
+   existing Recent Events table.
+   - **Two real bugs, both caught only by live-testing against the real
+     app, not by the 30 unit/HTTP tests that all passed first**:
+     (1) `datetime.now(UTC)` stores with a `+00:00` suffix that peewee's
+     `DateTimeField` can't parse back out of its own format list, so
+     reads silently returned a raw `str` instead of a `datetime` --
+     fixed with a naive-UTC timestamp plus an explicit
+     `.replace(tzinfo=UTC)` on read before converting to epoch (the
+     container's local tz is UTC+2, so the naive `.timestamp()` call
+     alone would have silently shifted every audit timestamp by 2 hours).
+     (2) `AlarmAuditLog` was never added to the real `models = [...]`
+     list `frigate/app.py` binds to the production database at startup
+     -- every write 500'd with `peewee.InterfaceError: Query must be
+     bound to a database`. This is exactly why: `BaseTestHttp`'s test
+     harness binds whatever model list you pass it directly in
+     `setUp()`, completely bypassing `app.py`'s own binding logic, so no
+     amount of HTTP-layer unit testing could ever have caught a model
+     missing from that real list. Confirmed fixed by a full live
+     sequence -- HTTP arm/bypass/disarm, MQTT arm/disarm (mirroring the
+     HA-card path) -- then a container **restart**, re-querying, and
+     confirming all 5 entries survived, which is the entire reason this
+     is DB-backed instead of an in-memory deque like the event history.
+2. **Multi-camera incident view** -- STATUS: **done**, verified to the
+   extent this environment allows (see caveat below). Pure frontend
+   change, one file: `AlarmAlertOverlay.tsx`'s state changed from a
+   single `activeEvent` to `activeEvents: Map<camera_id, AlarmEvent>` --
+   a new `alarm/event` upserts that camera's entry instead of replacing
+   the whole panel, so two zones on two different cameras triggering as
+   part of the same incident now both stay visible. Capped at
+   `MAX_VISIBLE_CAMERAS = 4` with a "+N more" badge past that (real
+   i18next pluralization gotcha caught here: a `{ count }` interpolation
+   needs `_one`/`_other` suffixed keys, not one generic key -- the
+   `i18next-cli extract --ci` gate correctly failed on the first attempt
+   and named the exact fix). Single-camera case renders the same
+   `AlarmCameraTile` as the multi-camera grid, just not wrapped in a
+   grid container -- a deliberate DRY choice over preserving the exact
+   prior DOM structure (footer button vs. inline button), since there
+   was no way to visually verify pixel fidelity here anyway. No backend
+   changes: `alarm/event` already carried everything needed, and
+   `useCameraLiveMode` already accepted multiple cameras.
+   - **Caveat, called out in the plan before building rather than
+     discovered after**: this environment has exactly one configured
+     camera (with an unreachable RTSP source), so an actual two-camera
+     incident could not be produced to watch this live -- unlike every
+     other part so far, verification here is `tsc`/`eslint`/
+     `i18next-cli extract --ci`/`vite build` all clean plus manual
+     read-through of the map-upsert logic, not an observed live
+     multi-camera panel. Also does not reconstruct an in-progress
+     incident's camera set on a fresh page load (only accumulates events
+     received while mounted) -- a real, well-scoped follow-up that Part
+     1's audit log (querying since the last "arm" action) would make
+     clean to build, deliberately left out as extra scope beyond what
+     was asked.
+3. **Scheduling (auto arm/disarm)** -- STATUS: **done**, live-verified,
+   including a real fire against the running container. E.g. "always
+   armed away at 23:00, disarmed at 07:00" without a human doing it
+   manually every time. Confirmed with the user up front that entries
+   need per-weekday granularity (weeknight vs. weekend times differ),
+   not just one flat daily time.
+   - Researched first, not assumed: Frigate has no existing schedule/
+     cron concept anywhere in the codebase (recording, motion,
+     notifications, genai all lack one) and no scheduling dependency in
+     `pyproject.toml`/requirements. A hand-rolled polling thread was the
+     right fit, not a new dependency.
+   - `frigate/alarm/schedule.py`: `ScheduleEntry`, a plain frozen
+     dataclass (`time: str` "HH:MM", `mode: ArmedMode | None` -- `None`
+     means disarm, `days: frozenset[int]` -- empty means every day),
+     mirroring `rules.py`'s "core stays free of `frigate.config`"
+     split.
+   - `frigate/alarm/scheduler.py`: `AlarmScheduler(threading.Thread)`,
+     modeled directly on `AlarmDetectionThread` -- `run()` is a thin
+     `stop_event.wait(poll_interval)` loop (default 30s), with the
+     actual decision logic split into a pure, directly-testable
+     `_check_and_fire(now: datetime)` method (same reasoning as
+     `AlarmDetectionThread._evaluate()`). Dedup via
+     `_fired_today: dict[int, date]` keyed by entry index, since a 30s
+     poll interval checks each matching minute roughly twice.
+     `_fire()` calls `alarm_system.arm()`/`.disarm()` and
+     `record_alarm_audit(..., "schedule", ...)`, wrapped in
+     `try/except InvalidAlarmTransition` exactly like `dispatcher.py`'s
+     `_on_alarm_command` (e.g. the schedule says "arm" but the system
+     is already armed or faulted -- log at debug, move on). No new
+     state-change plumbing needed: `arm()`/`disarm()` already call
+     `AlarmSystem._notify()` internally, so MQTT/WS/frontend pick up a
+     scheduled change exactly like a manual one, automatically.
+   - Config: `AlarmScheduleEntryConfig`/`AlarmScheduleConfig` added to
+     `frigate/config/alarm.py` alongside the existing
+     `AlarmReportingConfig`, same title/description/validator
+     conventions (`field_validator` for HH:MM format and 0-6 day
+     range). `AlarmConfig.schedule` field added. `to_entry()`/
+     `build_entries()` mirror `AlarmZoneConfig.to_rule()`/
+     `CameraAlarmConfig.build_rules()` exactly.
+   - Wiring: no new `factory.py` function needed -- `AlarmScheduler`,
+     like `AlarmDetectionThread`, is constructed directly in
+     `frigate/app.py`'s `start_alarm_system()` (a deliberate deviation
+     from the original plan's proposed `build_alarm_scheduler()`
+     factory wrapper, made during implementation once it was clear
+     `config.alarm.schedule.build_entries()` already did the only real
+     work a factory function would have done -- matches existing
+     precedent better, not scope creep). Stopped in `stop()` alongside
+     `alarm_detection_thread.stop()`, before `alarm_system.stop()`, so
+     nothing can fire an `arm()`/`disarm()` into a system already being
+     torn down.
+   - Tests: `frigate/test/test_alarm_scheduler.py` (8 cases -- fires on
+     exact minute match, disarm branch, outside-minute no-op, same-day
+     dedup, fires again next day, `days` filter respected, empty `days`
+     means every day, `InvalidAlarmTransition` swallowed cleanly), plus
+     5 new cases in `test_alarm_config.py`. All pass in-container (same
+     peewee-needing tier as `test_alarm_dispatcher_command.py`, not
+     runnable on the bare host). Full in-container `unittest discover`:
+     1139 tests (up from 1126), only the same 4 pre-existing
+     `test_alarm_dispatcher_command.py` failures from the
+     zone-normalization session, zero new regressions. `ruff`/mypy
+     clean on every touched file.
+   - **Live-verified with an actual scheduled fire, not just
+     reasoning**: added a real near-term schedule entry
+     (`{"time": "10:01", "mode": "away"}`) to the running container's
+     `config/config.yaml`, restarted, and confirmed over real HTTP that
+     the system transitioned `disarmed` -> `exit_delay` ->
+     `armed_away` at exactly the scheduled time with zero manual
+     intervention, and that `GET /alarm/audit` recorded
+     `source: "schedule"`. Separately verified the mid-restart
+     resilience the design relies on (no timer set up in advance, just
+     a wall-clock comparison every poll): restarted the container 10
+     seconds into a new target minute and confirmed the scheduled arm
+     still fired within that same minute. Both test entries removed
+     and the original `config.yaml` restored afterward.
+   - **An unplanned but valuable side effect of this live test**: a
+     real "person" detection on the real `dehothouse` camera actually
+     triggered a genuine `ALARM` state during the verification window
+     (confirmed via `GET /alarm/events`) -- meaning the camera's RTSP
+     feed is reachable now, unlike every earlier session's repeated
+     "RTSP unreachable" caveat. This is the first real end-to-end
+     detection -> alarm-trigger confirmation in the whole project,
+     previously an explicitly open item (see the "Control room" and
+     "Easy alarm control UI" sections above). `clear()` was called
+     afterward to reset state.
+   - Frontend: `web/src/views/settings/AlarmScheduleSetup.tsx` (new),
+     mirrors `AlarmZoneSetup.tsx`'s exact draft-state/`config/set`-PUT
+     pattern -- one card, a list of entry rows (time input, an
+     away/home/night/disarm `Select`, a 7-day `ToggleGroup`), add/
+     remove buttons, one enable switch, and a client-side-only "next
+     scheduled action" readout (pure function of the entries + current
+     time, no backend endpoint needed). Mounted in `AlarmView.tsx`
+     alongside `<AlarmZoneSetup />`. `frigateConfig.ts` gained the
+     schedule shape (same hand-maintained-mirror gap as every earlier
+     phase). `tsc`/`eslint`/`i18next-cli extract --ci`/`vite build` all
+     clean. `generate_config_translations.py` was run in-container
+     (repo-root dev script, not shipped in the runtime image --
+     `docker cp`'d in, run, output copied back out) to pick up the new
+     Pydantic field titles/descriptions into
+     `web/public/locales/en/config/global.json`, per this repo's own
+     CLAUDE.md instructions -- pure additions, nothing else touched.
+     Not opened in a browser (dev server not started, per standing
+     instruction) -- visual layout/responsiveness of the new schedule
+     card has not been confirmed, only that it compiles and type-checks
+     against the real component APIs.
+4. **Notifications beyond MQTT** -- STATUS: **done**, live-verified to
+   the extent possible without a real subscribed browser or a real
+   WhatsApp send (see below). Push/WhatsApp when something fires, for
+   when nobody is looking at a screen or connected to the MQTT broker.
+   Email/SMS were explicitly descoped this part (see below).
+   - Researched first, per this item's own instruction: confirmed
+     Frigate already has a working push-notification system
+     (`WebPushClient`, `frigate/comms/webpush.py` -- browser Push API +
+     VAPID, already wired to review/trigger events via a topic fan-out
+     on `Dispatcher.publish()`) and zero existing SMS/email/WhatsApp
+     code anywhere.
+   - Asked the user which channels to build. Answer: check
+     `/home/raine/Documents/LockNAlert/source/locknalert-api` (a
+     separate project of the user's) for how *it* sends WhatsApp
+     messages, and add WhatsApp alongside push -- not email/SMS. That
+     project sends via a **self-hosted OpenWA instance**
+     (`app/openwa_client.py`: `POST {base_url}/sessions/{session_id}/
+     messages/send-text`, `{"chatId": "<digits>@c.us", "text": ...}`,
+     `X-API-Key` header), confirmed live on this host
+     (`openwa-api`/`openwa-docker-proxy`/`openwa-postgres` containers).
+     Mirrored the REST contract and the rate-limiting instinct from that
+     project, not its code verbatim -- it's async (httpx) because that
+     whole app is async; this uses synchronous `requests` (already a
+     Frigate dependency) since every file in `frigate/alarm/` is
+     thread-based, not async.
+   - **Push**: `AlarmMqttBridge.publish_event()` already publishes a
+     global `"alarm/event"` topic through `Dispatcher.publish()` on
+     every qualifying detection, and `WebPushClient` already receives
+     every dispatcher publish call -- it just didn't act on this topic
+     before. Added one branch (`webpush.py`) plus a new
+     `send_alarm_alert()` method mirroring the existing `send_alert()`
+     almost exactly (same `_user_has_camera_access()`-filtered loop over
+     `web_pushers`, same `send_push_notification()` call), reusing the
+     existing per-camera `notifications.enabled` flag rather than adding
+     a redundant alarm-specific toggle (same sharing already used by
+     `triggers`/`camera_monitoring`). **Deliberately skips**
+     `_within_cooldown()`/`is_camera_suspended()` -- both exist to
+     reduce noise from routine review notifications, and an actual alarm
+     trigger must never be silenced by settings meant for that, not
+     this.
+   - **WhatsApp**: new `AlarmWhatsAppConfig` (`frigate/config/alarm.py`,
+     global only -- one sending session per instance, same shape as
+     `AlarmReportingConfig`) with **no hardcoded default `api_base_url`**
+     -- Frigate is a public repo; the user's OpenWA host/session/API key
+     are their own private infrastructure and never get a default value,
+     nor do they appear anywhere in this file, tests, or committed code,
+     only in the user's own gitignored `config.yaml`.
+     `frigate/alarm/notify_whatsapp.py`: `WhatsAppNotifyConfig` (plain
+     dataclass, same core/config split as `rules.py`/`schedule.py`, kept
+     free of `frigate.config` -- `AlarmWhatsAppConfig.to_notify_config()`
+     does the conversion) and `AlarmWhatsAppNotifier` (stateful, unlike
+     the bare-function SIA/Contact ID senders, since it needs
+     per-(camera, zone) cooldown tracking across calls -- mirrors the
+     LockNAlert precedent's own instinct to rate-limit WhatsApp
+     specifically so a burst of qualifying detections during one
+     incident can't spam a phone). `notifier.notify` matches
+     `ReportingQueue`'s `send: Callable[[AlarmEvent], bool]` signature
+     exactly, so it plugs directly into the **same `ReportingQueue`
+     class from phase 7** (`build_alarm_whatsapp_queue` in
+     `factory.py`) -- zero new queue/retry/thread code needed, just
+     reuse.
+   - **Wiring** (`frigate/app.py`, `init_alarm_system()`):
+     `AlarmSystem.on_event` is a single-slot callback already occupied
+     by the MQTT bridge -- rather than building a generic multi-listener
+     event bus for exactly two consumers (over-engineering), a small
+     composed closure fans out to both: `mqtt_bridge.publish_event(event)`
+     then `alarm_whatsapp_queue.enqueue(event)` if configured. Push needed
+     no equivalent change -- it already rides the dispatcher topic
+     `publish_event` triggers, unconditionally. **A real mypy catch, not
+     just reasoning**: the closure originally read
+     `self.alarm_mqtt_bridge.publish_event(...)`, which mypy correctly
+     flagged as `AlarmMqttBridge | None` since a deferred closure can't
+     inherit the surrounding `if self.alarm_system is None: return`
+     narrowing -- fixed by closing over a local `mqtt_bridge` variable
+     bound once at construction instead of re-reading the optional
+     attribute inside the closure. `alarm_whatsapp_queue` start/stop
+     wired alongside the existing `reporting_queue` start/stop in
+     `start_alarm_system()`/`stop()`.
+   - **No frontend changes** -- `AlarmWhatsAppConfig`'s fields all have
+     `title`/`description` like every other alarm config model, so the
+     existing schema-driven config form (already live for `alarm`/
+     `global` since phase 10) renders it automatically, exactly like
+     `AlarmReportingConfig` itself never got a hand-built component.
+     `generate_config_translations.py` run in-container afterward (same
+     pattern as Part 3) -- picked up both the new `whatsapp` section and,
+     as a harmless side effect, the camera-level `alarm`/`zones` section
+     into `cameras.json` for the first time (a pre-existing gap from
+     phase 4/10 that had just never been regenerated into that specific
+     file until now; confirmed via `git diff --stat` as pure additions,
+     unrelated to this session's own changes).
+   - Tests: `frigate/test/test_alarm_notify_whatsapp.py` (11 cases --
+     chat-id normalization, message formatting, successful/failed send,
+     request-exception handling, cooldown skip and its
+     per-camera/zone scoping, failed sends don't start a cooldown) runs
+     on the **bare host sandbox**, no cv2/peewee needed (`requests` is
+     already installed there) -- same tier as `test_alarm_sia.py`. Plus
+     5 new `test_alarm_config.py` cases. 34 tests total for this part,
+     all pass in-container too; full in-container `unittest discover`:
+     1155 tests (up from 1139), same 4 pre-existing
+     `test_alarm_dispatcher_command.py` failures, zero new regressions.
+     `ruff`/mypy clean on every touched file.
+   - **Live-verified against the real running container** (not just
+     unit tests): rebuilt the image, confirmed a clean boot with
+     notifications enabled (WebPushClient generated a fresh VAPID
+     keypair on first boot with the new config, no errors). Directly
+     exercised the real `WebPushClient.publish("alarm/event", ...)` path
+     against the real bound database and real config (a standalone
+     script binding to the same `frigate.db`, mirroring the technique
+     used for the zone-normalization live verification) -- confirmed
+     the new topic branch decodes the payload, checks
+     `notifications.enabled`, and reaches `send_alarm_alert()` with zero
+     exceptions. **Corrected a mistake made during this same
+     verification pass, not swept under the rug**: an early attempt to
+     toggle `notifications.enabled` in the live `config.yaml` used a
+     naive string-replace that matched the wrong `dehothouse:` key
+     (`go2rtc.streams.dehothouse`, not `cameras.dehothouse`) and produced
+     structurally invalid YAML -- caught before it was ever applied to
+     the running process, restored from the pre-edit backup, and redone
+     with a proper `yaml.safe_load`/`yaml.dump` round-trip instead of
+     string matching. Config restored to its original state and the
+     container restarted clean afterward either way.
+   - **Not verified live, and explicitly flagged, same posture as the
+     SIA DC-09 stub**: an actual push notification landing on a real
+     subscribed browser (no real Push API subscription exists in this
+     environment -- `web_pushers` resolved to one user with zero
+     subscriptions), and a real WhatsApp message via a real OpenWA
+     instance (would send a real message to a real phone -- the plan
+     explicitly calls this out as something to do only with the user's
+     own credentials and explicit opt-in during a session, never
+     autonomously; that opt-in was not given this session, so
+     `notify_whatsapp.py`'s request-shape correctness rests on the unit
+     tests against a mocked `requests.post`, not a real OpenWA
+     response).
+5. **Health / reporting dashboard** -- STATUS: **done**, live-verified,
+   including a real detection persisting through the new table and
+   surviving a real restart. Camera uptime, false-alarm rate, SIA/
+   Contact ID (and now WhatsApp) reporting-link health, all in one
+   place instead of scattered across `AlarmView.tsx`'s status badges
+   and `reporting_healthy`. Last part of the roadmap -- all 5 done.
+   - Researched first via two Explore agents: camera uptime
+     (`connection_quality`/`reconnects_last_hour`/`stalls_last_hour`/
+     `camera_fps`) is already fully tracked and exposed via `GET
+     /stats`, just never surfaced on the alarm dashboard. The WhatsApp
+     `ReportingQueue` (Part 4) was confirmed invisible anywhere --
+     built and held only on `FrigateApp`, never passed into
+     `AlarmSystem`. False-alarm rate had zero existing infrastructure
+     at all: `AlarmEvent`s were never persisted (in-memory
+     `deque(maxlen=100)`, lost on restart) and nothing links an
+     `AlarmEvent` back to a Frigate `Event`/`ReviewSegment` row. Asked
+     the user explicitly whether to build the full persisted-history +
+     marking feature or a reduced version -- confirmed: build it all.
+   - **New `AlarmEventLog` table** (`frigate/models.py`, migration
+     `038_create_alarm_event_log_table.py`), mirroring `AlarmAuditLog`'s
+     exact precedent from phase 1 -- `timestamp`/`event_type`/`camera`/
+     `zone`/`object_type`/`confidence`/`source`/`message`, plus
+     `false_alarm` (bool, default False). `frigate/alarm/event_log.py`'s
+     `record_alarm_event_log()` mirrors `audit.py`'s
+     `record_alarm_audit()` almost exactly, **including the naive-UTC
+     timestamp fix already learned the hard way in phase 1** (a
+     tz-aware `datetime.now(UTC)` stores with a `+00:00` suffix peewee
+     can't parse back out) -- reused, not rediscovered. `AlarmEventLog`
+     added to `frigate/app.py`'s real `models = [...]` binding list
+     proactively, in the same edit that added the class, continuing
+     every part's discipline since phase 1's live-500 mistake.
+   - **New API**: `GET /alarm/event_log` (mirrors `GET /alarm/audit`
+     exactly), `GET /alarm/event_log/summary?days=30` (total/false-alarm
+     count/rate/daily breakdown, grouped in Python not SQL `GROUP BY` --
+     a home alarm's volume doesn't justify the complexity), `POST
+     /alarm/event_log/{id}/false_alarm` (admin-gated, mirrors the
+     zone-bypass endpoint's shape, 404 for an unknown id, also calls
+     `record_alarm_audit("false_alarm", ...)` since marking something
+     false-alarm is an operator action same as bypass). `GET
+     /alarm/events` (the existing in-memory, most-recent-100 endpoint)
+     was deliberately left untouched -- different purpose (live/
+     low-latency vs. historical/annotatable), same coexistence already
+     established between `/alarm/events` and `/alarm/audit`.
+   - **Architecture fix, not just a new field**: exposing
+     `whatsapp_healthy` required giving the WhatsApp `ReportingQueue`
+     the same first-class treatment `reporting_queue` already has.
+     `AlarmSystem.__init__` gained a `whatsapp_queue` param (defaults
+     `None`, fully backwards compatible with every existing call site/
+     test), `record_event()` enqueues to it alongside `reporting_queue`,
+     `status()` gained `"whatsapp_healthy"`. `build_alarm_system()`
+     (`factory.py`) now builds and passes it in. `frigate/app.py` lost
+     its standalone `self.alarm_whatsapp_queue` attribute entirely --
+     the only reason it lived outside `AlarmSystem` in Part 4 was
+     `on_event`'s single-slot-callback limit, which was never actually
+     a constraint on the *queue*, only on the notification callback.
+     The `_on_alarm_event` closure simplified as a result: WhatsApp
+     enqueueing moved into `record_event()` itself, leaving the closure
+     with just MQTT publishing and the new `record_alarm_event_log()`
+     call.
+   - Tests: `test_alarm_event_log.py` (7 cases, mirrors
+     `test_alarm_audit.py` exactly including its own naive-UTC
+     regression-guard test), extended `test_alarm_system.py` (6 new
+     whatsapp-queue/status cases, all pass on the **bare host** -- pure
+     `frigate.alarm.*`, no cv2/peewee needed), extended
+     `test_http_alarm.py` (11 new cases: list/filter/summary/toggle/
+     404/admin-gating/audit-trail). 1176 tests collected in-container
+     (up from 1155), same 4 pre-existing `test_alarm_dispatcher_command.py`
+     failures, zero new regressions. `ruff`/mypy clean on every touched
+     file.
+   - **Live-verified with real detections, not just seeded rows**:
+     armed the real system, waited for the real `dehothouse` camera's
+     RTSP feed to produce genuine person detections (it fired 10 times
+     during this pass), confirmed each one landed in `GET
+     /alarm/event_log` with real confidence values via real HTTP,
+     toggled false-alarm on one and confirmed the summary/rate and
+     audit trail updated correctly, confirmed 404/403 error handling.
+   - **A real testing-harness gotcha caught and resolved during this
+     same pass**: an early admin-gating check via nginx (port 5000)
+     returned 200 for a viewer-role request against the new endpoint,
+     which looked like a real authorization bug. Isolated by hitting
+     the FastAPI backend directly on port 5001 (bypassing nginx)
+     instead, which correctly returned 403 -- confirming this was
+     nginx's own local-network auth convenience layer overriding the
+     `Remote-Role` header for anonymous curl requests (the same class
+     of nginx-layer testing quirk the phase-9 session already
+     documented for its 5s response cache), not a gap in this session's
+     code. Re-ran an *existing, already-shipped* admin-gated endpoint
+     (`/alarm/disarm`) the same way to confirm the quirk wasn't
+     specific to the new code, then re-verified the new endpoint
+     directly against port 5001 for both roles before moving on.
+   - **Restart-survival explicitly confirmed, the actual point of this
+     table existing**: with real detection rows persisted, restarted
+     the container and confirmed `GET /alarm/event_log/summary` still
+     showed the same total, while `GET /alarm/events` (the in-memory
+     endpoint) correctly reset to empty -- exactly the intended
+     difference between the two endpoints, not just asserted.
+   - `generate_api_auth_spec.py` run in-container (new endpoints,
+     `docs/static/frigate-api.yaml` didn't exist in the runtime image so
+     the directory had to be created before copying the file in) --
+     pure additions, confirmed via `git diff --stat`. No config schema
+     changed this part, so `generate_config_translations.py` was not
+     needed.
+   - Frontend: new `web/src/views/settings/AlarmHealthDashboard.tsx`
+     (camera-uptime cards reusing `ConnectionQualityIndicator` from
+     Frigate's own System page, a false-alarm summary + a modest
+     ApexCharts stacked bar chart of daily real-vs-false counts --
+     `react-apexcharts` was already a dependency, no new charting
+     library -- and an event-log table with a false-alarm `Switch` per
+     row mirroring the existing zone-bypass `Switch` pattern), mounted
+     in `AlarmView.tsx` between the Zones and Events sections. The
+     WhatsApp health badge is one small addition to the existing top
+     badge row (which already had a symmetric `reporting_healthy`
+     badge), not a new section. New `use-alarm-event-log.ts` hook
+     following `use-alarm-actions.ts`'s exact pattern.
+     `tsc`/`eslint`/`i18next-cli extract --ci`/`vite build` all clean.
+     Not opened in a browser (dev server not started, per standing
+     instruction) -- visual layout of the new dashboard section and the
+     chart's light/dark theming have not been visually confirmed, only
+     that they compile and type-check.
+
+**Already done, load-bearing for everything above** (full detail in the
+phase-by-phase sections earlier in this file, not repeated here): the
+alarm state machine and zone rules (`frigate/alarm/`), MQTT/HA
+integration including inbound `alarm/set` commands, opt-in AI
+verification via the existing GenAI provider abstraction, the global
+camera-auto-surface-on-alert overlay, and the quick arm/disarm/bypass
+control reachable from every page.
+
+### Post-roadmap addition: cross-camera person trail
+
+Requested after the 5-part roadmap above was already complete -- picked by
+the user from a shortlist of next-step ideas. During an active incident,
+show that the same person was likely seen on another camera nearby in
+time ("also seen on driveway at 14:32"), surfaced on the existing
+camera-auto-surface overlay (`AlarmAlertOverlay.tsx`, Part 2 above).
+Planned via EnterPlanMode with two Explore agents first, since it touches
+the alarm pipeline, the DB, the API, and the frontend.
+
+**Entirely glue, no new ML** -- research confirmed Frigate already
+computes both signals this needs: face recognition (opt-in,
+`FaceRecognitionConfig`) already writes a matched name to `Event.sub_label`,
+and semantic/thumbnail search (opt-in, `semantic_search.enabled`) already
+has a working cross-camera k-NN cosine-similarity query,
+`EmbeddingsContext.search_thumbnail()` (`frigate/embeddings/__init__.py`),
+already used by `GET /events/search?search_type=similarity`. Both stayed
+opt-in/off-by-default here too -- the trail endpoint just returns an empty
+list when neither is enabled, same "disabled feature returns empty/400"
+posture used throughout `frigate/api/alarm.py`.
+
+- **Carried the tracked-object id through the pipeline**, which nothing
+  previously did: `AlarmEvent` (`frigate/alarm/event.py`) gained
+  `object_id: str | None`, set by `DetectionAlarmAdapter.evaluate()`
+  (`frigate/alarm/adapter.py`) from the `object_id` parameter it already
+  received but only used for internal persistence tracking. This is
+  exactly the Frigate tracked-object id, confirmed to equal `Event.id`
+  once persisted by reading `frigate/events/maintainer.py:363`
+  (`Event.id == event_data["id"]`), not guessed. Threaded through
+  `AlarmMqttBridge.publish_event()` (one explicit dict key, since that
+  method builds its payload field-by-field, not via `asdict`),
+  `record_alarm_event_log()`, and `GET /alarm/events`'s response dict.
+  `migrations/039_add_object_id_to_alarm_event_log.py` adds a nullable,
+  indexed column to `AlarmEventLog` for historical lookups, following the
+  exact additive-migration pattern used for 036-038.
+- **New `frigate/alarm/trail.py`**: `find_trail(object_id, embeddings,
+  window_seconds)`. Same "glue layer allowed to import frigate.models/
+  frigate.embeddings" precedent as `event_log.py`/`ha_discovery.py` --
+  `frigate/alarm/system.py` itself stays DB-free by design. Combines a
+  cheap exact `Event.sub_label` match (free, no vector search, "named"
+  match type) with `search_thumbnail()` scoped to a candidate id list
+  built from a plain indexed `Event.start_time`/`Event.camera` query
+  ("visual" match type, only when `embeddings` is not `None`). **A real
+  bug in the existing `search_thumbnail()` was read directly from its own
+  docstring, not discovered the hard way**: its `event_ids` filter is
+  documented as broken on the currently pinned sqlite-vec version, so
+  `find_trail()` re-checks candidate-set membership in Python rather than
+  trusting the SQL filter -- covered by a dedicated regression test
+  (`test_visual_match_ignores_ids_outside_candidate_set`) that fabricates
+  exactly that broken-filter scenario. `VISUAL_MATCH_MAX_DISTANCE = 0.5`
+  is an untuned heuristic cosine-distance cutoff -- flagged in-code as
+  needing live tuning, same posture as every other "can't verify against
+  real embeddings/photos in this sandbox" caveat in this file.
+- **New `GET /alarm/trail/{object_id}`** (`frigate/api/alarm.py`),
+  `allow_any_authenticated()` like the other GET endpoints. New response
+  models `AlarmTrailMatchResponse`/`AlarmTrailResponse`. Regenerating
+  `docs/static/frigate-api.yaml` via `generate_api_auth_spec.py` is
+  **still outstanding** -- needs the real container (no fastapi here),
+  not run this session.
+- Frontend: `web/src/types/alarm.ts` gained `AlarmTrailMatch`/`AlarmTrail`
+  and `object_id` on `AlarmEvent` (hand-maintained mirror, same gap as
+  every earlier phase). New `web/src/hooks/use-alarm-trail.ts` (SWR,
+  fetch skipped via a `null` key until an `object_id` exists -- standard
+  SWR conditional-fetch, no precedent needed). `AlarmAlertOverlay.tsx`'s
+  `AlarmCameraTile` gained an "Also seen on" badge row, purely additive to
+  the multi-camera-incident layout from the "Control room" session.
+- **Tests, and this phase had more of the sandbox's "actually runs here"
+  tier than usual**: `frigate/alarm/event.py`/`adapter.py`/`mqtt_bridge.py`
+  have zero DB dependency, so their new/extended tests
+  (`test_alarm_adapter.py`, `test_alarm_mqtt_bridge.py`) ran for real in
+  this bare sandbox, not just lint-checked -- confirmed green. New
+  `frigate/test/test_alarm_trail.py` (13 cases) and the `test_alarm_event_log.py`/
+  `test_http_alarm.py` extensions need `peewee`/`fastapi`, the usual gap,
+  syntax/lint-only here. Full `test_alarm_*.py` discovery re-run after
+  this session's changes: same 9 pre-existing import-gap files as before
+  (now including the new `test_alarm_trail.py`, expected) plus one
+  pre-existing flaky threading test in `test_alarm_queue.py` (passes in
+  isolation, confirmed unrelated -- that file was never touched this
+  session), zero new regressions.
+- **Not yet live-verified** (no GPU, no `cv2`/`fastapi`/peewee in this
+  sandbox, same posture as every other feature in this file that touches
+  real ML): enable both `face_recognition` and `semantic_search` in a
+  real container, enroll a named face, trigger an alarm on one camera,
+  walk the same person past a second camera, and confirm
+  `GET /alarm/trail/{object_id}` returns the named match; repeat
+  unenrolled to confirm the visual-match fallback; confirm the overlay
+  renders the badges live; and regenerate `docs/static/frigate-api.yaml`.
+
+## Scalability: zone-filter query normalization (separate initiative)
+
+**Not part of the numbered security-command-centre roadmap above** --
+this is core Frigate data-layer work, prompted by "make the app scale to
+plenty of cameras/zones and stay fast," not an alarm feature. **DONE**,
+live-verified in the real `frigate` docker-compose container (not just
+this sandbox), including a rebuild of the image.
+
+- An initial audit (Explore agents) claimed `Event.start_time`,
+  `ReviewSegment.start_time`, and `Recordings.start_time` were
+  unindexed. Hand-verified against `migrations/*.py` and found all three
+  already indexed (migrations 011, 020, 022) -- the agents only checked
+  `models.py`'s inline `index=True` declarations and missed that most
+  indexes in this codebase are added via separate raw-SQL migrations.
+  No N+1 query patterns found either. The one real, confirmed,
+  zone-count-scaling issue: zone filtering on `Event.zones` and
+  `ReviewSegment.data["zones"]` did an unindexed `LIKE` scan over a JSON
+  blob (`Event.zones.cast("text") % f'*"{zone}"*'`), architecturally
+  unindexable as-is -- more zones directly meant a slower scan.
+- Fix: new additive join tables `EventZone`/`ReviewSegmentZone`
+  (`frigate/models.py`), a real index on `zone`, populated via
+  `insert_many(...).on_conflict_ignore()` at every write site
+  (`frigate/events/maintainer.py`, `frigate/comms/dispatcher.py`'s
+  review-segment upsert handlers) and kept clean at every existing
+  delete site (`frigate/events/cleanup.py`, `frigate/record/cleanup.py`,
+  `frigate/api/review.py`, `frigate/util/camera_cleanup.py`) since this
+  codebase does not enable SQLite's `foreign_keys` pragma, so `ON DELETE
+  CASCADE` would be inert. `Event.zones`/`ReviewSegment.data["zones"]`
+  are untouched -- still the display source, still what the join tables
+  are populated from. `migrations/037_create_zone_join_tables.py` also
+  backfills existing rows via SQLite's `json_each()` (verified working
+  against this codebase's SQLite build before relying on it) and adds a
+  `ReviewSegment.severity`+`start_time` compound index (every review-list
+  query already sorts by that pair). Read paths
+  (`frigate/api/event.py`, `frigate/api/review.py`) swapped from the LIKE
+  scan to `Event.id.in_(EventZone.select(...).where(EventZone.zone <<
+  filtered_zones))` and the review mirror, preserving OR-across-zones and
+  "None" (zoneless) semantics.
+- Learned from Part 1's mistake and avoided repeating it: `EventZone`/
+  `ReviewSegmentZone` were added to `frigate/app.py`'s real `models = [...]`
+  binding list proactively, in the same edit that added the classes to
+  `models.py` -- not discovered missing later via a live 500.
+- Tests: `frigate/test/test_zone_join_tables.py` (upsert-sync mechanics,
+  the migration's exact backfill SQL against hand-built rows, cleanup
+  orphan-check), plus new `TestEventZoneFilter`/`TestReviewZoneFilter`
+  classes in the existing `test_http_event.py`/`test_http_review.py`.
+  All pass in-container, plus a full `unittest discover` regression pass
+  (1126 tests) showed zero new failures -- the only 4 failures found
+  (`test_alarm_dispatcher_command.py`: `test_arm_home_command`,
+  `test_arm_night_command`, `test_command_is_case_insensitive`) are
+  pre-existing, deterministic, reproducible in isolation, and confirmed
+  unrelated by diffing exactly what changed in `dispatcher.py` this
+  session (only the zone-sync helper and its wiring into the two
+  review-segment handlers) -- worth fixing separately, not folded into
+  this initiative. The bug: `AlarmSystem`'s exit-delay timer only
+  reliably completes for `away` in that test's synchronous assertion
+  style, not `home`/`night`, in the still-uncommitted HA three-mode
+  work.
+- Rebuilt the image (`docker compose build frigate` + `up -d frigate`)
+  and confirmed migration 037 runs cleanly against the real production
+  DB on a real container restart (camera `dehothouse` configured, no
+  historical event/review rows existed yet to exercise the backfill
+  against, so the backfill's correctness rests on the unit tests running
+  the exact migration SQL against hand-built rows instead).
+- Live end-to-end verification against the real bound database (not
+  in-memory): manually inserted rows through the exact same write path
+  `maintainer.py`/`dispatcher.py` use, confirmed `EXPLAIN QUERY PLAN`
+  shows `SEARCH eventzone USING INDEX eventzone_zone` (not a table
+  scan), hit the real HTTP API through nginx (`GET /api/events?zones=`,
+  `GET /api/review?zones=`) and confirmed correct OR-across-zones and
+  "None" filtering, then deleted the rows through the same cleanup path
+  and confirmed zero orphaned join-table rows. Cleaned up all test data
+  afterward -- nothing left in the real database.
+- **A pre-existing, unrelated bug found along the way, not fixed**:
+  `frigate/api/review.py`'s `after = params.after or (now - 24h)` (and
+  the equivalent for `before`) treats `after=0` as falsy and silently
+  ignores it, falling back to the 24-hour-ago default instead of epoch
+  0. Only surfaced because a live-verification test row happened to use
+  an old timestamp; harmless for real usage (nobody passes `after=0` in
+  practice) but worth a one-line `is None` fix if anyone hits it.
+
+## TensorRT execution provider for x86_64 GPU inference (separate initiative)
+
+**Not alarm-engine related** -- performance work on core GPU inference,
+prompted by wanting the `-tensorrt` amd64 image to actually use TensorRT
+instead of silently running plain CUDA. **Code changes done, NOT live-
+verified** -- no NVIDIA GPU in this sandbox, same posture as the SIA DC-09
+stub above: best-effort implementation, flagged unverified, needs a real
+GPU build/boot before being trusted.
+
+- Found that `frigate/util/model.py`'s `get_ort_providers()` already had a
+  TensorRT-then-CUDA-fallback code path, but it was **dead on x86_64**: (1)
+  it only activated on the literal, undocumented `device: Tensorrt` config
+  value, and (2) `docker/tensorrt/requirements-amd64.txt` never installed
+  the TensorRT runtime libs (`libnvinfer*`) ONNX Runtime needs to even
+  detect `TensorrtExecutionProvider` as available, unlike
+  `Dockerfile.arm64` which does for Jetson. So every existing x86_64
+  `-tensorrt` GPU user was running plain CUDA-EP ONNX regardless of config.
+- User confirmed (via AskUserQuestion): TensorRT should become the
+  **automatic default** on that image, not a hidden opt-in, matching the
+  "auto-detected" UX already given to CUDA/ROCm/OpenVINO.
+- Changes: added `tensorrt-cu12-libs==10.9.*` to
+  `docker/tensorrt/requirements-amd64.txt` (version is a best-available
+  extrapolation from ONNX Runtime's published CUDA/TensorRT compatibility
+  table, which doesn't list `onnxruntime-gpu==1.24` explicitly -- **must be
+  confirmed against a real build**, adjust if `onnxruntime.get_available_providers()`
+  shows a version-mismatch error). Removed the `device == "Tensorrt"` gate
+  in `get_ort_providers()` (`frigate/util/model.py`) so
+  `TensorrtExecutionProvider` is registered unconditionally whenever ONNX
+  Runtime reports it available, exactly mirroring how `CUDAExecutionProvider`
+  is already handled -- no new fallback logic needed, since ONNX Runtime's
+  own per-node graph partitioning already falls back to whichever provider
+  comes next in the list. Added `trt_max_workspace_size` (default 2048MB,
+  overridable via `TRT_MAX_WORKSPACE_MB`), which resolves the stale
+  in-code comment claiming TensorRT had "no options to control" its memory
+  use -- that option existed in ONNX Runtime already, Frigate's code just
+  never set it.
+- `trt_fp16_enable` wiring was left untouched: the ONNX detector
+  (`frigate/detectors/plugins/onnx.py`) never passes `requires_fp16=True`
+  for detection models, so TensorRT runs at the same FP32 precision CUDA
+  does today -- no accuracy tradeoff introduced by this change.
+- `frigate/detectors/detection_runners.py`'s `get_optimized_runner()`
+  needed no change: its `providers[0] == "CUDAExecutionProvider"` check
+  (gating the CUDA-Graph-capture fast path) already correctly falls through
+  to the generic `ONNXModelRunner` path when TensorRT is `providers[0]`
+  instead, which is what should happen since CUDA Graph capture is CUDA-EP
+  specific and wouldn't apply to TensorRT anyway.
+- `frigate/detectors/plugins/tensorrt.py` (the dedicated Jetson `type:
+  tensorrt` detector) was not touched -- separate, unrelated code path.
+- Docs (`docs/docs/configuration/object_detectors.md`) updated to describe
+  the new automatic TensorRT-then-CUDA behavior and its tradeoffs (larger
+  image, slower first-boot engine compile, unchanged FP32 accuracy).
+- Tests: new `frigate/test/test_util_model.py` (3 cases -- TRT registered
+  automatically with CUDA fallback and a real `trt_max_workspace_size`,
+  the `TRT_MAX_WORKSPACE_MB` env override, and the CUDA-only case when TRT
+  isn't available). Like most of `frigate.util.model`'s dependents, this
+  needs real `cv2`/`onnxruntime` (imported at module scope), neither
+  installed in this sandbox -- confirmed via `ruff check`/`ruff format
+  --check`/`mypy` only (all clean), **never actually run**.
+- **Before trusting this**: rebuild the `-tensorrt` amd64 image on real
+  GPU hardware and confirm `TensorrtExecutionProvider` loads without a
+  version mismatch, the detector survives the slower first-boot engine
+  compile (existing `_warmup()` in `onnx.py` should already cover this,
+  unverified), inference speed actually improves over the prior CUDA-only
+  baseline, and detection confidence scores are materially unchanged.

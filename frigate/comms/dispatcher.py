@@ -6,6 +6,7 @@ import logging
 from collections.abc import Callable, Iterable
 from typing import Any, cast
 
+from frigate.alarm.audit import record_alarm_audit
 from frigate.alarm.state import ArmedMode, InvalidAlarmTransition
 from frigate.alarm.system import AlarmSystem
 from frigate.camera import PTZMetrics
@@ -40,7 +41,13 @@ from frigate.const import (
     UPDATE_REVIEW_DESCRIPTION,
     UPSERT_REVIEW_SEGMENT,
 )
-from frigate.models import Event, Previews, Recordings, ReviewSegment
+from frigate.models import (
+    Event,
+    Previews,
+    Recordings,
+    ReviewSegment,
+    ReviewSegmentZone,
+)
 from frigate.ptz.onvif import OnvifCommandEnum, OnvifController
 from frigate.types import ModelStatusTypesEnum, TrackedObjectUpdateTypesEnum
 from frigate.util.object import get_camera_regions_grid
@@ -183,6 +190,10 @@ class Dispatcher:
                 conflict_target=[ReviewSegment.id],
                 update=payload,
             ).execute()
+            self._sync_review_segment_zones(
+                payload[ReviewSegment.id.name],
+                payload[ReviewSegment.data.name].get("zones"),
+            )
 
         def handle_clear_ongoing_review_segments() -> None:
             ReviewSegment.update(end_time=datetime.datetime.now().timestamp()).where(
@@ -220,6 +231,10 @@ class Dispatcher:
                 conflict_target=[ReviewSegment.id],
                 update=final_data,
             ).execute()
+            self._sync_review_segment_zones(
+                final_data[ReviewSegment.id.name],
+                final_data[ReviewSegment.data.name].get("zones"),
+            )
             self.publish("reviews", json.dumps(payload))
 
         def handle_update_model_state() -> None:
@@ -554,6 +569,23 @@ class Dispatcher:
                         continue
                     camera.audio.enabled = value
 
+    def _sync_review_segment_zones(self, review_segment_id: str, zones: list) -> None:
+        """Additive index alongside ReviewSegment.data["zones"] (unchanged)
+        so zone filtering can use a real index instead of a LIKE scan over
+        JSON text -- see frigate/api/review.py. Zones only ever get added
+        as a segment accrues more objects, never removed, so
+        on_conflict_ignore() against the unique (review_segment_id, zone)
+        index is always correct here."""
+        if not zones:
+            return
+        (
+            ReviewSegmentZone.insert_many(
+                [{"review_segment": review_segment_id, "zone": z} for z in zones]
+            )
+            .on_conflict_ignore()
+            .execute()
+        )
+
     def _on_detect_command(self, camera_name: str, payload: str) -> None:
         """Callback for detect topic."""
         detect_settings = self.config.cameras[camera_name].detect
@@ -776,8 +808,11 @@ class Dispatcher:
         try:
             if command == "DISARM":
                 self.alarm_system.disarm()
+                record_alarm_audit("disarm", "mqtt")
             elif command in mode_by_command:
-                self.alarm_system.arm(mode_by_command[command])
+                mode = mode_by_command[command]
+                self.alarm_system.arm(mode)
+                record_alarm_audit("arm", "mqtt", details={"mode": mode.value})
             else:
                 logger.warning("Unrecognized alarm command: %s", payload)
         except InvalidAlarmTransition as e:

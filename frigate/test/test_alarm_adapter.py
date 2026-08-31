@@ -33,6 +33,7 @@ class TestBasicQualification(unittest.TestCase):
         self.assertEqual(event.zone_id, "driveway")
         self.assertEqual(event.object_type, "person")
         self.assertEqual(event.confidence, 0.9)
+        self.assertEqual(event.object_id, "1")
 
     def test_disarmed_never_qualifies(self) -> None:
         rule = _rule(objects=frozenset({"person"}))

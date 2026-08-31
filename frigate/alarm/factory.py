@@ -10,7 +10,9 @@ any dependency on frigate.config or the protocol adapters.
 import logging
 from collections.abc import Callable
 
+from frigate.alarm.ai_verification import AlarmAiVerifier
 from frigate.alarm.event import AlarmEvent
+from frigate.alarm.notify_whatsapp import AlarmWhatsAppNotifier
 from frigate.alarm.protocols.contact_id import (
     ContactIDClient,
     encode_contact_id_message,
@@ -19,8 +21,13 @@ from frigate.alarm.protocols.sia import SiaClient, encode_sia_message
 from frigate.alarm.queue import ReportingQueue
 from frigate.alarm.rules import ZoneAlarmRule
 from frigate.alarm.system import AlarmSystem
-from frigate.config.alarm import AlarmReportingConfig, AlarmReportingProtocol
+from frigate.config.alarm import (
+    AlarmConfig,
+    AlarmReportingConfig,
+    AlarmReportingProtocol,
+)
 from frigate.config.config import FrigateConfig
+from frigate.genai.manager import GenAIClientManager
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +103,36 @@ def build_alarm_rules(config: FrigateConfig) -> dict[tuple[str, str], ZoneAlarmR
     return rules
 
 
+def build_ai_verifier(
+    config: FrigateConfig, rules: dict[tuple[str, str], ZoneAlarmRule]
+) -> AlarmAiVerifier | None:
+    """Build an AlarmAiVerifier, or None if no zone opted into ai_verification.
+
+    Only built when at least one rule uses it -- GenAIClientManager itself
+    is cheap to construct (clients are created lazily on first use), but
+    there's no reason for AlarmDetectionThread to carry a verifier that
+    nothing will ever call.
+    """
+    if not any(rule.ai_verification for rule in rules.values()):
+        return None
+
+    return AlarmAiVerifier(GenAIClientManager(config))
+
+
+def build_alarm_whatsapp_queue(config: AlarmConfig) -> ReportingQueue | None:
+    """Build a ReportingQueue that sends WhatsApp notifications on
+    qualifying alarm events, or None if disabled. Hardcoded, sane retry
+    defaults -- not exposing another pair of config knobs for a first
+    version."""
+    if not config.whatsapp.enabled:
+        return None
+
+    notifier = AlarmWhatsAppNotifier(config.whatsapp.to_notify_config())
+    return ReportingQueue(
+        send=notifier.notify, max_attempts=3, retry_delay_seconds=10.0
+    )
+
+
 def build_alarm_system(config: FrigateConfig) -> AlarmSystem | None:
     """Build a (not yet started) AlarmSystem from config, or None if the
     alarm engine is disabled. Starting it (and its reporting queue, if any)
@@ -105,9 +142,11 @@ def build_alarm_system(config: FrigateConfig) -> AlarmSystem | None:
 
     rules = build_alarm_rules(config)
     reporting_queue = build_reporting_queue(config.alarm.reporting)
+    whatsapp_queue = build_alarm_whatsapp_queue(config.alarm)
 
     return AlarmSystem(
         rules,
         default_exit_delay_seconds=config.alarm.exit_delay_seconds,
         reporting_queue=reporting_queue,
+        whatsapp_queue=whatsapp_queue,
     )

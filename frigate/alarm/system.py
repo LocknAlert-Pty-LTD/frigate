@@ -31,6 +31,7 @@ class ZoneStatus:
     zone: str
     enabled: bool
     armed: bool
+    bypassed: bool
 
 
 class AlarmSystem:
@@ -40,6 +41,7 @@ class AlarmSystem:
         *,
         default_exit_delay_seconds: int = 30,
         reporting_queue: ReportingQueue | None = None,
+        whatsapp_queue: ReportingQueue | None = None,
         event_history_size: int = 100,
     ) -> None:
         self.state_machine = AlarmStateMachine()
@@ -47,7 +49,17 @@ class AlarmSystem:
         self._rules = rules
         self.default_exit_delay_seconds = default_exit_delay_seconds
         self.reporting_queue = reporting_queue
+        # Same shape as reporting_queue -- both are plain ReportingQueue
+        # instances (frigate/alarm/queue.py), just delivering to a
+        # different channel. Given first-class treatment here (rather than
+        # being held only on FrigateApp, as it briefly was) so its health
+        # can be exposed via status() the same way reporting_healthy is.
+        self.whatsapp_queue = whatsapp_queue
         self._events: deque[AlarmEvent] = deque(maxlen=event_history_size)
+        # Per-arm-cycle zone bypass: cleared automatically once the system
+        # is actually stood down (see disarm()/clear()), never persisted
+        # beyond that, so a bypassed zone can never be silently forgotten.
+        self._bypassed_zones: set[tuple[str, str]] = set()
 
         # AlarmStateMachine deliberately doesn't time its own delay states
         # (see engine.py) -- this is the caller that owns the timers, using
@@ -116,14 +128,33 @@ class AlarmSystem:
     def disarm(self) -> AlarmState:
         self._cancel_timers()
         state = self.state_machine.disarm()
+        if state == AlarmState.disarmed:
+            # Only when actually stood down -- disarm() during an active
+            # alarm silences into alarm_memory instead, and bypass should
+            # survive until the operator genuinely clears/re-disarms.
+            self._bypassed_zones.clear()
         self._notify()
         return state
 
     def clear(self) -> AlarmState:
         self._cancel_timers()
         state = self.state_machine.clear()
+        self._bypassed_zones.clear()
         self._notify()
         return state
+
+    def bypass_zone(self, camera: str, zone: str) -> None:
+        """Temporarily exclude a zone from alarm evaluation for the rest of
+        this arm cycle. Auto-clears on disarm()/clear() -- see there."""
+        self._bypassed_zones.add((camera, zone))
+        self._notify()
+
+    def unbypass_zone(self, camera: str, zone: str) -> None:
+        self._bypassed_zones.discard((camera, zone))
+        self._notify()
+
+    def is_bypassed(self, camera: str, zone: str) -> bool:
+        return (camera, zone) in self._bypassed_zones
 
     def stop(self) -> None:
         """Cancel any pending delay timers. Safe to call even if none are
@@ -152,6 +183,8 @@ class AlarmSystem:
         self._events.append(event)
         if self.reporting_queue is not None:
             self.reporting_queue.enqueue(event)
+        if self.whatsapp_queue is not None:
+            self.whatsapp_queue.enqueue(event)
         if self.on_event is not None:
             self.on_event(event)
 
@@ -201,7 +234,9 @@ class AlarmSystem:
                     rule.enabled
                     and armed_mode is not None
                     and armed_mode in rule.arm_modes
+                    and not self.is_bypassed(rule.camera, rule.zone)
                 ),
+                bypassed=self.is_bypassed(rule.camera, rule.zone),
             )
             for rule in self._rules.values()
         ]
@@ -220,12 +255,16 @@ class AlarmSystem:
                 if self.reporting_queue is not None
                 else None
             ),
+            "whatsapp_healthy": (
+                self.whatsapp_queue.healthy if self.whatsapp_queue is not None else None
+            ),
             "zones": [
                 {
                     "camera": z.camera,
                     "zone": z.zone,
                     "enabled": z.enabled,
                     "armed": z.armed,
+                    "bypassed": z.bypassed,
                 }
                 for z in self.zone_status()
             ],

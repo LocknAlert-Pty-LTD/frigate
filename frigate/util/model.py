@@ -345,32 +345,38 @@ def get_ort_providers(
                 }
             )
         elif provider == "TensorrtExecutionProvider":
-            # TensorrtExecutionProvider uses too much memory without options to control it
-            # so it is not enabled by default
-            if device == "Tensorrt":
-                os.makedirs(
-                    os.path.join(MODEL_CACHE_DIR, "tensorrt/ort/trt-engines"),
-                    exist_ok=True,
-                )
-                device_id = 0 if not device.isdigit() else int(device)
-                providers.append(provider)
-                options.append(
-                    {
-                        "device_id": device_id,
-                        "trt_fp16_enable": requires_fp16
-                        and os.environ.get("USE_FP16", "True") != "False",
-                        "trt_timing_cache_enable": True,
-                        "trt_engine_cache_enable": True,
-                        "trt_timing_cache_path": os.path.join(
-                            MODEL_CACHE_DIR, "tensorrt/ort"
-                        ),
-                        "trt_engine_cache_path": os.path.join(
-                            MODEL_CACHE_DIR, "tensorrt/ort/trt-engines"
-                        ),
-                    }
-                )
-            else:
-                continue
+            # Preferred over plain CUDA whenever available: ONNX Runtime
+            # partitions the graph and falls back to CUDAExecutionProvider
+            # (registered right below) node-by-node for anything TensorRT
+            # can't run, so this is a strict speed upgrade with no separate
+            # fallback logic needed. trt_max_workspace_size caps GPU memory
+            # use (overridable via TRT_MAX_WORKSPACE_MB for large/shared GPUs).
+            os.makedirs(
+                os.path.join(MODEL_CACHE_DIR, "tensorrt/ort/trt-engines"),
+                exist_ok=True,
+            )
+            device_id = 0 if (not device or not device.isdigit()) else int(device)
+            providers.append(provider)
+            options.append(
+                {
+                    "device_id": device_id,
+                    "trt_fp16_enable": requires_fp16
+                    and os.environ.get("USE_FP16", "True") != "False",
+                    "trt_max_workspace_size": int(
+                        os.environ.get("TRT_MAX_WORKSPACE_MB", "2048")
+                    )
+                    * 1024
+                    * 1024,
+                    "trt_timing_cache_enable": True,
+                    "trt_engine_cache_enable": True,
+                    "trt_timing_cache_path": os.path.join(
+                        MODEL_CACHE_DIR, "tensorrt/ort"
+                    ),
+                    "trt_engine_cache_path": os.path.join(
+                        MODEL_CACHE_DIR, "tensorrt/ort/trt-engines"
+                    ),
+                }
+            )
         elif provider == "OpenVINOExecutionProvider":
             # OpenVINO is used directly
             if device == "OpenVINO":

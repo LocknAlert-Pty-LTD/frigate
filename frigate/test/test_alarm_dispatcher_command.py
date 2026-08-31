@@ -37,6 +37,15 @@ def _alarm_system() -> AlarmSystem:
 
 
 class TestAlarmCommandRouting(unittest.TestCase):
+    def setUp(self) -> None:
+        # These tests are about command routing/state transitions, not
+        # persistence -- record_alarm_audit needs a real bound database
+        # (see test_alarm_audit.py for that), which this lightweight
+        # MagicMock-config dispatcher doesn't have.
+        patcher = patch("frigate.comms.dispatcher.record_alarm_audit")
+        self.mock_record_audit = patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_receive_routes_alarm_set_topic_to_handler(self) -> None:
         dispatcher = _build_dispatcher()
         dispatcher.alarm_system = _alarm_system()
@@ -112,6 +121,30 @@ class TestAlarmCommandRouting(unittest.TestCase):
         dispatcher.alarm_system.on_change = lambda: calls.append(1)
         dispatcher._on_alarm_command("ARM_AWAY")
         self.assertEqual(len(calls), 1)
+
+    def test_arm_command_records_audit_entry(self) -> None:
+        dispatcher = _build_dispatcher()
+        dispatcher.alarm_system = _alarm_system()
+        dispatcher._on_alarm_command("ARM_NIGHT")
+        self.mock_record_audit.assert_called_once_with(
+            "arm", "mqtt", details={"mode": "night"}
+        )
+
+    def test_disarm_command_records_audit_entry(self) -> None:
+        dispatcher = _build_dispatcher()
+        dispatcher.alarm_system = _alarm_system()
+        dispatcher.alarm_system.arm(ArmedMode.away, exit_delay_seconds=0)
+        self.mock_record_audit.reset_mock()
+        dispatcher._on_alarm_command("DISARM")
+        self.mock_record_audit.assert_called_once_with("disarm", "mqtt")
+
+    def test_invalid_transition_records_no_audit_entry(self) -> None:
+        dispatcher = _build_dispatcher()
+        dispatcher.alarm_system = _alarm_system()
+        dispatcher.alarm_system.arm(ArmedMode.away, exit_delay_seconds=0)
+        self.mock_record_audit.reset_mock()
+        dispatcher._on_alarm_command("ARM_HOME")
+        self.mock_record_audit.assert_not_called()
 
 
 if __name__ == "__main__":

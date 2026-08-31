@@ -4,6 +4,7 @@ import { CameraGroupSelector } from "../filter/CameraGroupSelector";
 import { Link, useMatch } from "react-router-dom";
 import GeneralSettings from "../menu/GeneralSettings";
 import AccountSettings from "../menu/AccountSettings";
+import AlarmControl from "../menu/AlarmControl";
 import useNavigation from "@/hooks/use-navigation";
 import { baseUrl } from "@/api/baseUrl";
 import { useMemo } from "react";
@@ -40,6 +41,7 @@ function Sidebar() {
         })}
       </div>
       <div className="mb-8 flex flex-col items-center gap-4">
+        <AlarmControl />
         <GeneralSettings />
         <AccountSettings />
       </div>

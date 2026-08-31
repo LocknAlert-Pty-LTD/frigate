@@ -90,4 +90,5 @@ class DetectionAlarmAdapter:
             zone_id=zone,
             object_type=label,
             confidence=score,
+            object_id=object_id,
         )

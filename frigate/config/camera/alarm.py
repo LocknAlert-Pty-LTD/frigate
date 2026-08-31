@@ -56,6 +56,11 @@ class AlarmZoneConfig(FrigateBaseModel):
         title="Active arm modes",
         description="Which arm modes this zone is active in. Remove 'home'/'night' for an interior zone that should only trigger when armed away.",
     )
+    ai_verification: bool = Field(
+        default=False,
+        title="AI verification",
+        description="Ask the configured GenAI description provider to confirm a qualifying detection before it raises an alarm, on top of the confidence/persistence checks above. Falls back to triggering normally if no provider is configured or the check fails, so it can only suppress false alarms, never mask a real one.",
+    )
 
     def to_rule(self, camera: str, zone: str) -> ZoneAlarmRule:
         """Build the plain-dataclass rule the detection adapter evaluates against."""
@@ -70,6 +75,7 @@ class AlarmZoneConfig(FrigateBaseModel):
             verification_seconds=self.verification_seconds,
             entry_delay_seconds=self.delay,
             arm_modes=frozenset(self.arm_modes),
+            ai_verification=self.ai_verification,
         )
 
 

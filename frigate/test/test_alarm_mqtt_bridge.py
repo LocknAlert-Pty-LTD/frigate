@@ -158,6 +158,25 @@ class TestPublishEvent(unittest.TestCase):
         self.assertFalse(retain)
         self.assertEqual(json.loads(payload)["camera_id"], "front")
 
+    def test_publishes_object_id_for_trail_lookup(self) -> None:
+        """object_id is what lets a frontend/API consumer correlate this
+        published event back to the real Frigate Event row (see
+        frigate/alarm/trail.py) -- must survive the explicit field-by-field
+        publish dict, not just live on the dataclass."""
+        publisher = _RecordingPublisher()
+        bridge = AlarmMqttBridge(_system(), publisher)
+        event = AlarmEvent(
+            event_type=AlarmEventType.burglary,
+            camera_id="front",
+            timestamp=1_700_000_000.0,
+            zone_id="driveway",
+            object_id="1700000000.123456-abc123",
+        )
+        bridge.publish_event(event)
+
+        payload = json.loads(publisher.calls[0][1])
+        self.assertEqual(payload["object_id"], "1700000000.123456-abc123")
+
 
 class TestIntegrationWithArm(unittest.TestCase):
     def test_status_reflects_armed_state_after_arm(self) -> None:

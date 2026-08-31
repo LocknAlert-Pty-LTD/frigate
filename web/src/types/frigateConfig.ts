@@ -425,6 +425,14 @@ export interface FrigateConfig {
       max_attempts: number;
       retry_delay_seconds: number;
     };
+    schedule: {
+      enabled: boolean;
+      entries: {
+        time: string;
+        mode: "away" | "home" | "night" | null;
+        days: number[];
+      }[];
+    };
   };
 
   audio: {
