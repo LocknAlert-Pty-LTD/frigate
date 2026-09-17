@@ -1303,6 +1303,45 @@ class TestConfig(unittest.TestCase):
         assert frigate_config.cameras["back"].snapshots.bounding_box
         assert frigate_config.cameras["back"].snapshots.quality == 60
 
+    def test_default_lpr_parkpow(self):
+        frigate_config = FrigateConfig(**self.minimal)
+
+        assert frigate_config.lpr.parkpow.enabled is False
+        assert frigate_config.lpr.parkpow.host == "https://app.parkpow.com"
+        assert frigate_config.lpr.parkpow.token is None
+        assert frigate_config.cameras["back"].lpr.parkpow_enabled is None
+
+    def test_lpr_parkpow_camera_override(self):
+        config = {
+            "mqtt": {"host": "mqtt"},
+            "lpr": {
+                "parkpow": {"enabled": True, "token": "abc123"},
+            },
+            "cameras": {
+                "back": {
+                    "ffmpeg": {
+                        "inputs": [
+                            {
+                                "path": "rtsp://10.0.0.1:554/video",
+                                "roles": ["detect"],
+                            },
+                        ]
+                    },
+                    "detect": {
+                        "height": 1080,
+                        "width": 1920,
+                        "fps": 5,
+                    },
+                    "lpr": {"parkpow_enabled": False},
+                }
+            },
+        }
+
+        frigate_config = FrigateConfig(**config)
+        assert frigate_config.lpr.parkpow.enabled is True
+        assert frigate_config.lpr.parkpow.token == "abc123"
+        assert frigate_config.cameras["back"].lpr.parkpow_enabled is False
+
     def test_global_snapshots_merge(self):
         config = {
             "mqtt": {"host": "mqtt"},

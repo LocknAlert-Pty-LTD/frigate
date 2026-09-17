@@ -272,6 +272,37 @@ The saved images are not full plates but rather the specific areas of text detec
 
 **Note:** Frigate does **not** automatically delete these debug images. Once LPR is functioning correctly, you should disable this option and manually remove the saved files to free up storage.
 
+### ParkPow integration
+
+Frigate can report recognized plates to [ParkPow](https://app.parkpow.com/documentation/), a hosted or self-hosted ALPR visit-management dashboard. Once a vehicle's tracked object finishes and a plate has been recognized for it, Frigate sends the plate, confidence score, camera name, timestamp, and a snapshot image to your ParkPow instance.
+
+```yaml
+lpr:
+  parkpow:
+    enabled: True
+    host: https://app.parkpow.com # use your on-premise host if self-hosting
+    token: <your ParkPow API token>
+    timeout: 10
+```
+
+Generate an API token at `https://app.parkpow.com/account/token/` (or the equivalent path on a self-hosted instance).
+
+To report only specific cameras to ParkPow, leave `lpr.parkpow.enabled` off globally and turn it on per-camera:
+
+```yaml
+lpr:
+  parkpow:
+    enabled: False
+    token: <your ParkPow API token>
+
+cameras:
+  driveway:
+    lpr:
+      parkpow_enabled: True
+```
+
+`cameras.<camera>.lpr.parkpow_enabled` overrides the global `lpr.parkpow.enabled` value for that camera; leave it unset to inherit the global setting.
+
 ## Configuration Examples
 
 These configuration parameters are available at the global level. The only optional parameters that should be set at the camera level are `enabled`, `min_area`, and `enhancement`.

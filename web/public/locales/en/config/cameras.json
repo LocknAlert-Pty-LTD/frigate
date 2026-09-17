@@ -301,6 +301,10 @@
     "enhancement": {
       "label": "Enhancement level",
       "description": "Enhancement level (0-10) to apply to plate crops prior to OCR; higher values may not always improve results, levels above 5 may only work with night time plates and should be used with caution."
+    },
+    "parkpow_enabled": {
+      "label": "Override ParkPow reporting",
+      "description": "Override the global ParkPow enabled setting for this camera. Unset inherits the global lpr.parkpow.enabled value."
     }
   },
   "motion": {

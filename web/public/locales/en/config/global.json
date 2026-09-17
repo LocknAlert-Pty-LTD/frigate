@@ -1561,6 +1561,26 @@
     "expire_time": {
       "label": "Expire seconds",
       "description": "Time in seconds after which an unseen plate is expired from the tracker (for dedicated LPR cameras only)."
+    },
+    "parkpow": {
+      "label": "ParkPow integration",
+      "description": "Settings for sending recognized license plates to ParkPow.",
+      "enabled": {
+        "label": "Enable ParkPow integration",
+        "description": "Send recognized license plates to a ParkPow instance."
+      },
+      "host": {
+        "label": "ParkPow host",
+        "description": "Base URL of the ParkPow instance (cloud or on-premise) to send recognized plates to."
+      },
+      "token": {
+        "label": "ParkPow API token",
+        "description": "API token used to authenticate with ParkPow, available at https://app.parkpow.com/account/token/."
+      },
+      "timeout": {
+        "label": "Request timeout",
+        "description": "Timeout in seconds for requests sent to ParkPow."
+      }
     }
   },
   "camera_groups": {
