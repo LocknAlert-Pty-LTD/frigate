@@ -48,7 +48,7 @@ Two independent causes:
 
 | File | Change |
 | --- | --- |
-| `docker/tensorrt/requirements-amd64.txt` | `+ tensorrt-cu12-libs==10.9.*; platform_machine == 'x86_64'` |
+| `docker/tensorrt/requirements-amd64.txt` | `+ tensorrt-cu12-libs==10.14.*; platform_machine == 'x86_64'` (must match the TensorRT release `onnxruntime-gpu` was built against) |
 | `frigate/util/model.py` | `get_ort_providers()`: removed the `device == "Tensorrt"` gate so TRT registers unconditionally when ORT reports it available; added `trt_max_workspace_size` (default 2048 MB, env `TRT_MAX_WORKSPACE_MB`); hardened `device_id` parse against empty string |
 | `docs/docs/configuration/object_detectors.md` | Documents automatic TRT→CUDA behavior, first-boot engine compile, larger image |
 | `frigate/test/test_util_model.py` | 3 cases: TRT auto-registered with CUDA fallback, env override, CUDA-only when TRT absent |
@@ -70,20 +70,42 @@ capture) correctly falls through to the generic runner when TRT is first.
 - `frigate/detectors/plugins/tensorrt.py` — the dedicated Jetson `type: tensorrt`
   detector is a separate, unrelated code path.
 
-### ⚠️ Verification status: NOT live-verified
+### The version pin is the whole ballgame
 
-Written without NVIDIA GPU access. The `tensorrt-cu12-libs==10.9.*` pin is an
-extrapolation from ONNX Runtime's compatibility table, which does not list
-`onnxruntime-gpu==1.24` explicitly. **Before trusting it:**
+The TensorRT EP in `onnxruntime-gpu` is built against **one specific** TensorRT
+release. If the `tensorrt-cu12-libs` wheel does not match it, the EP fails to
+load and ONNX Runtime falls back to CUDA. That failure surfaces as a
+*performance regression, not an error*, so an image can look completely healthy
+while doing none of what this work was for. Any `onnxruntime-gpu` bump must move
+this pin in step.
 
-1. Build the amd64 `-tensorrt` image on real GPU hardware.
-2. `python3 -c "import onnxruntime; print(onnxruntime.get_available_providers())"`
-   inside the container — `TensorrtExecutionProvider` must be present with no
-   version-mismatch error. If mismatched, adjust the pin to whatever TRT release
-   `onnxruntime-gpu` was built against.
-3. Confirm the detector survives the slower first-boot engine compile (engines are
+| `onnxruntime-gpu` | TensorRT |
+| --- | --- |
+| 1.19 | 10.2 |
+| 1.20 | 10.4 |
+| 1.21 | 10.8 |
+| 1.22 | 10.9 |
+| **1.24** (`1.24.*` → 1.24.4, what we pin) | **10.14** |
+
+The first four rows are ONNX Runtime's published matrix; the 1.24 row comes from
+the v1.24.1 release notes ("TensorRT EP: Upgraded to TensorRT 10.14").
+
+This was originally pinned to `10.9.*`, extrapolated from the 1.22 row because
+the published table stops there. **That was wrong** — 10.9 against an ORT 1.24
+that wants 10.14 is exactly the silent-fallback case above. Corrected to
+`10.14.*`.
+
+### ⚠️ Still not live-verified
+
+No NVIDIA GPU was available while writing this, so the corrected pin is
+researched but unproven. On the first real run:
+
+1. `python3 -c "import onnxruntime; print(onnxruntime.get_available_providers())"`
+   inside the container — `TensorrtExecutionProvider` must appear, with no
+   version-mismatch warning in the logs.
+2. Confirm the detector survives the slower first-boot engine compile (engines are
    cached to `/config/model_cache/tensorrt/ort/trt-engines`).
-4. Confirm inference speed improves over the CUDA-only baseline and detection
+3. Confirm inference speed improves over the CUDA-only baseline and detection
    confidence scores are materially unchanged.
 
 ### Build + push
@@ -710,7 +732,7 @@ npx tsc --noEmit && npx eslint . && npx i18next-cli extract --ci && npx vite bui
 
 | Item | Status |
 | --- | --- |
-| TensorRT `tensorrt-cu12-libs` version pin | Never run on real GPU hardware — verify before trusting |
+| TensorRT `tensorrt-cu12-libs` version pin | Corrected 10.9 → 10.14 to match onnxruntime-gpu 1.24; researched, but never run on real GPU hardware |
 | SIA DC-09 protocol (`protocols/sia.py`) | Best-effort, no spec available — flagged unverified. Contact ID *is* verified. |
 | ParkPow end-to-end | Unit tests now pass (8/8); no live POST confirmed against a real ParkPow instance |
 | ParkPow locale JSON | Hand-edited; still needs `generate_config_translations.py` re-run in the container |

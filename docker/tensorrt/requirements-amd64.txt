@@ -17,7 +17,15 @@ onnxruntime-gpu==1.24.*; platform_machine == 'x86_64'
 protobuf==3.20.3; platform_machine == 'x86_64'
 # TensorRT runtime libs (libnvinfer etc) so onnxruntime-gpu's
 # TensorrtExecutionProvider is actually available at runtime, not just
-# CUDAExecutionProvider. Version must track whatever TensorRT release
-# onnxruntime-gpu's TensorRT EP was built against; verify against a real
-# build (`onnxruntime.get_available_providers()`) and adjust if mismatched.
-tensorrt-cu12-libs==10.9.*; platform_machine == 'x86_64'
+# CUDAExecutionProvider.
+#
+# This MUST track the TensorRT release onnxruntime-gpu's TensorRT EP was built
+# against. If it does not, the EP fails to load and ONNX Runtime silently falls
+# back to CUDA -- the failure is a performance regression, not an error, so it
+# is easy to miss. Check with, inside the container:
+#   python3 -c "import onnxruntime; print(onnxruntime.get_available_providers())"
+#
+# onnxruntime-gpu 1.24 (pinned above) ships a TensorRT EP built against
+# TensorRT 10.14: the 1.24.1 release notes say "TensorRT EP: Upgraded to
+# TensorRT 10.14". Bump this in step with any onnxruntime-gpu upgrade.
+tensorrt-cu12-libs==10.14.*; platform_machine == 'x86_64'
