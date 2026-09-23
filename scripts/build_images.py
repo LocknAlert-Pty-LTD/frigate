@@ -127,6 +127,39 @@ def docker_binary() -> str:
     )
 
 
+def git_commit_hash() -> str:
+    """Short commit hash, with git's own error surfaced if it refuses.
+
+    Never swallow git's stderr here. The common failure is WSL reading a
+    checkout on the Windows filesystem, where git's ownership check trips and
+    exits 128; hiding that message turns a one-line fix into a mystery.
+    """
+    proc = subprocess.run(
+        ["git", "log", "-1", "--pretty=format:%h"],
+        capture_output=True,
+        text=True,
+        cwd=REPO_ROOT,
+    )
+    if proc.returncode == 0 and proc.stdout.strip():
+        return proc.stdout.strip()
+
+    stderr = (proc.stderr or "").strip()
+
+    if "dubious ownership" in stderr or "safe.directory" in stderr:
+        sys.exit(
+            f"git refused to read this repository:\n\n  {stderr.splitlines()[0]}\n\n"
+            "This is git's ownership check. It trips under WSL when the checkout\n"
+            "lives on the Windows filesystem (/mnt/c/...), because the directory's\n"
+            "owner does not match your WSL user. Mark it trusted, then re-run:\n\n"
+            f"  git config --global --add safe.directory {REPO_ROOT.as_posix()}\n"
+        )
+
+    sys.exit(
+        f"git log failed (exit {proc.returncode}):\n\n"
+        f"  {stderr or proc.stdout.strip() or '<no output>'}\n"
+    )
+
+
 def write_version_files() -> str:
     """The Makefile's `version` target, without needing make.
 
@@ -134,13 +167,7 @@ def write_version_files() -> str:
     Out-File default to UTF-8-with-BOM here, and a BOM in web/.env breaks the
     Vite build.
     """
-    commit = subprocess.run(
-        ["git", "log", "-1", "--pretty=format:%h"],
-        capture_output=True,
-        text=True,
-        cwd=REPO_ROOT,
-        check=True,
-    ).stdout.strip()
+    commit = git_commit_hash()
 
     (REPO_ROOT / "frigate" / "version.py").write_text(
         f'VERSION = "{VERSION}-{commit}"\n', encoding="utf-8", newline="\n"
@@ -149,6 +176,60 @@ def write_version_files() -> str:
         f"VITE_GIT_COMMIT_HASH={commit}\n", encoding="utf-8", newline="\n"
     )
     return commit
+
+
+def check_docker_access(docker: str) -> None:
+    """Fail early, and usefully, when the daemon is unreachable.
+
+    Reaching for `sudo` is the natural reaction to the permission error, but it
+    makes things worse: a builder created under sudo lives in root's buildx
+    state and is invisible when you later build as yourself, and `docker login`
+    credentials are per-user too. Point at the group fix instead.
+    """
+    proc = subprocess.run(
+        [docker, "info", "--format", "{{.ServerVersion}}"],
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode == 0:
+        return
+
+    err = (proc.stderr or proc.stdout or "").strip()
+    first = err.splitlines()[0] if err else "<no output>"
+
+    if "permission denied" in err.lower():
+        sys.exit(
+            f"Cannot reach the Docker daemon as this user:\n\n  {first}\n\n"
+            "Add yourself to the docker group rather than using sudo -- a builder\n"
+            "created with sudo lives in root's buildx state and will not be found\n"
+            "when you build as yourself:\n\n"
+            "  sudo usermod -aG docker $USER\n\n"
+            "Then apply the new group. In WSL the reliable way is to close the\n"
+            "shell and run `wsl --shutdown` from Windows; `newgrp docker` works\n"
+            "for a single shell. Afterwards recreate the builder as your user:\n\n"
+            "  docker buildx rm frigate-builder 2>/dev/null || true\n"
+            "  docker buildx create --name frigate-builder "
+            "--driver docker-container --use --bootstrap\n"
+        )
+
+    sys.exit(f"docker is installed but not usable:\n\n  {first}\n")
+
+
+def warn_if_slow_filesystem() -> None:
+    """A build context on /mnt/c from WSL goes over the 9p bridge, which is
+    slow enough to dominate the build. Worth saying once, up front."""
+    if sys.platform != "linux":
+        return
+    if not str(REPO_ROOT).startswith("/mnt/"):
+        return
+
+    print(
+        "\nWarning: this checkout is on the Windows filesystem "
+        f"({REPO_ROOT}).\n"
+        "Docker build contexts there cross WSL's 9p bridge and are far slower\n"
+        "than a checkout inside the WSL filesystem. For a build this large,\n"
+        "cloning to e.g. ~/frigate and building there is usually much faster.\n"
+    )
 
 
 def run(cmd: list[str], env: dict[str, str] | None, dry_run: bool) -> None:
@@ -229,6 +310,13 @@ def main() -> None:
 
     targets = ALL_TARGETS if "all" in args.targets else list(dict.fromkeys(args.targets))
     docker = docker_binary()
+
+    # Check the things that make a build fail immediately before doing any work,
+    # so the error arrives in one second rather than after the context upload.
+    if not args.dry_run:
+        check_docker_access(docker)
+
+    warn_if_slow_filesystem()
 
     commit = write_version_files()
     print(f"Version files written: {VERSION}-{commit}")
