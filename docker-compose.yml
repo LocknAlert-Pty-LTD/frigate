@@ -8,29 +8,41 @@ services:
   frigate:
     container_name: frigate
     restart: unless-stopped
-    # The TensorRT image: GPU inference via the TensorRT/CUDA execution providers,
-    # plus NVDEC hardware video decoding (set `ffmpeg.hwaccel_args: preset-nvidia`
-    # in config.yml to use it). The GPU reservation below only grants access to
-    # the card -- the default image ships a CPU-only onnxruntime, so reserving a
-    # GPU for it would accelerate decoding but not detection.
+    # Name of the image this builds. Override FRIGATE_IMAGE (env var or a .env
+    # file next to this compose file) to build here and push for the server:
     #
-    # Compose cannot build this image: docker/tensorrt/Dockerfile.amd64 consumes
-    # named build contexts (wget/wheels/deps/rootfs) that only buildx bake
-    # supplies. Build it first with:
-    #     make local-trt        # tags frigate:latest-tensorrt
-    image: frigate:latest-tensorrt
-    # To run the plain CPU/iGPU image instead, comment out `image:` above and
-    # uncomment this block:
-    # build:
-    #   context: .
-    #   dockerfile: docker/main/Dockerfile
-    #   target: frigate
-    #   cache_from:
-    #     - ghcr.io/blakeblackshear/frigate:cache-amd64
+    #   FRIGATE_IMAGE=docker.io/<user>/frigate:tensorrt docker compose build
+    #   docker login
+    #   FRIGATE_IMAGE=docker.io/<user>/frigate:tensorrt docker compose push
+    #
+    # then on the Ubuntu server, with the same FRIGATE_IMAGE set:
+    #   docker compose pull && docker compose up -d
+    image: ${FRIGATE_IMAGE:-frigate:latest-tensorrt}
+    build:
+      context: .
+      # The TensorRT target lives in the main Dockerfile so that compose can
+      # build it directly. docker/tensorrt/Dockerfile.amd64 builds the same two
+      # stages but takes wheels/deps/rootfs in as named build contexts, which
+      # only `docker buildx bake` can supply -- compose has no equivalent of
+      # bake's `target:` references. The two definitions are kept identical and
+      # frigate/test/test_tensorrt_dockerfile_parity.py enforces that.
+      #
+      # For the plain CPU/iGPU image instead, change this to `target: frigate`.
+      dockerfile: docker/main/Dockerfile
+      target: frigate-tensorrt
+      # Pinned so an image built on a dev machine always matches an x86_64
+      # Ubuntu server, rather than inheriting the builder's architecture.
+      platforms:
+        - linux/amd64
+      cache_from:
+        - ghcr.io/blakeblackshear/frigate:cache-amd64
     # Each 1080p camera stream needs roughly 50MB of shared memory; raise
     # this if you add more cameras. See:
     # https://docs.frigate.video/frigate/installation#calculating-required-shm-size
     shm_size: "256mb"
+    # Run-time only: `docker compose build` ignores this, so a machine with no
+    # NVIDIA GPU can still build the image to push. Needs the NVIDIA Container
+    # Toolkit on whichever host actually runs it.
     deploy:
       resources:
         reservations:

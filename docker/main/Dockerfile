@@ -401,3 +401,45 @@ COPY --from=rootfs / /
 # Pre-compile bytecode so a read-only rootfs doesn't force re-parsing the
 # source tree on every boot (pip-installed packages are already compiled)
 RUN python3 -m compileall -q -j0 /opt/frigate/frigate
+
+# Frigate TensorRT container (amd64 dGPU), buildable without buildx bake.
+#
+# docker/tensorrt/Dockerfile.amd64 defines these same two stages, but it takes
+# `wheels`, `deps` and `rootfs` in as *named build contexts*, which only
+# `docker buildx bake` can supply (see docker/tensorrt/trt.hcl). Compose
+# supports additional_contexts but not bake's `target:` stage references, so
+# that file is unreachable from `docker compose build`. Repeating the stages
+# here -- where wheels/deps/rootfs are ordinary local stages -- makes the image
+# reachable from a plain:
+#
+#     docker build --target frigate-tensorrt -f docker/main/Dockerfile .
+#
+# Nothing else is affected: BuildKit only builds stages the requested target
+# actually depends on, so `--target frigate` never touches these.
+#
+# KEEP IN SYNC with docker/tensorrt/Dockerfile.amd64 -- the two must produce the
+# same image, and frigate/test/test_tensorrt_dockerfile_parity.py fails if they
+# drift apart.
+FROM wheels AS trt-wheels
+ARG PIP_BREAK_SYSTEM_PACKAGES
+
+# Install TensorRT wheels
+COPY docker/tensorrt/requirements-amd64.txt /requirements-tensorrt.txt
+COPY docker/main/requirements-wheels.txt /requirements-wheels.txt
+
+# remove dependencies from the requirements that have type constraints
+RUN  sed -i '/\[.*\]/d' /requirements-wheels.txt \
+    && pip3 wheel --wheel-dir=/trt-wheels -c /requirements-wheels.txt -r /requirements-tensorrt.txt
+
+FROM deps AS frigate-tensorrt
+ARG PIP_BREAK_SYSTEM_PACKAGES
+
+RUN --mount=type=bind,from=trt-wheels,source=/trt-wheels,target=/deps/trt-wheels \
+    pip3 uninstall -y onnxruntime \
+    && pip3 install -U /deps/trt-wheels/*.whl
+
+COPY --from=rootfs / /
+COPY docker/tensorrt/detector/rootfs/etc/ld.so.conf.d /etc/ld.so.conf.d
+RUN ldconfig
+
+WORKDIR /opt/frigate/

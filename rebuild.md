@@ -88,8 +88,53 @@ extrapolation from ONNX Runtime's compatibility table, which does not list
 
 ### Build + push
 
-`docker/tensorrt/trt.mk` + `docker/tensorrt/trt.hcl` drive this via
-`docker buildx bake` — there is no plain `docker build` path.
+There are two build paths, and they must produce the same amd64 image:
+
+| Path | Use for | Entry point |
+| --- | --- | --- |
+| `docker buildx bake` | all three variants, incl. both Jetsons | `docker/tensorrt/trt.hcl` + `trt.mk` |
+| plain `docker build` / `docker compose` | amd64 only, self-building | `docker/main/Dockerfile --target frigate-tensorrt` |
+
+Bake exists because `docker/tensorrt/Dockerfile.amd64` takes `wheels`, `deps` and
+`rootfs` in as **named build contexts**, which only bake can supply. Compose has
+`additional_contexts` but no equivalent of bake's `target:` stage references, so
+that file is unreachable from `docker compose build`. To keep compose
+self-building, `docker/main/Dockerfile` repeats the same two stages
+(`trt-wheels`, `frigate-tensorrt`) where those names are ordinary local stages.
+
+**The two copies must stay identical** — otherwise the image differs depending on
+which path built it. `frigate/test/test_tensorrt_dockerfile_parity.py` compares
+the stage bodies (comments stripped) and fails on drift. It has no frigate
+imports, so it runs on a bare host.
+
+Adding those stages does not affect the default image: BuildKit only builds
+stages the requested target depends on, so `--target frigate` never touches them.
+
+#### Build on one machine, run on another (the usual workflow here)
+
+`docker-compose.yml` carries both `image:` and `build:`, so compose builds the
+TensorRT image and can push it straight to a registry. `FRIGATE_IMAGE` selects
+the tag; `build.platforms` is pinned to `linux/amd64` so a build never inherits
+the builder's architecture.
+
+```bash
+# on the build machine
+export FRIGATE_IMAGE=docker.io/<user>/frigate:tensorrt
+docker compose build
+docker login
+docker compose push
+
+# on the Ubuntu server, same FRIGATE_IMAGE (a .env file beside the compose file
+# is easiest), plus the NVIDIA Container Toolkit installed
+docker compose pull
+docker compose up -d
+```
+
+`docker compose build` ignores the `deploy.resources` GPU reservation, so the
+build machine does not need an NVIDIA GPU or the container toolkit — only the
+host that actually runs the image does.
+
+#### Bake path (all three variants)
 
 TensorRT is enabled identically on **all three** variants — `get_ort_providers()`
 has no architecture gating, so registering the EP applies to amd64, JP5 and JP6
@@ -127,7 +172,8 @@ Jetson (arm64) variants built from an amd64 host need QEMU:
 `docker run --privileged --rm tonistiigi/binfmt --install all`.
 
 Local build without pushing: `make local-trt` (or `local-trt-jp5` / `local-trt-jp6`)
-→ tags `frigate:latest-tensorrt`.
+→ tags `frigate:latest-tensorrt`. `docker compose build` with no `FRIGATE_IMAGE`
+set produces that same tag, so the two local paths are interchangeable.
 
 ### Unrelated build fix that rode along
 
