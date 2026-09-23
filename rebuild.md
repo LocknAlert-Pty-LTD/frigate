@@ -525,6 +525,18 @@ they were renumbered to `040`–`043`. If you rebuild onto a newer upstream,
 check the highest existing migration number first — peewee_migrate orders by
 filename, so a duplicate prefix makes the order ambiguous.
 
+**Renumbering means every one of these must be idempotent.** peewee_migrate
+keys applied migrations by *filename*, so on any database created by the
+earlier build the renamed files look unapplied and run a second time. `040`,
+`041` and `042` were already safe (`CREATE TABLE/INDEX IF NOT EXISTS`,
+`INSERT OR IGNORE`). `043` was not: a bare
+`ALTER TABLE "alarmeventlog" ADD COLUMN "object_id"` raises
+`duplicate column name: object_id`, and a failed migration aborts startup —
+the API never binds `:5001` and every request 500s behind nginx, with only
+`connect() failed (111: Connection refused)` in the log to go on. It now checks
+`PRAGMA table_info` first. Keep any new migration here idempotent for the same
+reason.
+
 Models live in `frigate/models.py`; all four must also be registered in the
 `models = [...]` list in `frigate/app.py`.
 

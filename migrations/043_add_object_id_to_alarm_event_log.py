@@ -26,8 +26,36 @@ import peewee as pw
 SQL = pw.SQL
 
 
+def _add_object_id_if_missing(migrator, database, fake=False):
+    """Add alarmeventlog.object_id only when it is not already present.
+
+    SQLite has no ALTER TABLE ... ADD COLUMN IF NOT EXISTS, and a bare ADD
+    COLUMN against an existing column aborts the whole migration run, which
+    takes Frigate's startup down with it -- the API never binds :5001 and every
+    request 500s behind nginx.
+
+    The guard is needed because this migration was renumbered: it shipped once
+    as 039_add_object_id_to_alarm_event_log, before upstream claimed 036-039.
+    peewee_migrate keys applied migrations by filename, so on a database
+    created by that earlier build the new name looks unapplied and runs again.
+    """
+    if fake:
+        return
+
+    columns = {
+        row[1] for row in database.execute_sql('PRAGMA table_info("alarmeventlog")')
+    }
+
+    if "object_id" in columns:
+        return
+
+    database.execute_sql(
+        'ALTER TABLE "alarmeventlog" ADD COLUMN "object_id" VARCHAR(30) NULL'
+    )
+
+
 def migrate(migrator, database, fake=False, **kwargs):
-    migrator.sql('ALTER TABLE "alarmeventlog" ADD COLUMN "object_id" VARCHAR(30) NULL')
+    migrator.python(_add_object_id_if_missing, migrator, database, fake=fake)
     migrator.sql(
         'CREATE INDEX IF NOT EXISTS "alarmeventlog_object_id" ON "alarmeventlog" ("object_id")'
     )
