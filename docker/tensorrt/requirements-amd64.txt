@@ -15,3 +15,9 @@ nvidia-nvjitlink-cu12==12.8.93; platform_machine == 'x86_64'
 onnx==1.16.*; platform_machine == 'x86_64'
 onnxruntime-gpu==1.24.*; platform_machine == 'x86_64'
 protobuf==3.20.3; platform_machine == 'x86_64'
+# TensorRT runtime libs (libnvinfer etc) so onnxruntime-gpu's
+# TensorrtExecutionProvider is actually available at runtime, not just
+# CUDAExecutionProvider. Version must track whatever TensorRT release
+# onnxruntime-gpu's TensorRT EP was built against; verify against a real
+# build (`onnxruntime.get_available_providers()`) and adjust if mismatched.
+tensorrt-cu12-libs==10.9.*; platform_machine == 'x86_64'

@@ -497,8 +497,14 @@ If the correct build is used for your GPU then the GPU will be detected and used
   - OpenVINO will automatically be detected and used with the ONNX detector in the default Frigate image.
 
 - **Nvidia**
-  - Nvidia GPUs will automatically be detected and used with the ONNX detector in the `-tensorrt` Frigate image.
-  - Jetson devices will automatically be detected and used with the ONNX detector in the `-tensorrt-jp6` Frigate image.
+  - Nvidia GPUs will automatically be detected and used with the ONNX detector in the `-tensorrt` Frigate image, preferring TensorRT for inference and automatically falling back to plain CUDA for anything TensorRT can't run, with no extra configuration needed.
+  - Jetson devices will automatically be detected and used with the ONNX detector in the `-tensorrt-jp6` Frigate image, the same way.
+
+:::
+
+:::tip
+
+TensorRT gives the fastest GPU inference, but its execution engine is compiled for your specific GPU on first use and cached in `/config/model_cache` for future startups. Expect the first detection after a fresh start (or a model change) to take noticeably longer while this happens. The `-tensorrt` image now also ships the TensorRT runtime libraries, so it is larger than before. Inference precision is unchanged (still full FP32, same as plain CUDA), so detection accuracy is not affected.
 
 :::
 

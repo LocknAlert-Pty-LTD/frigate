@@ -12,19 +12,35 @@ ARG SLIM_BASE=debian:12-slim
 # A hook that allows us to inject commands right after the base images
 ARG BASE_HOOK=
 
+# Some networks have flaky/asymmetric IPv6 routes to deb.debian.org (a
+# dual-stack Fastly-fronted mirror), which apt can hit as a slow connect
+# timeout rather than a fast fallback to IPv4. Force IPv4 and make apt more
+# tolerant of transient connect timeouts so a brief blip doesn't fail the
+# whole build.
+ARG APT_NETWORK_TUNING="echo 'Acquire::ForceIPv4 \"true\";' > /etc/apt/apt.conf.d/99-frigate-apt-network \
+    && echo 'Acquire::Retries \"10\";' >> /etc/apt/apt.conf.d/99-frigate-apt-network \
+    && echo 'Acquire::http::Timeout \"30\";' >> /etc/apt/apt.conf.d/99-frigate-apt-network"
+
 FROM ${BASE_IMAGE} AS base
 ARG PIP_BREAK_SYSTEM_PACKAGES
 ARG BASE_HOOK
+ARG APT_NETWORK_TUNING
 
+RUN sh -c "$APT_NETWORK_TUNING"
 RUN sh -c "$BASE_HOOK"
 
 FROM --platform=${BUILDPLATFORM} debian:12 AS base_host
 ARG PIP_BREAK_SYSTEM_PACKAGES
+ARG APT_NETWORK_TUNING
+
+RUN sh -c "$APT_NETWORK_TUNING"
 
 FROM ${SLIM_BASE} AS slim-base
 ARG PIP_BREAK_SYSTEM_PACKAGES
 ARG BASE_HOOK
+ARG APT_NETWORK_TUNING
 
+RUN sh -c "$APT_NETWORK_TUNING"
 RUN sh -c "$BASE_HOOK"
 
 FROM slim-base AS wget
