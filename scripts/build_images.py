@@ -215,6 +215,75 @@ def check_docker_access(docker: str) -> None:
     sys.exit(f"docker is installed but not usable:\n\n  {first}\n")
 
 
+def check_registry_login(repo: str) -> None:
+    """Fail before the build when the push has no chance of succeeding.
+
+    A missing `docker login` only shows up at the very end, after everything is
+    compiled, which is a miserable way to lose an hour. This reads the same
+    config file the push will use -- including the root-owned one when running
+    under sudo, which is a different file from the one `docker login` wrote if
+    that was run as a normal user.
+
+    Best effort by design: a credential helper can store the secret outside the
+    config, so an entry here is evidence of a login, not proof of a valid one.
+    Hence exit only when there is clearly nothing at all.
+    """
+    import json
+
+    config_dir = os.environ.get("DOCKER_CONFIG")
+    config_path = (
+        pathlib.Path(config_dir) / "config.json"
+        if config_dir
+        else pathlib.Path.home() / ".docker" / "config.json"
+    )
+
+    registry = "docker.io" if repo.count("/") <= 1 else repo.split("/")[0]
+    hint = (
+        f"  docker login{'' if registry == 'docker.io' else ' ' + registry}\n\n"
+        f"Checked {config_path}"
+    )
+
+    if not config_path.is_file():
+        sys.exit(
+            f"No Docker credentials found, so --push would fail after the build.\n\n"
+            f"Log in first:\n\n{hint} (does not exist).\n"
+        )
+
+    try:
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        print(f"\nWarning: could not read {config_path} ({exc}); skipping login check.")
+        return
+
+    auths = config.get("auths") or {}
+    logged_in = any(registry in key for key in auths) or bool(
+        config.get("credsStore") or config.get("credHelpers")
+    )
+
+    if not logged_in:
+        sys.exit(
+            f"No credentials for {registry} found, so --push would fail after the\n"
+            f"build finishes. Log in first:\n\n{hint}\n"
+        )
+
+
+def warn_if_running_as_root() -> None:
+    """sudo works, but it quietly splits your Docker state in two."""
+    if not hasattr(os, "geteuid") or os.geteuid() != 0:
+        return
+
+    print(
+        "\nWarning: running as root (sudo).\n"
+        "The builder, the build cache and the registry credentials all live in\n"
+        "root's Docker state, separate from your user's. In particular a\n"
+        "`docker login` you ran as yourself does NOT apply here, so --push can\n"
+        "fail at the end. Preferably fix the group instead and re-run without\n"
+        "sudo:\n\n"
+        "  sudo usermod -aG docker $USER\n"
+        "  # then, from Windows: wsl --shutdown, and reopen the shell\n"
+    )
+
+
 def warn_if_slow_filesystem() -> None:
     """A build context on /mnt/c from WSL goes over the 9p bridge, which is
     slow enough to dominate the build. Worth saying once, up front."""
@@ -315,7 +384,10 @@ def main() -> None:
     # so the error arrives in one second rather than after the context upload.
     if not args.dry_run:
         check_docker_access(docker)
+        if args.push:
+            check_registry_login(args.repo)
 
+    warn_if_running_as_root()
     warn_if_slow_filesystem()
 
     commit = write_version_files()
