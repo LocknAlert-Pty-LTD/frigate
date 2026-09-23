@@ -96,20 +96,34 @@ ALL_TARGETS = [*TRT_TARGETS, "default"]
 
 
 def docker_binary() -> str:
-    """Find docker even when it is not on PATH (common on Windows)."""
+    """Find docker even when it is not on PATH.
+
+    A PowerShell window opened before Docker Desktop was installed or updated
+    keeps the old PATH for its whole life, so `docker` is missing there even
+    though the install is fine. Rather than making that the user's problem,
+    fall back to the two standard Docker Desktop locations.
+    """
     found = shutil.which("docker")
     if found:
         return found
 
-    fallback = pathlib.Path(
-        r"C:\Program Files\Docker\Docker\resources\bin\docker.exe"
-    )
-    if fallback.exists():
-        return str(fallback)
+    fallbacks = [
+        pathlib.Path(os.environ.get("LOCALAPPDATA", ""))
+        / "Programs"
+        / "DockerDesktop"
+        / "resources"
+        / "bin"
+        / "docker.exe",
+        pathlib.Path(r"C:\Program Files\Docker\Docker\resources\bin\docker.exe"),
+    ]
+    for candidate in fallbacks:
+        if candidate.is_file():
+            print(f"Note: docker is not on PATH; using {candidate}")
+            return str(candidate)
 
     sys.exit(
-        "docker not found on PATH. Start Docker Desktop, or add its "
-        "resources\\bin directory to PATH."
+        "docker not found. Start Docker Desktop, then open a NEW terminal so it "
+        "picks up the updated PATH."
     )
 
 
