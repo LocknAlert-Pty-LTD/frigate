@@ -1,0 +1,56 @@
+# Frigate is built and run exclusively on Linux, including every Docker build,
+# so everything in the working tree should use LF regardless of the host OS.
+#
+# Without this, a Windows checkout with core.autocrlf=true rewrites shell
+# scripts to CRLF. They are then bind-mounted into the build containers, where
+# the kernel reads `#!/bin/bash\r` and tries to exec an interpreter literally
+# named "bash\r". The build dies with a thoroughly misleading error:
+#
+#   /bin/sh: 1: /deps/install_deps.sh: not found
+#   ERROR: process "/bin/sh -c /deps/install_deps.sh" did not complete
+#          successfully: exit code: 127
+#
+# ("not found" refers to the interpreter, not the script. A missing exec bit
+# would instead say "Permission denied".)
+#
+# Normalize to LF in the repository and check out as LF everywhere.
+* text=auto eol=lf
+
+# Called during the image build or at container start. A CRLF byte here breaks
+# the build, so state it explicitly rather than relying on the catch-all above.
+*.sh            text eol=lf
+*.bash          text eol=lf
+Dockerfile*     text eol=lf
+*.mk            text eol=lf
+Makefile        text eol=lf
+*.hcl           text eol=lf
+
+# s6-overlay service scripts have no file extension.
+docker/**/rootfs/**     text eol=lf
+docker/**/*/run         text eol=lf
+docker/**/*/finish      text eol=lf
+docker/main/fake_frigate_run  text eol=lf
+
+# Binary formats: never convert, never diff as text.
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.webp   binary
+*.mp4    binary
+*.pdf    binary
+*.woff   binary
+*.woff2  binary
+*.ttf    binary
+*.eot    binary
+*.tflite binary
+*.onnx   binary
+*.pt     binary
+*.zip    binary
+*.gz     binary
+*.xz     binary
+*.bz2    binary
+*.so     binary
+*.dylib  binary
+*.dll    binary
