@@ -110,6 +110,20 @@ imports, so it runs on a bare host.
 Adding those stages does not affect the default image: BuildKit only builds
 stages the requested target depends on, so `--target frigate` never touches them.
 
+#### There is no Hailo image
+
+Worth stating because it is easy to assume otherwise: `docker/hailo8l/` contains
+only `user_installation.sh`, a **host driver** installer. There is no Dockerfile,
+no `.hcl` and no `.mk` there, and no Hailo target in CI. The Hailo detector runs
+on the **standard** image — HailoRT is not baked in, it is downloaded on first
+start by `frigate/util/runtime_deps.py` (`HAILORT_MANIFEST` in
+`frigate/detectors/plugins/hailo.py`) once a Hailo detector is configured. Only
+HailoRT's pure-Python dependencies are in `docker/main/requirements-wheels.txt`.
+
+The same applies to MemryX and Axera. The boards that *do* have their own image
+are the ones with a `.mk` file: `rockchip`, `rocm`, `rpi`, `synaptics`,
+`tensorrt`.
+
 #### Build on one machine, run on another (the usual workflow here)
 
 `docker-compose.yml` carries both `image:` and `build:`, so compose builds the
@@ -133,6 +147,24 @@ docker compose up -d
 `docker compose build` ignores the `deploy.resources` GPU reservation, so the
 build machine does not need an NVIDIA GPU or the container toolkit — only the
 host that actually runs the image does.
+
+#### `scripts/build_images.py` (works on Windows, where there is no `make`)
+
+Wraps the bake invocations so each build gets its own environment. That matters:
+the variants differ only by env vars (`ARCH`, `BASE_IMAGE`, `SLIM_BASE`,
+`TRT_BASE`), and in PowerShell `$env:BASE_IMAGE = ...` persists for the rest of
+the session — running the Jetson build and then the amd64 build in one shell
+would silently produce an amd64 image on a Jetson base. It also writes the
+version files the way `make version` does, with an explicit encoding, because
+PowerShell's `Out-File`/`Set-Content` default to UTF-8-with-BOM here and a BOM in
+`web/.env` breaks the Vite build. `VERSION` is parsed out of the Makefile rather
+than duplicated.
+
+```bash
+python scripts/build_images.py --repo <user>/<repo> --tag 0.19.0 \
+    tensorrt jp5 jp6 default --push
+python scripts/build_images.py --repo <user>/<repo> all --dry-run   # show only
+```
 
 #### Bake path (all three variants)
 
