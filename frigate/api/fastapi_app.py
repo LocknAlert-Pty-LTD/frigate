@@ -12,8 +12,9 @@ from slowapi.middleware import SlowAPIMiddleware
 from starlette_context import middleware, plugins
 from starlette_context.plugins import Plugin
 
-from frigate.api import app as main_app
+from frigate.alarm.system import AlarmSystem
 from frigate.api import (
+    alarm,
     auth,
     camera,
     chat,
@@ -30,6 +31,7 @@ from frigate.api import (
     record,
     review,
 )
+from frigate.api import app as main_app
 from frigate.api.auth import get_jwt_secret, limiter, require_admin_by_default
 from frigate.comms.dispatcher import Dispatcher
 from frigate.comms.event_metadata_updater import (
@@ -80,6 +82,7 @@ def create_fastapi_app(
     enforce_default_admin: bool = True,
     config_holder: ConfigHolder | None = None,
     notice_registry: NoticeRegistry | None = None,
+    alarm_system: AlarmSystem | None = None,
 ):
     logger.info("Starting FastAPI app")
     app = FastAPI(
@@ -140,6 +143,7 @@ def create_fastapi_app(
 
     # Routes
     # Order of include_router matters: https://fastapi.tiangolo.com/tutorial/path-params/#order-matters
+    app.include_router(alarm.router)
     app.include_router(auth.router)
     app.include_router(camera.router)
     app.include_router(chat.router)
@@ -174,6 +178,7 @@ def create_fastapi_app(
     app.dispatcher = dispatcher
     app.profile_manager = profile_manager
     app.config_holder = config_holder
+    app.alarm_system = alarm_system
 
     if frigate_config.auth.enabled:
         secret = get_jwt_secret()

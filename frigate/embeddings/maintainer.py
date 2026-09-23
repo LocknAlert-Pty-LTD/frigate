@@ -8,6 +8,7 @@ import threading
 from multiprocessing.synchronize import Event as MpEvent
 from typing import Any
 
+import cv2
 from peewee import DoesNotExist
 
 from frigate.comms.config_updater import ConfigSubscriber
@@ -38,6 +39,7 @@ from frigate.config.classification import ObjectClassificationType
 from frigate.data_processing.common.license_plate.model import (
     LicensePlateModelRunner,
 )
+from frigate.data_processing.common.license_plate.parkpow import send_to_parkpow
 from frigate.data_processing.post.api import PostProcessorApi
 from frigate.data_processing.post.audio_transcription import (
     AudioTranscriptionPostProcessor,
@@ -71,7 +73,7 @@ from frigate.genai import GenAIClientManager
 from frigate.models import Event, Recordings, ReviewSegment, Timeline, Trigger
 from frigate.types import TrackedObjectUpdateTypesEnum
 from frigate.util.builtin import serialize
-from frigate.util.file import get_event_thumbnail_bytes
+from frigate.util.file import get_event_snapshot, get_event_thumbnail_bytes
 from frigate.util.image import SharedMemoryFrameManager
 
 from .embeddings import Embeddings
@@ -616,6 +618,38 @@ class EmbeddingMaintainer(threading.Thread):
 
                 # Embed the thumbnail
                 self._embed_thumbnail(event_id, thumbnail)
+
+                # forward the plate to ParkPow once per finished event, not
+                # per LPR frame. camera may already have been removed from
+                # config (the guard for that is below), so look it up softly.
+                camera_config = self.config.cameras.get(camera)
+
+                if (
+                    event.data.get("recognized_license_plate")
+                    and camera_config is not None
+                ):
+                    camera_override = camera_config.lpr.parkpow_enabled
+                    parkpow_config = self.config.lpr.parkpow
+                    parkpow_enabled = (
+                        parkpow_config.enabled
+                        if camera_override is None
+                        else camera_override
+                    )
+                    if parkpow_enabled:
+                        snapshot = get_event_snapshot(event)
+                        image_bytes = (
+                            cv2.imencode(".jpg", snapshot)[1].tobytes()
+                            if snapshot is not None
+                            else thumbnail
+                        )
+                        send_to_parkpow(
+                            parkpow_config,
+                            camera,
+                            event.data["recognized_license_plate"],
+                            event.data.get("recognized_license_plate_score", 0.0),
+                            event.start_time,
+                            image_bytes,
+                        )
 
             # every post processor below reads config.cameras[camera], but
             # tracked_events still has to be released or the thumbnails held

@@ -57,7 +57,7 @@ from frigate.comms.event_metadata_updater import EventMetadataTypeEnum
 from frigate.config.classification import ObjectClassificationType
 from frigate.const import CLIPS_DIR
 from frigate.embeddings import EmbeddingsContext
-from frigate.models import Event, ReviewSegment, Timeline, Trigger
+from frigate.models import Event, EventZone, ReviewSegment, Timeline, Trigger
 from frigate.track.object_processing import TrackedObject
 from frigate.util.file import get_event_thumbnail_bytes, load_event_snapshot_image
 from frigate.util.path import get_trigger_thumbnail_path, safe_join
@@ -250,16 +250,25 @@ def events(
 
     if zones != "all":
         # use matching so events with multiple zones
-        # still match on a search where any zone matches
+        # still match on a search where any zone matches. Goes through
+        # the EventZone join table (indexed on zone) instead of a LIKE
+        # scan over the Event.zones JSON blob -- see EventZone in
+        # frigate/models.py for why.
         zone_clauses = []
         filtered_zones = zones.split(",")
 
         if "None" in filtered_zones:
             filtered_zones.remove("None")
-            zone_clauses.append(Event.zones.length() == 0)
+            zone_clauses.append(Event.id.not_in(EventZone.select(EventZone.event)))
 
-        for zone in filtered_zones:
-            zone_clauses.append(Event.zones.cast("text") % f'*"{zone}"*')
+        if filtered_zones:
+            zone_clauses.append(
+                Event.id.in_(
+                    EventZone.select(EventZone.event).where(
+                        EventZone.zone << filtered_zones
+                    )
+                )
+            )
 
         zone_clause = reduce(operator.or_, zone_clauses)
         clauses.append(zone_clause)

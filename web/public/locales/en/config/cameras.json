@@ -12,6 +12,54 @@
     "label": "Enabled",
     "description": "Enabled"
   },
+  "alarm": {
+    "label": "Alarm",
+    "description": "Alarm zone settings for this camera; requires alarm to also be enabled at the global level.",
+    "enabled": {
+      "label": "Enable alarm",
+      "description": "Enable or disable the alarm engine for this camera; requires alarm to also be enabled at the global level."
+    },
+    "zones": {
+      "label": "Alarm zones",
+      "description": "Alarm zone settings keyed by the Frigate zone name defined under this camera's zones.",
+      "enabled": {
+        "label": "Enable alarm zone",
+        "description": "Enable or disable this zone as an alarm trigger."
+      },
+      "objects": {
+        "label": "Tracked objects",
+        "description": "Object labels that are permitted to trigger this alarm zone. Must be a subset of objects -> track for this camera."
+      },
+      "event": {
+        "label": "Alarm event type",
+        "description": "The canonical alarm event type reported when this zone triggers."
+      },
+      "object_event_overrides": {
+        "label": "Per-object event overrides",
+        "description": "Override the alarm event type for specific object labels, e.g. reporting vehicles differently than people."
+      },
+      "min_confidence": {
+        "label": "Minimum confidence",
+        "description": "Minimum detection confidence required for an object to qualify as an alarm trigger in this zone."
+      },
+      "verification_seconds": {
+        "label": "Verification time",
+        "description": "Seconds a qualifying object must persist in the zone before triggering. 0 triggers instantly, matching a traditional sensor."
+      },
+      "delay": {
+        "label": "Entry delay",
+        "description": "Entry delay (seconds) applied when this zone triggers while the system is armed, giving time to disarm before an alarm is raised."
+      },
+      "arm_modes": {
+        "label": "Active arm modes",
+        "description": "Which arm modes this zone is active in. Remove 'home'/'night' for an interior zone that should only trigger when armed away."
+      },
+      "ai_verification": {
+        "label": "AI verification",
+        "description": "Ask the configured GenAI description provider to confirm a qualifying detection before it raises an alarm, on top of the confidence/persistence checks above. Falls back to triggering normally if no provider is configured or the check fails, so it can only suppress false alarms, never mask a real one."
+      }
+    }
+  },
   "audio": {
     "label": "Audio detection",
     "description": "Settings for audio-based event detection for this camera.",
@@ -265,6 +313,10 @@
     "enhancement": {
       "label": "Enhancement level",
       "description": "Enhancement level (0-10) to apply to plate crops prior to OCR; higher values may not always improve results, levels above 5 may only work with night time plates and should be used with caution."
+    },
+    "parkpow_enabled": {
+      "label": "Override ParkPow reporting",
+      "description": "Override the global ParkPow enabled setting for this camera. Unset inherits the global lpr.parkpow.enabled value."
     }
   },
   "motion": {

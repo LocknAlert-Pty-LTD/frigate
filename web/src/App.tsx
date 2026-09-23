@@ -12,6 +12,7 @@ import { Redirect } from "./components/navigation/Redirect";
 import { cn } from "./lib/utils";
 import { isPWA } from "./utils/isPWA";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import AlarmAlertOverlay from "@/components/alarm/AlarmAlertOverlay";
 import useSWR from "swr";
 import { FrigateConfig } from "./types/frigateConfig";
 import ActivityIndicator from "@/components/indicators/activity-indicator";
@@ -113,6 +114,9 @@ function DefaultAppView() {
       <ChromeErrorBoundary>{isDesktop && <Statusbar />}</ChromeErrorBoundary>
       <ChromeErrorBoundary>{isDesktop && <CommandMenu />}</ChromeErrorBoundary>
       <ChromeErrorBoundary>{isMobile && <Bottombar />}</ChromeErrorBoundary>
+      <ChromeErrorBoundary>
+        {config?.alarm?.enabled && <AlarmAlertOverlay />}
+      </ChromeErrorBoundary>
       <div
         id="pageRoot"
         className={cn(

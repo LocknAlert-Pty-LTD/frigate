@@ -55,6 +55,10 @@ export const settingsViewGroups = [
     ],
   },
   {
+    label: "alarm",
+    views: ["alarmStatus", "globalAlarm", "cameraAlarm"],
+  },
+  {
     label: "enrichments",
     views: [
       "integrationSemanticSearch",

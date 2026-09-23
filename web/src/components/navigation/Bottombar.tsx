@@ -15,6 +15,7 @@ import {
 import useStats from "@/hooks/use-stats";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import GeneralSettings from "../menu/GeneralSettings";
+import AlarmControl from "../menu/AlarmControl";
 import useNavigation from "@/hooks/use-navigation";
 import {
   StatusBarMessagesContext,
@@ -87,6 +88,7 @@ function Bottombar() {
           Icon={item.icon}
         />
       ))}
+      <AlarmControl className="p-2" />
       <GeneralSettings large={large} className="p-2" />
       <StatusAlertNav large={large} className="p-2" />
     </div>

@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import logging
 import queue
@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion
 
+from frigate.alarm.ha_discovery import publish_ha_discovery
 from frigate.comms.base_communicator import Communicator
 from frigate.config import FrigateConfig, birdseye_modes_to_mqtt_payload
 
@@ -85,6 +86,22 @@ class MqttClient(Communicator):
             return
 
         self._publish_queue.put(QueuedPublish(full_topic, payload, retain))
+
+    def publish_absolute(self, topic: str, payload: Any, retain: bool = False) -> None:
+        """Publish without the topic_prefix, for topics that must be exact
+        (e.g. Home Assistant MQTT discovery configs, which are always under
+        the literal "homeassistant/" tree regardless of Frigate's own
+        prefix)."""
+        if not self.connected:
+            logger.debug(f"Unable to publish to {topic}: client is not connected")
+            return
+
+        self.client.publish(
+            topic,
+            payload,
+            qos=self.config.mqtt.qos,
+            retain=retain,
+        )
 
     def stop(self) -> None:
         if self._worker is None:
@@ -792,6 +809,14 @@ class MqttClient(Communicator):
             self._callback_queue.put(("connect", reason_code))
         else:
             self._callback_queue.put(("connect_failure", reason_code))
+
+        # Discovery configs must be published after the client is actually
+        # connected (same reason _set_initial_topics runs here); publishing
+        # from FrigateApp's startup sequence races the async MQTT connect
+        # and silently drops the publish, since publish_absolute() no-ops
+        # while self.connected is still False.
+        if self.config.alarm.enabled:
+            publish_ha_discovery(self.config, self.publish_absolute)
 
     def _on_disconnect(
         self,

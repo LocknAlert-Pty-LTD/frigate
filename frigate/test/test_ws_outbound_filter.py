@@ -102,6 +102,12 @@ class TestClassifyOutbound(unittest.TestCase):
     def test_notification_test_is_global(self):
         self.assertEqual(self._classify("notification_test"), ("global", None))
 
+    def test_alarm_state_is_global(self):
+        self.assertEqual(self._classify("alarm/state"), ("global", None))
+
+    def test_alarm_fault_is_global(self):
+        self.assertEqual(self._classify("alarm/fault"), ("global", None))
+
     # --- Unrestricted-only ---
 
     def test_birdseye_layout_is_unrestricted_only(self):
@@ -164,6 +170,24 @@ class TestClassifyOutbound(unittest.TestCase):
     def test_tracked_object_update_marks_payload_camera_path(self):
         self.assertEqual(
             self._classify("tracked_object_update"), ("payload_camera", ("camera",))
+        )
+
+    def test_alarm_event_marks_payload_camera_path(self):
+        self.assertEqual(
+            self._classify("alarm/event"), ("payload_camera", ("camera_id",))
+        )
+
+    # --- Camera-prefixed (alarm) ---
+
+    def test_alarm_zone_state_resolves_to_camera(self):
+        """<camera>/alarm_zone/<zone>/state must resolve via the camera-prefix
+        rule with no explicit registration -- this is the whole reason that
+        topic isn't the spec's literal "alarm/zone/<zone>/state" (see
+        AGENTS.md phase 1/9): a bare "alarm/..." topic doesn't start with a
+        camera name and would be silently dropped."""
+        self.assertEqual(
+            self._classify("front_door/alarm_zone/driveway/state"),
+            ("camera", "front_door"),
         )
 
     # --- Reshape ---

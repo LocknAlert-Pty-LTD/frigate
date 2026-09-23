@@ -13,6 +13,7 @@ __all__ = [
     "SemanticSearchConfig",
     "CameraSemanticSearchConfig",
     "LicensePlateRecognitionConfig",
+    "ParkPowConfig",
 ]
 
 
@@ -363,6 +364,30 @@ class ReplaceRule(FrigateBaseModel):
     replacement: str = Field(..., title="Replacement string")
 
 
+class ParkPowConfig(FrigateBaseModel):
+    enabled: bool = Field(
+        default=False,
+        title="Enable ParkPow integration",
+        description="Send recognized license plates to a ParkPow instance.",
+    )
+    host: str = Field(
+        default="https://app.parkpow.com",
+        title="ParkPow host",
+        description="Base URL of the ParkPow instance (cloud or on-premise) to send recognized plates to.",
+    )
+    token: str | None = Field(
+        default=None,
+        title="ParkPow API token",
+        description="API token used to authenticate with ParkPow, available at https://app.parkpow.com/account/token/.",
+    )
+    timeout: float = Field(
+        default=10.0,
+        title="Request timeout",
+        description="Timeout in seconds for requests sent to ParkPow.",
+        gt=0.0,
+    )
+
+
 class LicensePlateRecognitionConfig(FrigateBaseModel):
     enabled: bool = Field(
         default=False,
@@ -436,6 +461,11 @@ class LicensePlateRecognitionConfig(FrigateBaseModel):
         title="Replacement rules",
         description="Regex replacement rules used to normalize detected plate strings before matching.",
     )
+    parkpow: ParkPowConfig = Field(
+        default_factory=ParkPowConfig,
+        title="ParkPow integration",
+        description="Settings for sending recognized license plates to ParkPow.",
+    )
 
 
 class CameraLicensePlateRecognitionConfig(FrigateBaseModel):
@@ -443,6 +473,11 @@ class CameraLicensePlateRecognitionConfig(FrigateBaseModel):
         default=False,
         title="Enable LPR",
         description="Enable or disable LPR on this camera.",
+    )
+    parkpow_enabled: bool | None = Field(
+        default=None,
+        title="Override ParkPow reporting",
+        description="Override the global ParkPow enabled setting for this camera. Unset inherits the global lpr.parkpow.enabled value.",
     )
     expire_time: int = Field(
         default=3,

@@ -38,6 +38,21 @@ export type SearchModelSize = "small" | "large";
 
 export interface CameraConfig {
   friendly_name: string;
+  alarm: {
+    enabled: boolean;
+    zones: {
+      [zoneName: string]: {
+        enabled: boolean;
+        objects: string[];
+        event: string;
+        object_event_overrides: Record<string, string>;
+        min_confidence: number;
+        verification_seconds: number;
+        delay: number;
+        arm_modes: ("away" | "home" | "night")[];
+      };
+    };
+  };
   audio: {
     enabled: boolean;
     enabled_in_config: boolean;
@@ -437,6 +452,28 @@ export type DetectionModelConfig = {
 export interface FrigateConfig {
   version: string;
   safe_mode: boolean;
+
+  alarm: {
+    enabled: boolean;
+    exit_delay_seconds: number;
+    reporting: {
+      protocol: "none" | "sia_dc09" | "contact_id";
+      host: string | null;
+      port: number | null;
+      account: string | null;
+      timeout_seconds: number;
+      max_attempts: number;
+      retry_delay_seconds: number;
+    };
+    schedule: {
+      enabled: boolean;
+      entries: {
+        time: string;
+        mode: "away" | "home" | "night" | null;
+        days: number[];
+      }[];
+    };
+  };
 
   audio: {
     enabled: boolean;

@@ -1,4 +1,4 @@
-import {
+﻿import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuLabel,
@@ -43,6 +43,7 @@ import { PolygonType } from "@/types/canvas";
 import CameraManagementView from "@/views/settings/CameraManagementView";
 import MotionTunerView from "@/views/settings/MotionTunerView";
 import MasksAndZonesView from "@/views/settings/MasksAndZonesView";
+import AlarmView from "@/views/settings/AlarmView";
 import UsersView from "@/views/settings/UsersView";
 import RolesView from "@/views/settings/RolesView";
 import UiSettingsView from "@/views/settings/UiSettingsView";
@@ -231,6 +232,8 @@ const CameraFaceRecognitionSettingsPage = createSectionPage(
   "camera",
 );
 const CameraLprSettingsPage = createSectionPage("lpr", "camera");
+const GlobalAlarmSettingsPage = createSectionPage("alarm", "global");
+const CameraAlarmSettingsPage = createSectionPage("alarm", "camera");
 const CameraMqttConfigSettingsPage = createSectionPage("mqtt", "camera", {
   showOverrideIndicator: false,
 });
@@ -276,6 +279,9 @@ const SECTION_VIEWS = {
   cameraOnvif: CameraOnvifSettingsPage,
   cameraMqttConfig: CameraMqttConfigSettingsPage,
   cameraTimestampStyle: CameraTimestampStyleSettingsPage,
+  alarmStatus: AlarmView,
+  globalAlarm: GlobalAlarmSettingsPage,
+  cameraAlarm: CameraAlarmSettingsPage,
   integrationSemanticSearch: IntegrationSemanticSearchSettingsPage,
   integrationGenerativeAi: IntegrationGenerativeAiSettingsPage,
   integrationFaceRecognition: IntegrationFaceRecognitionSettingsPage,
@@ -358,7 +364,7 @@ const CAMERA_SECTION_MAPPING: Record<string, SettingsType> = {
   timestamp_style: "cameraTimestampStyle",
 };
 
-// Reverse mapping: page key → config section key
+// Reverse mapping: page key â†’ config section key
 const REVERSE_CAMERA_SECTION_MAPPING: Record<string, string> =
   Object.fromEntries(
     Object.entries(CAMERA_SECTION_MAPPING).map(([section, page]) => [
@@ -615,7 +621,7 @@ export default function Settings() {
         states[camName] = state.config?.enabled ?? false;
       });
     }
-    // fallback to config if ws data isn’t available yet
+    // fallback to config if ws data isnâ€™t available yet
     cameras.forEach((cam) => {
       if (!(cam.name in states)) {
         states[cam.name] = cam.enabled;
@@ -792,7 +798,7 @@ export default function Settings() {
     let failCount = 0;
     let anyNeedsRestart = false;
     const savedKeys: string[] = [];
-    // Pending entries that have been successfully PUT — cleared in one batch
+    // Pending entries that have been successfully PUT â€” cleared in one batch
     // after `mutate("config")` resolves
     const keysToClear: string[] = [];
 
@@ -840,7 +846,7 @@ export default function Settings() {
         successCount++;
       } catch (error) {
         // eslint-disable-next-line no-console
-        console.error("Save All – error saving go2rtc streams", error);
+        console.error("Save All â€“ error saving go2rtc streams", error);
         failCount++;
       }
     }
@@ -861,7 +867,7 @@ export default function Settings() {
         });
 
         if (!payload) {
-          // No actual overrides — schedule the pending entry for clearing
+          // No actual overrides â€” schedule the pending entry for clearing
           keysToClear.push(key);
           successCount++;
           continue;
@@ -887,12 +893,12 @@ export default function Settings() {
         successCount++;
       } catch (error) {
         // eslint-disable-next-line no-console
-        console.error("Save All – error saving", key, error);
+        console.error("Save All â€“ error saving", key, error);
         failCount++;
       }
     }
 
-    // Refresh config from server once — must complete before clearing the
+    // Refresh config from server once â€” must complete before clearing the
     // pending entries so consumers don't observe a moment where pending is
     // empty AND config is still stale
     await mutate("config");

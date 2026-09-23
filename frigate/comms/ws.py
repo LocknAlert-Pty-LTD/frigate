@@ -148,6 +148,8 @@ _WS_GLOBAL_OUTBOUND_TOPICS = frozenset(
         "profile/state",
         "notifications/state",
         "notification_test",
+        "alarm/state",
+        "alarm/fault",
     }
 )
 
@@ -178,6 +180,7 @@ _WS_PAYLOAD_CAMERA_TOPICS: dict[str, tuple[str, ...]] = {
     "tracked_object_update": ("camera",),
     "triggers": ("camera",),
     "camera_monitoring": ("camera",),
+    "alarm/event": ("camera_id",),
 }
 
 # Topics whose payload is a dict keyed by camera name; filter keys per

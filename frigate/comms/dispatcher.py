@@ -8,6 +8,9 @@ from typing import Any, cast
 
 from peewee import IntegrityError
 
+from frigate.alarm.audit import record_alarm_audit
+from frigate.alarm.state import ArmedMode, InvalidAlarmTransition
+from frigate.alarm.system import AlarmSystem
 from frigate.camera import PTZMetrics
 from frigate.camera.activity_manager import AudioActivityManager, CameraActivityManager
 from frigate.comms.base_communicator import Communicator
@@ -45,7 +48,13 @@ from frigate.const import (
     UPDATE_REVIEW_DESCRIPTION,
     UPSERT_REVIEW_SEGMENT,
 )
-from frigate.models import Event, Previews, Recordings, ReviewSegment
+from frigate.models import (
+    Event,
+    Previews,
+    Recordings,
+    ReviewSegment,
+    ReviewSegmentZone,
+)
 from frigate.notices.registry import NoticeRegistry
 from frigate.ptz.onvif import OnvifCommandEnum, OnvifController
 from frigate.types import ModelStatusTypesEnum, TrackedObjectUpdateTypesEnum
@@ -116,11 +125,20 @@ class Dispatcher:
         self._global_settings_handlers: dict[str, Callable] = {
             "notifications": self._on_global_notification_command,
             "profile": self._on_profile_command,
+            "alarm": self._on_alarm_command,
         }
         self.profile_manager: ProfileManager | None = None
+        # Set by FrigateApp.init_alarm_system() once the alarm engine exists,
+        # the same post-construction-attribute pattern as profile_manager
+        # above. None (the default) means the alarm/set handler below is a
+        # no-op, e.g. when alarm.enabled is false.
+        self.alarm_system: AlarmSystem | None = None
 
         self.web_push_client = next(
             (comm for comm in communicators if isinstance(comm, WebPushClient)), None
+        )
+        self.mqtt_client = next(
+            (comm for comm in communicators if isinstance(comm, MqttClient)), None
         )
 
         for comm in self.comms:
@@ -306,6 +324,10 @@ class Dispatcher:
                 conflict_target=[ReviewSegment.id],
                 update=payload,
             ).execute()
+            self._sync_review_segment_zones(
+                payload[ReviewSegment.id.name],
+                payload[ReviewSegment.data.name].get("zones"),
+            )
 
         def handle_clear_ongoing_review_segments() -> None:
             ReviewSegment.update(end_time=datetime.datetime.now().timestamp()).where(
@@ -343,6 +365,10 @@ class Dispatcher:
                 conflict_target=[ReviewSegment.id],
                 update=final_data,
             ).execute()
+            self._sync_review_segment_zones(
+                final_data[ReviewSegment.id.name],
+                final_data[ReviewSegment.data.name].get("zones"),
+            )
             self.publish("reviews", json.dumps(payload))
 
         def handle_update_model_state() -> None:
@@ -505,6 +531,14 @@ class Dispatcher:
 
         self.publish_local("notices", json.dumps(self.notice_registry.active()))
 
+    def publish_absolute(self, topic: str, payload: Any, retain: bool = False) -> None:
+        """Publish an exact topic with no prefix, bypassing MqttClient's
+        normal topic_prefix. Only meaningful for MQTT (e.g. Home Assistant
+        discovery configs, which must be under the literal "homeassistant/"
+        tree); a no-op if MQTT isn't configured."""
+        if self.mqtt_client is not None:
+            self.mqtt_client.publish_absolute(topic, payload, retain)
+
     def stop(self) -> None:
         self.camera_activity.stop()
 
@@ -640,6 +674,23 @@ class Dispatcher:
                     if value and not camera.audio.enabled_in_config:
                         continue
                     camera.audio.enabled = value
+
+    def _sync_review_segment_zones(self, review_segment_id: str, zones: list) -> None:
+        """Additive index alongside ReviewSegment.data["zones"] (unchanged)
+        so zone filtering can use a real index instead of a LIKE scan over
+        JSON text -- see frigate/api/review.py. Zones only ever get added
+        as a segment accrues more objects, never removed, so
+        on_conflict_ignore() against the unique (review_segment_id, zone)
+        index is always correct here."""
+        if not zones:
+            return
+        (
+            ReviewSegmentZone.insert_many(
+                [{"review_segment": review_segment_id, "zone": z} for z in zones]
+            )
+            .on_conflict_ignore()
+            .execute()
+        )
 
     def _on_detect_command(self, camera_name: str, payload: str) -> None:
         """Callback for detect topic."""
@@ -840,6 +891,38 @@ class Dispatcher:
             return
 
         self.publish("profile/state", payload.strip() or "none", retain=True)
+
+    def _on_alarm_command(self, payload: str) -> None:
+        """Callback for alarm/set. Matches Home Assistant's
+        alarm_control_panel command payloads (ARM_AWAY/ARM_HOME/ARM_NIGHT/
+        DISARM, see the discovery config in frigate/alarm/ha_discovery.py)
+        so this is usable directly from an HA alarm panel card, not just
+        Frigate's own UI. Publishing updated state back out is
+        AlarmSystem's job (see on_change/on_event in system.py), not this
+        handler's."""
+        if self.alarm_system is None:
+            logger.debug("Received alarm command but alarm is not enabled")
+            return
+
+        command = payload.strip().upper()
+        mode_by_command = {
+            "ARM_AWAY": ArmedMode.away,
+            "ARM_HOME": ArmedMode.home,
+            "ARM_NIGHT": ArmedMode.night,
+        }
+
+        try:
+            if command == "DISARM":
+                self.alarm_system.disarm()
+                record_alarm_audit("disarm", "mqtt")
+            elif command in mode_by_command:
+                mode = mode_by_command[command]
+                self.alarm_system.arm(mode)
+                record_alarm_audit("arm", "mqtt", details={"mode": mode.value})
+            else:
+                logger.warning("Unrecognized alarm command: %s", payload)
+        except InvalidAlarmTransition as e:
+            logger.warning("Rejected alarm command %s: %s", command, e)
 
     def _on_audio_command(self, camera_name: str, payload: str) -> None:
         """Callback for audio topic."""

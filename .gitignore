@@ -23,6 +23,11 @@ core
 !/web/**/*.ts
 .idea/*
 .ipynb_checkpoints
+*graphify*
+/graphify/
+
+# Media written by a local `docker compose up` (./storage:/media/frigate)
+/storage/
 
 # Auto-generated Docker Compose Generator config files
 docs/src/components/DockerComposeGenerator/config/devices.ts

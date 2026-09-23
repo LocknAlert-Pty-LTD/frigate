@@ -17,6 +17,8 @@ from frigate.const import CLIPS_DIR
 from frigate.data_processing.post.types import ReviewMetadata
 from frigate.genai.manager import GenAIClientManager
 from frigate.genai.prompts import (
+    build_alarm_verification_prompt,
+    build_alarm_verification_response_format,
     build_object_description_prompt,
     build_review_description_prompt,
     build_review_description_response_format,
@@ -293,6 +295,46 @@ class GenAIClient:
 
         logger.debug(f"Sending images to genai provider with prompt: {prompt}")
         return self._send(prompt, thumbnails)
+
+    def generate_alarm_verification(
+        self,
+        *,
+        camera: str,
+        zone: str,
+        label: str,
+        confidence: float,
+        event_type: str,
+        thumbnail: bytes,
+    ) -> tuple[bool, str | None] | None:
+        """Ask the provider to confirm a qualifying alarm detection.
+
+        Returns (confirmed, reason), or None if the request failed or the
+        response couldn't be parsed. Callers should treat None the same as
+        a fault -- fail open (confirmed) -- since this exists only to
+        suppress false alarms, never to gate real ones.
+        """
+        prompt = build_alarm_verification_prompt(
+            camera=camera,
+            zone=zone,
+            label=label,
+            confidence=confidence,
+            event_type=event_type,
+        )
+        response_format = build_alarm_verification_response_format()
+        response = self._send(prompt, [thumbnail], response_format)
+
+        if not response:
+            return None
+
+        clean_json = re.sub(
+            r"\n?```$", "", re.sub(r"^```[a-zA-Z0-9]*\n?", "", response)
+        )
+        try:
+            data = json.loads(clean_json)
+            return bool(data["confirmed"]), data.get("reason")
+        except (json.JSONDecodeError, KeyError, TypeError) as e:
+            logger.warning("Failed to parse alarm verification response: %s", e)
+            return None
 
     def _init_provider(self) -> Any:
         """Initialize the client."""

@@ -11,7 +11,7 @@ from typing import Any
 from frigate.config import FrigateConfig
 from frigate.const import CLIPS_DIR
 from frigate.db.sqlitevecq import SqliteVecQueueDatabase
-from frigate.models import Event, Timeline
+from frigate.models import Event, EventZone, Timeline
 from frigate.util.file import delete_event_snapshot, delete_event_thumbnail
 
 logger = logging.getLogger(__name__)
@@ -365,6 +365,10 @@ class EventCleanup(threading.Thread):
                     chunk = ids_to_delete[i : i + CHUNK_SIZE]
                     logger.debug(f"Deleting {len(chunk)} events from the database")
                     Event.delete().where(Event.id << chunk).execute()
+                    # No FK cascade in effect (sqlite foreign_keys pragma
+                    # isn't enabled), so EventZone rows need an explicit
+                    # delete alongside Event's or they'd orphan.
+                    EventZone.delete().where(EventZone.event << chunk).execute()
 
                     # embeddings are always cleaned up, even when semantic search
                     # is disabled, so that they don't outlive their events

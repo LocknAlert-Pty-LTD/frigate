@@ -9,7 +9,7 @@ from frigate.config import FrigateConfig
 from frigate.config.classification import ObjectClassificationType
 from frigate.const import REPLAY_CAMERA_PREFIX
 from frigate.events.types import EventStateEnum, EventTypeEnum
-from frigate.models import Event
+from frigate.models import Event, EventZone
 from frigate.util.builtin import to_relative_box
 
 logger = logging.getLogger(__name__)
@@ -285,6 +285,23 @@ class EventProcessor(threading.Thread):
                 )
                 .execute()
             )
+
+            # Additive index alongside Event.zones (unchanged above) so
+            # zone filtering can use a real index instead of a LIKE scan
+            # over JSON text -- see frigate/api/event.py. Zones are only
+            # ever added as the object moves through the scene, never
+            # removed, so on_conflict_ignore() against the unique
+            # (event_id, zone) index is always correct here, no delete
+            # needed.
+            zones = event[Event.zones]
+            if zones:
+                (
+                    EventZone.insert_many(
+                        [{"event": event_data["id"], "zone": z} for z in zones]
+                    )
+                    .on_conflict_ignore()
+                    .execute()
+                )
 
         # check if the stored event_data should be updated
         if updated_db or should_update_state(

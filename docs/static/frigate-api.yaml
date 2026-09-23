@@ -10,6 +10,336 @@ servers:
   - url: https://demo.frigate.video/api
   - url: http://localhost:5001/api
 paths:
+  /alarm/status:
+    get:
+      tags:
+        - Alarm
+      summary: Get alarm status
+      description: |-
+        **Access:** Admin role required.
+
+        Current alarm state, armed mode, faults, zone status, and reporting health.
+      operationId: get_status_alarm_status_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlarmStatusResponse'
+      security:
+        - frigateAdminAuth: []
+      x-required-role: admin
+  /alarm/events:
+    get:
+      tags:
+        - Alarm
+      summary: Get recent alarm events
+      description: |-
+        **Access:** Admin role required.
+
+        Most recent alarm events, newest first.
+      operationId: get_events_alarm_events_get
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+            title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AlarmEventResponse'
+                title: Response Get Events Alarm Events Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - frigateAdminAuth: []
+      x-required-role: admin
+  /alarm/audit:
+    get:
+      tags:
+        - Alarm
+      summary: Get the operator-action audit log
+      description: |-
+        **Access:** Admin role required.
+
+        Recent arm/disarm/clear/bypass actions, newest first, with who performed each one and from where.
+      operationId: get_audit_log_alarm_audit_get
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+            title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AlarmAuditLogResponse'
+                title: Response Get Audit Log Alarm Audit Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - frigateAdminAuth: []
+      x-required-role: admin
+  /alarm/event_log:
+    get:
+      tags:
+        - Alarm
+      summary: Get the persisted alarm event history
+      description: |-
+        **Access:** Admin role required.
+
+        Historical, restart-surviving alarm events, newest first. Distinct from GET /alarm/events (live, most-recent-100, lost on restart).
+      operationId: get_event_log_alarm_event_log_get
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+            title: Limit
+        - name: camera
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            title: Camera
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AlarmEventLogResponse'
+                title: Response Get Event Log Alarm Event Log Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - frigateAdminAuth: []
+      x-required-role: admin
+  /alarm/event_log/summary:
+    get:
+      tags:
+        - Alarm
+      summary: Get alarm event/false-alarm rate summary
+      description: |-
+        **Access:** Admin role required.
+
+        Total events, false-alarm count/rate, and a daily breakdown over the given window.
+      operationId: get_event_log_summary_alarm_event_log_summary_get
+      parameters:
+        - name: days
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 30
+            title: Days
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlarmEventLogSummaryResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - frigateAdminAuth: []
+      x-required-role: admin
+  /alarm/event_log/{event_id}/false_alarm:
+    post:
+      tags:
+        - Alarm
+      summary: Mark or unmark a persisted alarm event as a false alarm
+      description: |-
+        **Access:** Admin role required.
+
+        Used to compute the false-alarm rate on the health dashboard.
+      operationId: 
+        set_event_false_alarm_alarm_event_log__event_id__false_alarm_post
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Event Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlarmEventFalseAlarmBody'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - frigateAdminAuth: []
+      x-required-role: admin
+  /alarm/arm:
+    post:
+      tags:
+        - Alarm
+      summary: Arm the alarm
+      description: |-
+        **Access:** Admin role required.
+
+        Arm away or stay, with an optional exit delay override.
+      operationId: arm_alarm_arm_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlarmArmBody'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - frigateAdminAuth: []
+      x-required-role: admin
+  /alarm/disarm:
+    post:
+      tags:
+        - Alarm
+      summary: Disarm the alarm
+      description: |-
+        **Access:** Admin role required.
+
+        Disarm the system. If an alarm is currently active, this silences it into alarm memory rather than clearing it (see /alarm/clear).
+      operationId: disarm_alarm_disarm_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericResponse'
+      security:
+        - frigateAdminAuth: []
+      x-required-role: admin
+  /alarm/clear:
+    post:
+      tags:
+        - Alarm
+      summary: Clear alarm memory
+      description: |-
+        **Access:** Admin role required.
+
+        Acknowledge and clear alarm memory after an alarm has been disarmed.
+      operationId: clear_alarm_clear_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericResponse'
+      security:
+        - frigateAdminAuth: []
+      x-required-role: admin
+  /alarm/zones/{camera}/{zone}/bypass:
+    post:
+      tags:
+        - Alarm
+      summary: Bypass or un-bypass an alarm zone
+      description: |-
+        **Access:** Admin role required.
+
+        Temporarily exclude a zone from alarm evaluation. Bypass is per arm-cycle and clears automatically when the system disarms.
+      operationId: set_zone_bypass_alarm_zones__camera___zone__bypass_post
+      parameters:
+        - name: camera
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Camera
+        - name: zone
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Zone
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlarmZoneBypassBody'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - frigateAdminAuth: []
+      x-required-role: admin
   /auth/first_time_login:
     get:
       tags:
@@ -7645,6 +7975,289 @@ paths:
       x-required-role: admin
 components:
   schemas:
+    AlarmArmBody:
+      properties:
+        mode:
+          type: string
+          enum:
+            - away
+            - home
+            - night
+          title: Mode
+        exit_delay_seconds:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Exit Delay Seconds
+      type: object
+      required:
+        - mode
+      title: AlarmArmBody
+    AlarmAuditLogResponse:
+      properties:
+        timestamp:
+          type: number
+          title: Timestamp
+        action:
+          type: string
+          title: Action
+        source:
+          type: string
+          title: Source
+        actor:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Actor
+        camera:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Camera
+        zone:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Zone
+        details:
+          anyOf:
+            - type: object
+            - type: 'null'
+          title: Details
+      type: object
+      required:
+        - timestamp
+        - action
+        - source
+        - actor
+        - camera
+        - zone
+        - details
+      title: AlarmAuditLogResponse
+    AlarmEventFalseAlarmBody:
+      properties:
+        false_alarm:
+          type: boolean
+          title: False Alarm
+      type: object
+      required:
+        - false_alarm
+      title: AlarmEventFalseAlarmBody
+    AlarmEventLogDayResponse:
+      properties:
+        date:
+          type: string
+          title: Date
+        total:
+          type: integer
+          title: Total
+        false_alarm_count:
+          type: integer
+          title: False Alarm Count
+      type: object
+      required:
+        - date
+        - total
+        - false_alarm_count
+      title: AlarmEventLogDayResponse
+    AlarmEventLogResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        timestamp:
+          type: number
+          title: Timestamp
+        event_type:
+          type: string
+          title: Event Type
+        camera:
+          type: string
+          title: Camera
+        zone:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Zone
+        object_type:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Object Type
+        confidence:
+          anyOf:
+            - type: number
+            - type: 'null'
+          title: Confidence
+        false_alarm:
+          type: boolean
+          title: False Alarm
+      type: object
+      required:
+        - id
+        - timestamp
+        - event_type
+        - camera
+        - zone
+        - object_type
+        - confidence
+        - false_alarm
+      title: AlarmEventLogResponse
+    AlarmEventLogSummaryResponse:
+      properties:
+        total:
+          type: integer
+          title: Total
+        false_alarm_count:
+          type: integer
+          title: False Alarm Count
+        false_alarm_rate:
+          anyOf:
+            - type: number
+            - type: 'null'
+          title: False Alarm Rate
+        daily:
+          items:
+            $ref: '#/components/schemas/AlarmEventLogDayResponse'
+          type: array
+          title: Daily
+      type: object
+      required:
+        - total
+        - false_alarm_count
+        - false_alarm_rate
+        - daily
+      title: AlarmEventLogSummaryResponse
+    AlarmEventResponse:
+      properties:
+        event_type:
+          type: string
+          title: Event Type
+        camera_id:
+          type: string
+          title: Camera Id
+        timestamp:
+          type: number
+          title: Timestamp
+        zone_id:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Zone Id
+        object_type:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Object Type
+        confidence:
+          anyOf:
+            - type: number
+            - type: 'null'
+          title: Confidence
+        source:
+          type: string
+          title: Source
+        message:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Message
+      type: object
+      required:
+        - event_type
+        - camera_id
+        - timestamp
+        - zone_id
+        - object_type
+        - confidence
+        - source
+        - message
+      title: AlarmEventResponse
+    AlarmStatusResponse:
+      properties:
+        state:
+          type: string
+          title: State
+        armed_mode:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Armed Mode
+        is_alarm_active:
+          type: boolean
+          title: Is Alarm Active
+        is_alarm_memory:
+          type: boolean
+          title: Is Alarm Memory
+        fault_reason:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Fault Reason
+        last_transition:
+          type: string
+          title: Last Transition
+        reporting_healthy:
+          anyOf:
+            - type: boolean
+            - type: 'null'
+          title: Reporting Healthy
+        whatsapp_healthy:
+          anyOf:
+            - type: boolean
+            - type: 'null'
+          title: Whatsapp Healthy
+        zones:
+          items:
+            $ref: '#/components/schemas/AlarmZoneStatusResponse'
+          type: array
+          title: Zones
+      type: object
+      required:
+        - state
+        - armed_mode
+        - is_alarm_active
+        - is_alarm_memory
+        - fault_reason
+        - last_transition
+        - reporting_healthy
+        - whatsapp_healthy
+        - zones
+      title: AlarmStatusResponse
+    AlarmZoneBypassBody:
+      properties:
+        bypassed:
+          type: boolean
+          title: Bypassed
+      type: object
+      required:
+        - bypassed
+      title: AlarmZoneBypassBody
+    AlarmZoneStatusResponse:
+      properties:
+        camera:
+          type: string
+          title: Camera
+        zone:
+          type: string
+          title: Zone
+        enabled:
+          type: boolean
+          title: Enabled
+        armed:
+          type: boolean
+          title: Armed
+        bypassed:
+          type: boolean
+          title: Bypassed
+      type: object
+      required:
+        - camera
+        - zone
+        - enabled
+        - armed
+        - bypassed
+      title: AlarmZoneStatusResponse
     AppConfigSetBody:
       properties:
         requires_restart:

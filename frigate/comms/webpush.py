@@ -266,6 +266,15 @@ class WebPushClient(Communicator):
                 logger.debug(f"Notifications for {camera} are currently suspended.")
                 return
             self.send_camera_monitoring(decoded)
+        elif topic == "alarm/event":
+            decoded = json.loads(payload)
+            camera = decoded["camera_id"]
+            if not self.config.cameras[camera].notifications.enabled:
+                return
+            # Deliberately skips is_camera_suspended()/_within_cooldown() --
+            # both exist to reduce noise from routine review notifications,
+            # not to silence an actual alarm trigger.
+            self.send_alarm_alert(decoded)
         elif topic == "notification_test":
             if not self.config.notifications.enabled and not any(
                 cam.notifications.enabled for cam in self.config.cameras.values()
@@ -519,6 +528,53 @@ class WebPushClient(Communicator):
                 direct_url=direct_url,
                 image=image,
                 ttl=ttl,
+            )
+
+        self.cleanup_registrations()
+
+    def send_alarm_alert(self, payload: dict[str, Any]) -> None:
+        """Push notification for a qualifying alarm event. Payload shape
+        matches AlarmMqttBridge.publish_event()'s "alarm/event" topic and
+        frigate/api/alarm.py's GET /alarm/events response."""
+        if not self.config.notifications.email:
+            return
+
+        camera: str = payload["camera_id"]
+        camera_name: str = getattr(
+            self.config.cameras[camera], "friendly_name", None
+        ) or titlecase(camera.replace("_", " "))
+
+        self.check_registrations()
+
+        object_type = payload.get("object_type")
+        zone = payload.get("zone_id")
+        event_type = titlecase(payload["event_type"].replace("_", " "))
+
+        if object_type and zone:
+            title = f"{titlecase(object_type)} detected in {titlecase(zone.replace('_', ' '))}"
+        else:
+            title = event_type
+        message = f"Alarm on {camera_name}"
+
+        logger.debug(f"Sending alarm push notification for {camera}")
+
+        for user in self.web_pushers:
+            if not self._user_has_camera_access(user, camera):
+                logger.debug(
+                    "Skipping alarm notification for user %s - no access to camera %s",
+                    user,
+                    camera,
+                )
+                continue
+
+            self.send_push_notification(
+                user=user,
+                payload=payload,
+                title=title,
+                message=message,
+                direct_url=f"/#{camera}",
+                notification_type="alarm",
+                ttl=3600,
             )
 
         self.cleanup_registrations()
