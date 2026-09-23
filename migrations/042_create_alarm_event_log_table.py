@@ -1,4 +1,4 @@
-"""Peewee migrations -- 038_create_alarm_event_log_table.py.
+"""Peewee migrations -- 042_create_alarm_event_log_table.py.
 
 Some examples (model - class or model name)::
 

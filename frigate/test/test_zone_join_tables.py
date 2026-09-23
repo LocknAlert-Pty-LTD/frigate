@@ -25,7 +25,7 @@ test_db = SqliteDatabase(":memory:")
 _MODELS = [Event, EventZone, ReviewSegment, ReviewSegmentZone]
 
 # Mirrors the INSERT ... SELECT ... json_each(...) statements in
-# migrations/037_create_zone_join_tables.py exactly -- kept here as a
+# migrations/041_create_zone_join_tables.py exactly -- kept here as a
 # literal copy (not imported) since peewee_migrate migration files are
 # loaded by the migration runner, not meant to be imported as a module.
 _BACKFILL_EVENT_ZONES_SQL = """

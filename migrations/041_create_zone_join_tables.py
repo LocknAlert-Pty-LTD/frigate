@@ -1,4 +1,4 @@
-"""Peewee migrations -- 037_create_zone_join_tables.py.
+"""Peewee migrations -- 041_create_zone_join_tables.py.
 
 Some examples (model - class or model name)::
 

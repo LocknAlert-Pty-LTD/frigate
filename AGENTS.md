@@ -1,4 +1,4 @@
-﻿# Agent Instructions for Frigate NVR
+# Agent Instructions for Frigate NVR
 
 > **Fork-specific features** (alarm engine, ParkPow LPR integration, TensorRT
 > execution provider): see **[`rebuild.md`](rebuild.md)** for the structural map —

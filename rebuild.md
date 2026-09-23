@@ -1,10 +1,10 @@
-# Fork Rebuild Reference — TensorRT, ParkPow, Alarm System
+# Fork Rebuild Reference â€” TensorRT, ParkPow, Alarm System
 
 Reference for rebuilding the three LocknAlert-specific feature sets in this
 Frigate fork onto a clean upstream checkout. Written to be read cold, with no
 memory of the sessions that produced the code.
 
-**Relationship to `AGENTS.md`**: `AGENTS.md` is the chronological session log —
+**Relationship to `AGENTS.md`**: `AGENTS.md` is the chronological session log â€”
 why each decision was made, what was tried and rejected, which bugs were found
 live. It is the authority on *intent* and *caveats*. This file is the structural
 map: what exists, where it lives, how the pieces connect, and what order to
@@ -19,7 +19,7 @@ git diff d37dff1b4 HEAD --stat -- frigate/ migrations/ docker/ docs/ web/src/
 
 ---
 
-## 1. TensorRT — making the `-tensorrt` image actually use TensorRT
+## 1. TensorRT â€” making the `-tensorrt` image actually use TensorRT
 
 ### The problem
 
@@ -29,7 +29,7 @@ Two independent causes:
 1. `docker/tensorrt/requirements-amd64.txt` never installed the TensorRT runtime
    libs (`libnvinfer*`), so ONNX Runtime could not even detect
    `TensorrtExecutionProvider` as available. (`Dockerfile.arm64` *did* install
-   them for Jetson — which is why Jetson worked and amd64 didn't.)
+   them for Jetson â€” which is why Jetson worked and amd64 didn't.)
 2. `frigate/util/model.py::get_ort_providers()` only registered the TensorRT EP
    when the config had the literal, undocumented value `device: Tensorrt`;
    otherwise it hit a `continue` and skipped it entirely.
@@ -40,27 +40,27 @@ Two independent causes:
 | --- | --- |
 | `docker/tensorrt/requirements-amd64.txt` | `+ tensorrt-cu12-libs==10.9.*; platform_machine == 'x86_64'` |
 | `frigate/util/model.py` | `get_ort_providers()`: removed the `device == "Tensorrt"` gate so TRT registers unconditionally when ORT reports it available; added `trt_max_workspace_size` (default 2048 MB, env `TRT_MAX_WORKSPACE_MB`); hardened `device_id` parse against empty string |
-| `docs/docs/configuration/object_detectors.md` | Documents automatic TRT→CUDA behavior, first-boot engine compile, larger image |
+| `docs/docs/configuration/object_detectors.md` | Documents automatic TRTâ†’CUDA behavior, first-boot engine compile, larger image |
 | `frigate/test/test_util_model.py` | 3 cases: TRT auto-registered with CUDA fallback, env override, CUDA-only when TRT absent |
 
 ### Why no fallback logic was needed
 
 ONNX Runtime partitions the graph per-node and falls back to the next provider in
 the list. Registering `TensorrtExecutionProvider` immediately before
-`CUDAExecutionProvider` is therefore a strict upgrade — anything TRT can't compile
+`CUDAExecutionProvider` is therefore a strict upgrade â€” anything TRT can't compile
 runs on CUDA automatically. `frigate/detectors/detection_runners.py` also needed
 no change: its `providers[0] == "CUDAExecutionProvider"` check (gating CUDA-Graph
 capture) correctly falls through to the generic runner when TRT is first.
 
 ### Things deliberately left alone
 
-- `trt_fp16_enable` — the ONNX detector never passes `requires_fp16=True` for
+- `trt_fp16_enable` â€” the ONNX detector never passes `requires_fp16=True` for
   detection models, so TRT runs FP32, same precision as CUDA. **No accuracy
   tradeoff was introduced.** Don't "fix" this without measuring.
-- `frigate/detectors/plugins/tensorrt.py` — the dedicated Jetson `type: tensorrt`
+- `frigate/detectors/plugins/tensorrt.py` â€” the dedicated Jetson `type: tensorrt`
   detector is a separate, unrelated code path.
 
-### ⚠️ Verification status: NOT live-verified
+### âš ï¸ Verification status: NOT live-verified
 
 Written without NVIDIA GPU access. The `tensorrt-cu12-libs==10.9.*` pin is an
 extrapolation from ONNX Runtime's compatibility table, which does not list
@@ -68,7 +68,7 @@ extrapolation from ONNX Runtime's compatibility table, which does not list
 
 1. Build the amd64 `-tensorrt` image on real GPU hardware.
 2. `python3 -c "import onnxruntime; print(onnxruntime.get_available_providers())"`
-   inside the container — `TensorrtExecutionProvider` must be present with no
+   inside the container â€” `TensorrtExecutionProvider` must be present with no
    version-mismatch error. If mismatched, adjust the pin to whatever TRT release
    `onnxruntime-gpu` was built against.
 3. Confirm the detector survives the slower first-boot engine compile (engines are
@@ -79,7 +79,7 @@ extrapolation from ONNX Runtime's compatibility table, which does not list
 ### Build + push
 
 `docker/tensorrt/trt.mk` + `docker/tensorrt/trt.hcl` drive this via
-`docker buildx bake` — there is no plain `docker build` path.
+`docker buildx bake` â€” there is no plain `docker build` path.
 
 ```bash
 docker login -u <dockerhub-username>
@@ -100,19 +100,19 @@ Narrowing `COMPUTE_LEVEL` to your GPU's compute capability (e.g. `"86"` for
 30-series) cuts build time substantially. Jetson (arm64) variants built from an
 amd64 host need QEMU: `docker run --privileged --rm tonistiigi/binfmt --install all`.
 
-Local build without pushing: `make local-trt` → tags `frigate:latest-tensorrt`.
+Local build without pushing: `make local-trt` â†’ tags `frigate:latest-tensorrt`.
 
 ### Unrelated build fix that rode along
 
 `docker/main/Dockerfile` gained an `APT_NETWORK_TUNING` ARG applied to the `base`,
 `base_host`, and `slim-base` stages: forces apt to IPv4 with retries/timeouts,
 because some networks have flaky IPv6 routes to `deb.debian.org` that manifest as
-slow connect timeouts failing the whole build. Keep it — it is not TensorRT-specific
+slow connect timeouts failing the whole build. Keep it â€” it is not TensorRT-specific
 but it is why builds stopped failing intermittently.
 
 ---
 
-## 2. ParkPow integration (LPR → ParkPow visits)
+## 2. ParkPow integration (LPR â†’ ParkPow visits)
 
 Sends each recognized license plate to [ParkPow](https://app.parkpow.com/documentation/),
 a hosted/self-hosted ALPR visit-management dashboard (same company as Plate
@@ -138,9 +138,9 @@ instance).
 
 | File | Role |
 | --- | --- |
-| `frigate/data_processing/common/license_plate/parkpow.py` | **New.** `send_to_parkpow()` (gate + dispatch) and `_post_to_parkpow()` (the actual request). Fire-and-forget via a daemon `threading.Thread`, log-and-drop on failure — modeled on `frigate/alarm/notify_whatsapp.py`. |
+| `frigate/data_processing/common/license_plate/parkpow.py` | **New.** `send_to_parkpow()` (gate + dispatch) and `_post_to_parkpow()` (the actual request). Fire-and-forget via a daemon `threading.Thread`, log-and-drop on failure â€” modeled on `frigate/alarm/notify_whatsapp.py`. |
 | `frigate/config/classification.py` | `ParkPowConfig` (`enabled`, `host`, `token`, `timeout`) under `lpr.parkpow`; `parkpow_enabled: bool \| None` on `CameraLicensePlateRecognitionConfig` |
-| `frigate/embeddings/maintainer.py` | The hook — see below |
+| `frigate/embeddings/maintainer.py` | The hook â€” see below |
 | `docs/docs/configuration/license_plate_recognition.md` | "ParkPow integration" section |
 | `frigate/test/test_parkpow.py` | Payload construction, host-slash normalization, non-2xx + exception handling, enabled/token gating |
 | `frigate/test/test_config.py` | `test_default_lpr_parkpow`, `test_lpr_parkpow_camera_override` |
@@ -197,10 +197,10 @@ the payload (snapshot geometry doesn't map cleanly to their expected pixel box
 without extra plumbing; `plate` + `score` + image is enough for ParkPow to create
 the visit and run its own enrichment).
 
-### ⚠️ Two known debts
+### âš ï¸ Two known debts
 
 1. **`web/public/locales/en/config/{global,cameras}.json` were hand-edited** for
-   the ParkPow fields. `AGENTS.md` says never to do that — they are generated from
+   the ParkPow fields. `AGENTS.md` says never to do that â€” they are generated from
    the Pydantic field `title`/`description` by `python generate_config_translations.py`.
    Re-run that script (needs Linux/container) and confirm the diff is empty or
    sensible.
@@ -215,12 +215,12 @@ the visit and run its own enrichment).
 ## 3. Alarm system (backend)
 
 A full intrusion-alarm engine layered on Frigate's existing detection stream.
-`AGENTS.md` §"Alarm Engine Project" documents its 12-phase build and every design
+`AGENTS.md` Â§"Alarm Engine Project" documents its 12-phase build and every design
 argument; this is the structural summary.
 
 ### Core principle: no MQTT dependency
 
-`AlarmSystem` and everything under it have zero MQTT/Dispatcher knowledge —
+`AlarmSystem` and everything under it have zero MQTT/Dispatcher knowledge â€”
 enforced by `frigate/test/test_alarm_no_mqtt_dependency.py`. The MQTT bridge is
 the *only* piece that publishes, and it takes a plain callable. Detections arrive
 over `EventUpdateSubscriber` (the internal ZMQ bus every other subsystem uses),
@@ -230,12 +230,12 @@ not MQTT. **Preserve this boundary when rebuilding.**
 
 ```
 config (frigate/config/alarm.py, frigate/config/camera/alarm.py)
-  └─ factory.py            builds everything from a validated FrigateConfig
-       └─ AlarmSystem (system.py)          orchestrator; owns delay timers,
-            ├─ AlarmStateMachine (engine.py)   states + transitions only
-            ├─ DetectionAlarmAdapter (adapter.py)  detection → AlarmEvent | None
-            ├─ ReportingQueue ×2 (queue.py)    central-station + WhatsApp
-            └─ on_change / on_event callbacks  ← the only outward coupling
+  â””â”€ factory.py            builds everything from a validated FrigateConfig
+       â””â”€ AlarmSystem (system.py)          orchestrator; owns delay timers,
+            â”œâ”€ AlarmStateMachine (engine.py)   states + transitions only
+            â”œâ”€ DetectionAlarmAdapter (adapter.py)  detection â†’ AlarmEvent | None
+            â”œâ”€ ReportingQueue Ã—2 (queue.py)    central-station + WhatsApp
+            â””â”€ on_change / on_event callbacks  â† the only outward coupling
 ```
 
 `AlarmDetectionThread` (`detection_thread.py`) feeds it; `AlarmMqttBridge`
@@ -244,18 +244,18 @@ config (frigate/config/alarm.py, frigate/config/camera/alarm.py)
 
 ### State machine (`state.py`, `engine.py`)
 
-States: `disarmed → arming → exit_delay → armed_{away,home,night} → entry_delay →
-alarm → alarm_memory`, plus `fault` (enterable from anywhere, returns to the prior
+States: `disarmed â†’ arming â†’ exit_delay â†’ armed_{away,home,night} â†’ entry_delay â†’
+alarm â†’ alarm_memory`, plus `fault` (enterable from anywhere, returns to the prior
 state). `ALLOWED_TRANSITIONS` in `state.py` is the authority; illegal moves raise
 `InvalidAlarmTransition`.
 
-`ArmedMode` is `away` / `home` / `night` — named to match Home Assistant's
+`ArmedMode` is `away` / `home` / `night` â€” named to match Home Assistant's
 `alarm_control_panel` 1:1 so the MQTT bridge needs no translation table. The UI
 labels `night` as "Sleep".
 
 **The state machine deliberately does not time its own delay states.**
 `AlarmSystem` owns the `threading.Timer`s for exit/entry delay. A bug where the
-delay never completed (no timer ever called it) was fixed in `58759df8f` — don't
+delay never completed (no timer ever called it) was fixed in `58759df8f` â€” don't
 reintroduce it by moving timers back into the engine.
 
 ### Per-arm-cycle zone bypass
@@ -265,7 +265,7 @@ Auto-clears **conditionally**: only when `disarm()` actually lands on `disarmed`
 Disarm during an active alarm silences into `alarm_memory`, and bypass must survive
 that until a genuine stand-down (`disarm()` again, or `clear()`). Matches real panel
 convention. `AlarmDetectionThread._evaluate()` skips bypassed zones *before* the
-adapter sees them — the adapter stays unaware bypass exists.
+adapter sees them â€” the adapter stays unaware bypass exists.
 
 ### Config
 
@@ -310,7 +310,7 @@ cameras:
 ```
 
 Validators enforce coherence: reporting requires host+port+account when protocol
-≠ none; WhatsApp requires base URL + session + key + at least one number when
+â‰  none; WhatsApp requires base URL + session + key + at least one number when
 enabled.
 
 ### Module map (`frigate/alarm/`)
@@ -318,22 +318,22 @@ enabled.
 | File | Role |
 | --- | --- |
 | `state.py` | `AlarmState`, `ArmedMode`, `ALLOWED_TRANSITIONS`, `InvalidAlarmTransition` |
-| `engine.py` | `AlarmStateMachine` — transitions only, no timers, no I/O |
+| `engine.py` | `AlarmStateMachine` â€” transitions only, no timers, no I/O |
 | `system.py` | `AlarmSystem` orchestrator: timers, bypass, event history, `status()`, `on_change`/`on_event` |
-| `rules.py` | `ZoneAlarmRule` plain dataclass (the config→core boundary) |
-| `adapter.py` | `DetectionAlarmAdapter.evaluate()` — confidence/persistence/arm-mode gates → `AlarmEvent \| None` |
+| `rules.py` | `ZoneAlarmRule` plain dataclass (the configâ†’core boundary) |
+| `adapter.py` | `DetectionAlarmAdapter.evaluate()` â€” confidence/persistence/arm-mode gates â†’ `AlarmEvent \| None` |
 | `event.py` | `AlarmEvent`, `AlarmEventType` (canonical event vocabulary) |
 | `detection_thread.py` | Subscribes `EventUpdateSubscriber`, evaluates, triggers, records. Crops the AI-verification thumbnail synchronously. |
-| `factory.py` | Config → `AlarmSystem` / reporting queue / AI verifier / WhatsApp queue |
-| `queue.py` | `ReportingQueue` — retrying background delivery + `healthy` flag |
-| `protocols/sia.py` | SIA DC-09 encoder/client. ⚠️ **Unverified stub** — no spec was available. |
+| `factory.py` | Config â†’ `AlarmSystem` / reporting queue / AI verifier / WhatsApp queue |
+| `queue.py` | `ReportingQueue` â€” retrying background delivery + `healthy` flag |
+| `protocols/sia.py` | SIA DC-09 encoder/client. âš ï¸ **Unverified stub** â€” no spec was available. |
 | `protocols/contact_id.py` | Contact ID encoder/client. Event codes verified against a real reference. |
 | `mqtt_bridge.py` | `publish_status()` / `publish_event()` via a plain callable |
 | `ha_discovery.py` | Home Assistant MQTT discovery for `alarm_control_panel` |
 | `scheduler.py` / `schedule.py` | Auto arm/disarm thread + `ScheduleEntry` dataclass |
-| `ai_verification.py` | `AlarmAiVerifier` — background GenAI confirm. **Fails open by design.** |
-| `audit.py` | `record_alarm_audit()` — operator actions (successful ones only) |
-| `event_log.py` | `record_alarm_event_log()` — historical alarm events |
+| `ai_verification.py` | `AlarmAiVerifier` â€” background GenAI confirm. **Fails open by design.** |
+| `audit.py` | `record_alarm_audit()` â€” operator actions (successful ones only) |
+| `event_log.py` | `record_alarm_event_log()` â€” historical alarm events |
 | `trail.py` | Cross-camera person trail |
 | `notify_whatsapp.py` | `AlarmWhatsAppNotifier` via self-hosted OpenWA, per camera/zone cooldown |
 
@@ -341,10 +341,10 @@ enabled.
 
 | Migration | Adds |
 | --- | --- |
-| `036_create_alarm_audit_log_table.py` | `AlarmAuditLog` |
-| `037_create_zone_join_tables.py` | `EventZone`, `ReviewSegmentZone` (zone-filter query normalization — separate initiative, see `AGENTS.md`) |
-| `038_create_alarm_event_log_table.py` | `AlarmEventLog` |
-| `039_add_object_id_to_alarm_event_log.py` | `object_id` column (for the trail feature) |
+| `040_create_alarm_audit_log_table.py` | `AlarmAuditLog` |
+| `041_create_zone_join_tables.py` | `EventZone`, `ReviewSegmentZone` (zone-filter query normalization â€” separate initiative, see `AGENTS.md`) |
+| `042_create_alarm_event_log_table.py` | `AlarmEventLog` |
+| `043_add_object_id_to_alarm_event_log.py` | `object_id` column (for the trail feature) |
 
 Models live in `frigate/models.py`; all four must also be registered in the
 `models = [...]` list in `frigate/app.py`.
@@ -356,14 +356,14 @@ returning `str` instead of `datetime`. Store naive UTC, then
 
 ### Wiring in `frigate/app.py`
 
-- `init_alarm_system()` — builds the system, AI verifier, and MQTT bridge; assigns
+- `init_alarm_system()` â€” builds the system, AI verifier, and MQTT bridge; assigns
   `alarm_system.on_change = bridge.publish_status` and an `on_event` closure that
   does `bridge.publish_event(event)` + `record_alarm_event_log(event)`; sets
   `dispatcher.alarm_system` so inbound MQTT `alarm/set` commands route through.
-- `start_alarm_system()` — starts reporting/WhatsApp queues, `AlarmDetectionThread`,
+- `start_alarm_system()` â€” starts reporting/WhatsApp queues, `AlarmDetectionThread`,
   and (only if entries exist) `AlarmScheduler`.
 - HA discovery is published from `MqttClient`'s **on-connect** callback
-  (`frigate/comms/mqtt.py`), *not* synchronously at init — doing it at init races
+  (`frigate/comms/mqtt.py`), *not* synchronously at init â€” doing it at init races
   the async connect and the publish is silently dropped.
 
 WhatsApp enqueueing lives inside `AlarmSystem.record_event()`, not in the app
@@ -385,7 +385,7 @@ POST /alarm/clear
 POST /alarm/zones/{camera}/{zone}/bypass         {bypassed: bool}; 404 for unknown zone
 ```
 
-After touching any endpoint, regenerate the OpenAPI spec —
+After touching any endpoint, regenerate the OpenAPI spec â€”
 `docs/static/frigate-api.yaml` is generated by `generate_api_auth_spec.py`, CI
 runs the `--check` variant, and it must **never** be hand-edited.
 
@@ -405,7 +405,7 @@ Inbound `alarm/set` commands are routed by `frigate/comms/dispatcher.py`'s
 actions vs. the `remote-user` header for HTTP).
 
 Push notifications ride along automatically: `WebPushClient`
-(`frigate/comms/webpush.py`) subscribes to the `alarm/event` dispatcher topic —
+(`frigate/comms/webpush.py`) subscribes to the `alarm/event` dispatcher topic â€”
 no extra wiring needed at the call site.
 
 ### AI verification (opt-in per zone)
@@ -418,14 +418,14 @@ thread (network-bound work must never touch a hot path).
 
 **Fails open, deliberately**: no provider configured, a request exception, or an
 unparseable response all resolve to `confirmed=True`. An optional AI layer must
-never become a silent single point of failure that disables the alarm — it can
+never become a silent single point of failure that disables the alarm â€” it can
 suppress false positives, never mask a real intrusion. Do not "harden" this into
 fail-closed without an explicit product decision.
 
-The live thumbnail comes from the `frame_name` in the ZMQ tuple →
-`SharedMemoryFrameManager.get(frame_name, camera_config.frame_shape_yuv)` →
+The live thumbnail comes from the `frame_name` in the ZMQ tuple â†’
+`SharedMemoryFrameManager.get(frame_name, camera_config.frame_shape_yuv)` â†’
 `create_thumbnail(yuv_frame, box)` (`frigate/util/image.py`). It **must** be
-cropped synchronously — the shared-memory frame is only valid for that update's
+cropped synchronously â€” the shared-memory frame is only valid for that update's
 lifetime.
 
 ### Tests (`frigate/test/`)
@@ -438,38 +438,38 @@ dispatcher_command,no_mqtt_dependency,notify_whatsapp}.py` plus
 Two tiers, and it matters: some import cleanly without cv2/pyzmq (bare host),
 others need the real container. `test_alarm_detection_thread.py` moved into the
 container-only tier when AI verification added `FrigateConfig` + `frigate.util.image`
-imports — noted in its docstring. `test_alarm_dispatcher_command.py` has 4
+imports â€” noted in its docstring. `test_alarm_dispatcher_command.py` has 4
 pre-existing known failures.
 
 ---
 
-## 4. Alarm UI — management + camera auto-surface popup
+## 4. Alarm UI â€” management + camera auto-surface popup
 
 ### The popup (what the user calls "camera that has an object detected shown")
 
-`web/src/components/alarm/AlarmAlertOverlay.tsx` — **frontend only, needed zero
+`web/src/components/alarm/AlarmAlertOverlay.tsx` â€” **frontend only, needed zero
 backend changes.**
 
 - Mounted once in `App.tsx`'s `DefaultAppView`, gated on `config.alarm.enabled`,
   so it is global and route-independent.
 - Watches `useAlarmEvents()` / `useAlarmState()` in `web/src/api/ws.ts` (added
   mirroring the existing `useFrigateEvents()` pattern).
-- Pops a fixed bottom-right card with the **triggering camera's live feed** —
+- Pops a fixed bottom-right card with the **triggering camera's live feed** â€”
   reuses `LivePlayer` + `useCameraLiveMode`, the same hooks the grid dashboard
-  uses — plus zone / object / confidence context.
+  uses â€” plus zone / object / confidence context.
 - Surfaces as early as `alarm/event` fires (i.e. during entry delay, not only on
-  full `alarm` state — the whole point is seeing the camera *before* the alarm
+  full `alarm` state â€” the whole point is seeing the camera *before* the alarm
   finishes triggering), escalates visually when `is_alarm_active`.
 - **No auto-timeout.** Clears only on manual dismiss or the alarm actually
-  clearing/disarming — matching how a real panel behaves.
+  clearing/disarming â€” matching how a real panel behaves.
 
 ### Quick control widget
 
-`web/src/components/menu/AlarmControl.tsx` — arm/disarm/clear + per-zone bypass
+`web/src/components/menu/AlarmControl.tsx` â€” arm/disarm/clear + per-zone bypass
 reachable from every page. Modeled on `AccountSettings.tsx`'s polymorphic
 `Container`/`Trigger`/`Content` pattern (`DropdownMenu` on desktop, `Drawer` on
 mobile via `isDesktop`). Mounted in **both** `Sidebar.tsx` (desktop) and
-`Bottombar.tsx` (mobile) — that pair is the complete mount set.
+`Bottombar.tsx` (mobile) â€” that pair is the complete mount set.
 
 Deliberately does **not** wrap its controls in `DropdownMenuItem`/`DrawerClose`
 (unlike `GeneralSettings.tsx`'s nav-item precedent): those auto-close on click,
@@ -488,7 +488,7 @@ which is wrong for a bypass `Switch` you may flip several times in a row.
 | `hooks/use-alarm-actions.ts` | arm/disarm/clear/`setZoneBypass` mutations |
 | `hooks/use-alarm-event-log.ts`, `hooks/use-alarm-trail.ts` | History + trail fetching |
 | `types/alarm.ts` | Shared response types |
-| `utils/alarmUtil.ts` | `ALARM_STATE_BADGE_CLASSES` — shared so `AlarmView` and `AlarmControl` can't drift |
+| `utils/alarmUtil.ts` | `ALARM_STATE_BADGE_CLASSES` â€” shared so `AlarmView` and `AlarmControl` can't drift |
 | `api/ws.ts` | `useAlarmEvents()`, `useAlarmState()` |
 | `public/locales/en/views/alarm.json` | i18n keys |
 
@@ -499,28 +499,28 @@ the quick widget refreshes the settings view and vice versa with no extra wiring
 
 ## Rebuild order
 
-1. **TensorRT** — independent of everything else; 2 files. Do it first, it's the
+1. **TensorRT** â€” independent of everything else; 2 files. Do it first, it's the
    cheapest to verify (build + `get_available_providers()`).
-2. **Alarm backend core** — `state.py` → `engine.py` → `rules.py` → `adapter.py` →
-   `system.py` → `factory.py`, with tests at each step. These are pure and
+2. **Alarm backend core** â€” `state.py` â†’ `engine.py` â†’ `rules.py` â†’ `adapter.py` â†’
+   `system.py` â†’ `factory.py`, with tests at each step. These are pure and
    testable on a bare host.
-3. **Alarm persistence** — models + migrations 036–039, registered in `app.py`.
-4. **Alarm integration** — `detection_thread.py`, `mqtt_bridge.py`,
+3. **Alarm persistence** â€” models + migrations 036â€“039, registered in `app.py`.
+4. **Alarm integration** â€” `detection_thread.py`, `mqtt_bridge.py`,
    `ha_discovery.py`, `scheduler.py`, dispatcher/webpush/ws wiring, `app.py`
    `init_alarm_system()`/`start_alarm_system()`.
-5. **Alarm API** — `frigate/api/alarm.py`, then regenerate `frigate-api.yaml`.
-6. **Alarm UI** — ws hooks → `AlarmView` → `AlarmControl` → `AlarmAlertOverlay`.
-7. **ParkPow** — fully independent; config → client module → `maintainer.py` hook.
+5. **Alarm API** â€” `frigate/api/alarm.py`, then regenerate `frigate-api.yaml`.
+6. **Alarm UI** â€” ws hooks â†’ `AlarmView` â†’ `AlarmControl` â†’ `AlarmAlertOverlay`.
+7. **ParkPow** â€” fully independent; config â†’ client module â†’ `maintainer.py` hook.
 
 ## Commands
 
 ```bash
-# Backend tests (in container — cannot run on native Windows)
+# Backend tests (in container â€” cannot run on native Windows)
 python3 -m pytest frigate/test/ -k alarm
 python3 -m pytest frigate/test/test_parkpow.py frigate/test/test_util_model.py
 python3 -m ruff check frigate && python3 -m mypy --config-file frigate/mypy.ini frigate
 
-# Regenerate — NEVER hand-edit the outputs of these
+# Regenerate â€” NEVER hand-edit the outputs of these
 python3 generate_config_translations.py     # web/public/locales/en/config/*.json
 python3 generate_api_auth_spec.py           # docs/static/frigate-api.yaml (--check in CI)
 
@@ -532,8 +532,8 @@ npx tsc --noEmit && npx eslint . && npx i18next-cli extract --ci && npx vite bui
 
 | Item | Status |
 | --- | --- |
-| TensorRT `tensorrt-cu12-libs` version pin | Never run on real GPU hardware — verify before trusting |
-| SIA DC-09 protocol (`protocols/sia.py`) | Best-effort, no spec available — flagged unverified. Contact ID *is* verified. |
+| TensorRT `tensorrt-cu12-libs` version pin | Never run on real GPU hardware â€” verify before trusting |
+| SIA DC-09 protocol (`protocols/sia.py`) | Best-effort, no spec available â€” flagged unverified. Contact ID *is* verified. |
 | ParkPow end-to-end | Tests never executed; no live POST confirmed against a real ParkPow instance |
 | ParkPow locale JSON | Hand-edited; needs `generate_config_translations.py` re-run |
 | `test_alarm_dispatcher_command.py` | 4 pre-existing failures, unrelated to recent work |
