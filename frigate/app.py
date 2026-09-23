@@ -106,6 +106,9 @@ from frigate.timeline import TimelineProcessor
 from frigate.track.object_processing import TrackedObjectProcessor
 from frigate.util.builtin import empty_and_close_queue
 from frigate.util.image import UntrackedSharedMemory
+from frigate.util.migration_history import (
+    repair_renumbered_migration_history,
+)
 from frigate.util.ownership import chown_to_runtime
 from frigate.util.process import FrigateProcess
 from frigate.util.runtime_deps import RuntimeDependencyError
@@ -218,6 +221,12 @@ class FrigateApp:
 
         # Migrate DB schema
         migrate_db = SqliteExtDatabase(self.config.database.path)
+
+        # Rename any history rows left behind by renumbered migrations. This
+        # must happen before Router is constructed: Router.migrator replays
+        # every name in the history table by reading its file, so a stale name
+        # raises FileNotFoundError and takes startup down with it.
+        repair_renumbered_migration_history(migrate_db)
 
         # Run migrations
         del logging.getLogger("peewee_migrate").handlers[:]

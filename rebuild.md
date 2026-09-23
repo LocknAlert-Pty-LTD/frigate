@@ -525,17 +525,43 @@ they were renumbered to `040`–`043`. If you rebuild onto a newer upstream,
 check the highest existing migration number first — peewee_migrate orders by
 filename, so a duplicate prefix makes the order ambiguous.
 
-**Renumbering means every one of these must be idempotent.** peewee_migrate
-keys applied migrations by *filename*, so on any database created by the
-earlier build the renamed files look unapplied and run a second time. `040`,
-`041` and `042` were already safe (`CREATE TABLE/INDEX IF NOT EXISTS`,
-`INSERT OR IGNORE`). `043` was not: a bare
-`ALTER TABLE "alarmeventlog" ADD COLUMN "object_id"` raises
-`duplicate column name: object_id`, and a failed migration aborts startup —
-the API never binds `:5001` and every request 500s behind nginx, with only
-`connect() failed (111: Connection refused)` in the log to go on. It now checks
-`PRAGMA table_info` first. Keep any new migration here idempotent for the same
-reason.
+**Renumbering an applied migration is a breaking change.** peewee_migrate keys
+applied migrations by *filename*, and `Router.migrator` is a cached property
+that replays **every** name in the history table by reading its file:
+
+```python
+for name in self.done:          # names from the migratehistory table
+    self.run_one(name, migrator)  # -> read(name) -> open(<name>.py)
+```
+
+So a renamed migration does not merely re-run — the Router cannot be
+constructed at all, and startup dies with `FileNotFoundError` before any SQL
+executes. Frigate then looks alive but is not: nginx keeps serving the UI while
+every `/api/*` returns 500, and the only clue in the log is
+`connect() failed (111: Connection refused) ... upstream: "http://127.0.0.1:5001/auth"`
+because uvicorn never bound `:5001`.
+
+Two things handle this, and both are needed:
+
+1. `frigate/util/migration_history.py` — `repair_renumbered_migration_history()`
+   rewrites the stale history rows to the current names. It is called from
+   `FrigateApp.init_database()` **before** `Router(...)` is constructed, since a
+   migration cannot fix a failure that happens while the migrator is built.
+2. The migrations themselves stay idempotent, as a second line of defence.
+   `040`–`042` already were (`CREATE TABLE/INDEX IF NOT EXISTS`,
+   `INSERT OR IGNORE`); `043` needed a `PRAGMA table_info` guard, because a bare
+   `ALTER TABLE ... ADD COLUMN` raises `duplicate column name: object_id`.
+
+`frigate/test/test_migrations.py` covers both, driving the real Router against a
+real SQLite file — including a test that asserts the bare Router *does* raise
+`FileNotFoundError` without the repair, so the reason for the repair cannot be
+quietly lost.
+
+**Write migrations against the pinned `peewee_migrate == 1.14.*`.** Its
+`Migrator` has no `python()` method, even though the boilerplate docstring
+copied into every migration advertises one; using it fails only at runtime,
+during startup. `test_no_migration_calls_a_missing_migrator_method` guards
+this.
 
 Models live in `frigate/models.py`; all four must also be registered in the
 `models = [...]` list in `frigate/app.py`.
