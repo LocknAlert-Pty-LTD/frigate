@@ -91,26 +91,43 @@ extrapolation from ONNX Runtime's compatibility table, which does not list
 `docker/tensorrt/trt.mk` + `docker/tensorrt/trt.hcl` drive this via
 `docker buildx bake` — there is no plain `docker build` path.
 
+TensorRT is enabled identically on **all three** variants — `get_ort_providers()`
+has no architecture gating, so registering the EP applies to amd64, JP5 and JP6
+alike. What differs is only where the TRT runtime comes from: the
+`tensorrt-cu12-libs` wheel on amd64, and the NVIDIA L4T / TensorRT base image on
+the two Jetson variants (which is why Jetson worked before the amd64 fix).
+
 ```bash
 docker login -u <dockerhub-username>
 docker buildx create --use          # needs the docker-container driver to push
 make version                        # writes frigate/version.py + web/.env
 
-# x86 dGPU only (the variant the TensorRT work above applies to):
-X86_DGPU_ARGS="ARCH=amd64 COMPUTE_LEVEL=\"50 60 70 80 90\"" \
-docker buildx bake --file=docker/tensorrt/trt.hcl tensorrt \
+# all three variants (amd64 dGPU + Jetson JP5 + JP6), tagged <TRT_TAG>-tensorrt,
+# -tensorrt-jp5 and -tensorrt-jp6:
+make push-trt IMAGE_REPO=docker.io/<user>/frigate TRT_TAG=0.19.0
+
+# x86 dGPU only:
+ARCH=amd64 docker buildx bake --file=docker/tensorrt/trt.hcl tensorrt \
   --set tensorrt.tags=docker.io/<user>/frigate:latest-tensorrt \
   --push
-
-# or all three variants (amd64 dGPU + Jetson JP5 + JP6) via the Makefile:
-make push-trt IMAGE_REPO=docker.io/<user>/frigate
 ```
 
-Narrowing `COMPUTE_LEVEL` to your GPU's compute capability (e.g. `"86"` for
-30-series) cuts build time substantially. Jetson (arm64) variants built from an
-amd64 host need QEMU: `docker run --privileged --rm tonistiigi/binfmt --install all`.
+`TRT_TAG` defaults to the CI scheme `<branch>-<commit>`; override it for a
+friendlier Docker Hub tag.
 
-Local build without pushing: `make local-trt` → tags `frigate:latest-tensorrt`.
+**`COMPUTE_LEVEL` does nothing for the amd64 build.** It is only read by
+`docker/tensorrt/detector/tensorrt_libyolo.sh` (the `tensorrt_demos` YOLO
+plugins), and only `Dockerfile.arm64` declares the ARG — `Dockerfile.amd64` never
+references it. The ONNX Runtime TensorRT EP compiles engines at runtime for
+whichever GPU is present, so there is no compute-capability list to narrow and no
+x86 build time to save by trying. (An earlier revision of this file claimed
+otherwise; that was wrong.)
+
+Jetson (arm64) variants built from an amd64 host need QEMU:
+`docker run --privileged --rm tonistiigi/binfmt --install all`.
+
+Local build without pushing: `make local-trt` (or `local-trt-jp5` / `local-trt-jp6`)
+→ tags `frigate:latest-tensorrt`.
 
 ### Unrelated build fix that rode along
 
@@ -119,6 +136,42 @@ Local build without pushing: `make local-trt` → tags `frigate:latest-tensorrt`
 because some networks have flaky IPv6 routes to `deb.debian.org` that manifest as
 slow connect timeouts failing the whole build. Keep it — it is not TensorRT-specific
 but it is why builds stopped failing intermittently.
+
+### FFmpeg NVIDIA hardware decoding — already upstream, do not reimplement
+
+TensorRT accelerates *inference*. Video *decoding* is a separate, unrelated path,
+and it already works upstream with no fork changes. This is written down because
+the question keeps coming up.
+
+`hwaccel_args: preset-nvidia` expands to `-hwaccel cuda -hwaccel_output_format
+cuda` (`frigate/ffmpeg_presets.py`), which is codec-agnostic: FFmpeg selects the
+matching NVDEC decoder from the bitstream, covering H.264, H.265/HEVC and MJPEG
+in one setting. The supporting pieces are all present:
+
+- `NVIDIA_VISIBLE_DEVICES` / `NVIDIA_DRIVER_CAPABILITIES="compute,video,utility"`
+  are set in the `deps` stage of `docker/main/Dockerfile`, which both `frigate`
+  and `frigate-tensorrt` build `FROM`, so the `video` capability NVDEC needs is
+  in the TensorRT image too.
+- The bundled FFmpeg builds have NVDEC compiled in and dlopen the driver at
+  runtime.
+- `FAMILY_NVIDIA` in `frigate/util/hwaccel.py` is registered with `ANY_CODEC`, so
+  the hwaccel recommender never drops it for a codec.
+- `auto_detect_hwaccel()` (`frigate/util/services.py`) probes go2rtc's
+  `/api/ffmpeg/hardware` and returns `preset-nvidia` on its own when CUDA is up.
+
+**H.264+ / H.265+ need nothing extra.** They are Hikvision/Dahua encoder-side
+optimizations, not codecs — longer dynamic GOPs, long-term reference frames,
+per-region bitrate shaping — and the output is still a standards-compliant
+H.264/HEVC bitstream. No "H.265+ decoder" exists in FFmpeg or in any GPU, and
+`ffprobe` reports these streams as plain `h264` / `hevc`. Their one real
+side effect is wider keyframe spacing, which slows first-frame latency and
+coarsens recording segment cuts; the fix is a fixed I-frame interval in the
+camera's own UI, not a Frigate setting.
+
+Do **not** add `h264_cuvid` / `hevc_cuvid` presets as a "better" path. NVIDIA's
+own guidance is to prefer the `-hwaccel cuda`/`nvdec` route and to use the
+`_cuvid` decoders only for a specific reason, so such presets would be a
+downgrade dressed up as a feature.
 
 ---
 

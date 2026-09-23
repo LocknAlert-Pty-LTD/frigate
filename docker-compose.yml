@@ -8,12 +8,25 @@ services:
   frigate:
     container_name: frigate
     restart: unless-stopped
-    build:
-      context: .
-      dockerfile: docker/main/Dockerfile
-      target: frigate
-      cache_from:
-        - ghcr.io/blakeblackshear/frigate:cache-amd64
+    # The TensorRT image: GPU inference via the TensorRT/CUDA execution providers,
+    # plus NVDEC hardware video decoding (set `ffmpeg.hwaccel_args: preset-nvidia`
+    # in config.yml to use it). The GPU reservation below only grants access to
+    # the card -- the default image ships a CPU-only onnxruntime, so reserving a
+    # GPU for it would accelerate decoding but not detection.
+    #
+    # Compose cannot build this image: docker/tensorrt/Dockerfile.amd64 consumes
+    # named build contexts (wget/wheels/deps/rootfs) that only buildx bake
+    # supplies. Build it first with:
+    #     make local-trt        # tags frigate:latest-tensorrt
+    image: frigate:latest-tensorrt
+    # To run the plain CPU/iGPU image instead, comment out `image:` above and
+    # uncomment this block:
+    # build:
+    #   context: .
+    #   dockerfile: docker/main/Dockerfile
+    #   target: frigate
+    #   cache_from:
+    #     - ghcr.io/blakeblackshear/frigate:cache-amd64
     # Each 1080p camera stream needs roughly 50MB of shared memory; raise
     # this if you add more cameras. See:
     # https://docs.frigate.video/frigate/installation#calculating-required-shm-size

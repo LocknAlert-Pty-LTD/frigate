@@ -242,6 +242,51 @@ ffmpeg:
 </TabItem>
 </ConfigTabs>
 
+### Which camera codecs are covered
+
+`preset-nvidia` is codec-agnostic. It sets `-hwaccel cuda`, which lets FFmpeg pick the
+NVDEC decoder that matches whatever the camera is actually sending, so a single setting
+covers every codec your GPU can decode — there is no separate preset to choose per codec:
+
+| Camera setting | Decoded by | Covered by `preset-nvidia` |
+| --- | --- | --- |
+| H.264 / AVC | NVDEC `h264` | Yes |
+| **H.264+** (Hikvision, Dahua "Smart Codec") | NVDEC `h264` | Yes |
+| H.265 / HEVC | NVDEC `hevc` | Yes |
+| **H.265+** (Hikvision, Dahua "Smart Codec") | NVDEC `hevc` | Yes |
+| MJPEG | NVDEC `mjpeg` | Yes |
+
+:::tip
+
+**H.264+ and H.265+ need no special configuration.** Despite the name, they are not
+separate codecs and there is no "H.265+ decoder" in FFmpeg or in any GPU. They are
+vendor encoder-side optimizations — longer and dynamically sized GOPs, long-term
+reference frames, and per-region bitrate shaping — that still emit an ordinary,
+standards-compliant H.264 or H.265 bitstream. Any decoder that handles H.264/H.265
+handles the "+" variant, so `preset-nvidia` decodes them on the GPU exactly like the
+plain versions. `ffprobe` also reports them as plain `h264` / `hevc`, which is why
+Frigate's automatic hardware-acceleration detection classifies them correctly.
+
+What the "+" modes *do* change is keyframe spacing. Because they stretch the interval
+between I-frames, a stream may take noticeably longer to produce its first decoded
+frame, and recording segments can be less precisely cut. If that matters more to you
+than the bandwidth saving, set a fixed I-frame interval (ideally equal to the frame
+rate, i.e. one keyframe per second) in the camera's own web UI. That is a camera-side
+setting; no Frigate option changes it.
+
+:::
+
+### GPU capability
+
+Whether a given codec decodes in hardware depends on the GPU's NVDEC block, not on
+Frigate. Check NVIDIA's [video decode support matrix](https://developer.nvidia.com/video-encode-and-decode-gpu-support-matrix-new)
+for your card. As a reference point, an RTX 3060 (Ampere, GA106) decodes H.264 up to
+4:4:4, HEVC 8/10/12-bit, VP8, VP9 and AV1, which covers every codec a surveillance
+camera is likely to emit.
+
+If the GPU cannot decode a particular stream, FFmpeg logs an error for that camera
+rather than silently falling back, so check the camera's logs after enabling the preset.
+
 If everything is working correctly, you should see a significant improvement in performance.
 Verify that hardware decoding is working by running `nvidia-smi`, which should show `ffmpeg`
 processes:

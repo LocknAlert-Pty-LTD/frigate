@@ -508,6 +508,38 @@ TensorRT gives the fastest GPU inference, but its execution engine is compiled f
 
 :::
 
+#### TensorRT across the image variants
+
+TensorRT is enabled the same way on every `-tensorrt` variant. Frigate registers
+`TensorrtExecutionProvider` whenever ONNX Runtime reports it as available, ahead of
+`CUDAExecutionProvider`, so no per-architecture configuration or `device:` setting is
+required:
+
+| Image | TensorRT runtime comes from |
+| --- | --- |
+| `-tensorrt` (x86_64 dGPU) | The `tensorrt-cu12-libs` wheel installed into the image |
+| `-tensorrt-jp5` (Jetson, JetPack 5) | The `l4t-tensorrt` base image |
+| `-tensorrt-jp6` (Jetson, JetPack 6) | The `tensorrt` iGPU base image |
+
+ONNX Runtime partitions the model graph and runs any node TensorRT cannot compile on
+CUDA instead, so enabling it is a speed improvement rather than an all-or-nothing switch.
+
+#### Tuning the TensorRT workspace
+
+TensorRT reserves a scratch workspace on the GPU while it compiles and runs engines.
+Frigate defaults to 2048 MB and exposes it as the `TRT_MAX_WORKSPACE_MB` environment
+variable:
+
+```yaml
+environment:
+  - TRT_MAX_WORKSPACE_MB=1024
+```
+
+Lower it if the GPU is shared with other workloads, or on a Jetson, where GPU memory is
+unified with system RAM and a large workspace competes directly with the rest of the
+system. Raise it if TensorRT logs that it lacks workspace to build an engine for a large
+model. It caps scratch space only and does not change detection accuracy.
+
 :::tip
 
 When using many cameras one detector may not be enough to keep up. Multiple detectors can be defined assuming GPU resources are available. An example configuration would be:

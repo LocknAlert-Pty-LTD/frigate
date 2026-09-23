@@ -24,7 +24,7 @@ See [the hardware acceleration docs](/configuration/hardware_acceleration_video.
 | preset-vaapi          | VAAPI (Intel/AMD GPU)   | Intel or AMD GPU via VAAPI        | Check the hwaccel docs to ensure the correct driver is selected |
 | preset-intel-qsv-h264 | Intel QuickSync (H.264) | Intel QuickSync, H.264 stream     | If you have issues, use the VAAPI preset instead                |
 | preset-intel-qsv-h265 | Intel QuickSync (H.265) | Intel QuickSync, H.265 stream     | If you have issues, use the VAAPI preset instead                |
-| preset-nvidia         | NVIDIA GPU              | NVIDIA GPU                        |                                                                 |
+| preset-nvidia         | NVIDIA GPU              | NVIDIA GPU                        | Codec-agnostic: covers H.264, H.265 and MJPEG, including the H.264+ / H.265+ variants |
 | preset-jetson-h264    | NVIDIA Jetson (H.264)   | NVIDIA Jetson, H.264 stream       |                                                                 |
 | preset-jetson-h265    | NVIDIA Jetson (H.265)   | NVIDIA Jetson, H.265 stream       |                                                                 |
 | preset-rkmpp          | Rockchip RKMPP          | Rockchip MPP                      | Use an image with the `-rk` suffix and run in privileged mode   |
