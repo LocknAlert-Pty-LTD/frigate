@@ -43,6 +43,7 @@ import subprocess
 import sys
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
+NL = chr(10)
 
 
 def read_version() -> str:
@@ -215,6 +216,71 @@ def check_docker_access(docker: str) -> None:
     sys.exit(f"docker is installed but not usable:\n\n  {first}\n")
 
 
+
+def current_builder_name(docker: str) -> str:
+    proc = subprocess.run(
+        [docker, "buildx", "inspect"], capture_output=True, text=True
+    )
+    for line in (proc.stdout or "").splitlines():
+        if line.lower().startswith("name:"):
+            return line.split(":", 1)[1].strip()
+    return "<builder>"
+
+
+def check_buildx_builder(docker: str) -> None:
+    """Boot the active buildx builder before starting a long build.
+
+    A docker-container builder keeps a buildkit container whose bind mounts
+    point into Docker Desktop's per-WSL-session directory
+    (/run/desktop/mnt/host/wsl/docker-desktop-bind-mounts/...).
+    `wsl --shutdown` regenerates that path, so a builder created in an
+    earlier session is left pointing at a directory that no longer exists:
+
+        invalid mount config for type "bind":
+        bind source path does not exist
+
+    The builder then has to be recreated, and `buildx create` alone refuses
+    because the instance is still registered. Catch it here rather than
+    after the context upload.
+    """
+    proc = subprocess.run(
+        [docker, "buildx", "inspect", "--bootstrap"],
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode == 0:
+        return
+
+    err = (proc.stderr or proc.stdout or "").strip()
+    name = current_builder_name(docker)
+    detail = err.splitlines()[-1] if err else "<no output>"
+
+    if "bind source path does not exist" in err or "booting buildkit" in err:
+        sys.exit(
+            NL.join(
+                [
+                    f"The buildx builder '{name}' is stale and cannot start:",
+                    "",
+                    f"  {detail}",
+                    "",
+                    "Its buildkit container points at a Docker Desktop path from",
+                    "a previous WSL session, which `wsl --shutdown` invalidated.",
+                    "Recreate it -- `buildx create` on its own will refuse while",
+                    "the old instance is still registered:",
+                    "",
+                    f"  docker buildx rm {name}",
+                    f"  docker buildx create --name {name} \\",
+                    "      --driver docker-container --use --bootstrap",
+                    "",
+                ]
+            )
+        )
+
+    sys.exit(
+        NL.join([f"buildx builder '{name}' is not usable:", "", f"  {detail}", ""])
+    )
+
+
 def check_registry_login(repo: str) -> None:
     """Fail before the build when the push has no chance of succeeding.
 
@@ -384,6 +450,7 @@ def main() -> None:
     # so the error arrives in one second rather than after the context upload.
     if not args.dry_run:
         check_docker_access(docker)
+        check_buildx_builder(docker)
         if args.push:
             check_registry_login(args.repo)
 
