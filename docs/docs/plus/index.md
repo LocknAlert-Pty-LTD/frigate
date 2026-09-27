@@ -3,11 +3,11 @@ id: index
 title: Models
 ---
 
-<a href="https://frigate.video/plus" target="_blank" rel="nofollow">Frigate+</a> offers models trained on images submitted by Frigate+ users from their security cameras and is specifically designed for the way Frigate NVR analyzes video footage. These models offer higher accuracy with less resources. The images you upload are used to fine tune a base model trained from images uploaded by all Frigate+ users. This fine tuning process results in a model that is optimized for accuracy in your specific conditions.
+<a href="https://frigate.video/plus" target="_blank" rel="nofollow">Frigate+</a> offers models trained on images submitted by Frigate+ users from their security cameras and is specifically designed for the way Kestrel NVR analyzes video footage. These models offer higher accuracy with less resources. The images you upload are used to fine tune a base model trained from images uploaded by all Frigate+ users. This fine tuning process results in a model that is optimized for accuracy in your specific conditions.
 
 With a subscription, 12 model trainings to fine tune your model per year are included. In addition, you will have access to any base models published while your subscription is active. If you cancel your subscription, you will retain access to any trained and base models in your account. An active subscription is required to submit model requests or purchase additional trainings. New base models are published quarterly with target dates of January 15th, April 15th, July 15th, and October 15th.
 
-Information on how to integrate Frigate+ with Frigate can be found in the [integration docs](../integrations/plus.md).
+Information on how to integrate Frigate+ with Kestrel can be found in the [integration docs](../integrations/plus.md).
 
 ## Available model types
 
@@ -17,7 +17,7 @@ Not all model types are supported by all detectors, so it's important to choose 
 
 | Model Type  | Description                                                                                                                                                    |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `mobiledet` | Based on the same architecture as the default model included with Frigate. Runs on Google Coral devices and CPUs.                                              |
+| `mobiledet` | Based on the same architecture as the default model included with Kestrel. Runs on Google Coral devices and CPUs.                                              |
 | `yolonas`   | A newer architecture that offers slightly higher accuracy and improved detection of small objects. Runs on Intel, NVidia GPUs, and AMD GPUs.                   |
 | `yolov9`    | A leading SOTA (state of the art) object detection model with similar performance to yolonas, but on a wider range of hardware options. Runs on most hardware. |
 
@@ -37,7 +37,7 @@ If you have a Hailo device, you will need to specify the hardware you have when 
 
 #### Rockchip (RKNN) Support
 
-Rockchip models are automatically converted as of 0.17. For 0.16, YOLOv9 onnx models will need to be manually converted. First, you will need to configure Frigate to use the model id for your YOLOv9 onnx model so it downloads the model to your `model_cache` directory. From there, you can follow the [documentation](/configuration/object_detectors.md#converting-your-own-onnx-model-to-rknn-format) to convert it.
+Rockchip models are automatically converted as of 0.17. For 0.16, YOLOv9 onnx models will need to be manually converted. First, you will need to configure Kestrel to use the model id for your YOLOv9 onnx model so it downloads the model to your `model_cache` directory. From there, you can follow the [documentation](/configuration/object_detectors.md#converting-your-own-onnx-model-to-rknn-format) to convert it.
 
 ## Supported detector types
 
@@ -55,7 +55,7 @@ Currently, Frigate+ models support CPU (`cpu`), Google Coral (`edgetpu`), OpenVi
 
 ## Improving your model
 
-Some users may find that Frigate+ models result in more false positives initially, but by submitting true and false positives, the model will improve. With all the new images now being submitted by subscribers, future base models will improve as more and more examples are incorporated. Note that only images with at least one verified label will be used when training your model. Submitting an image from Frigate as a true or false positive will not verify the image. You still must verify the image in Frigate+ in order for it to be used in training.
+Some users may find that Frigate+ models result in more false positives initially, but by submitting true and false positives, the model will improve. With all the new images now being submitted by subscribers, future base models will improve as more and more examples are incorporated. Note that only images with at least one verified label will be used when training your model. Submitting an image from Kestrel as a true or false positive will not verify the image. You still must verify the image in Frigate+ in order for it to be used in training.
 
 - **Submit both true positives and false positives**. This will help the model differentiate between what is and isn't correct. You should aim for a target of 80% true positive submissions and 20% false positives across all of your images. If you are experiencing false positives in a specific area, submitting true positives for any object type near that area in similar lighting conditions will help teach the model what that area looks like when no objects are present.
 - **Lower your thresholds a little in order to generate more false/true positives near the threshold value**. For example, if you have some false positives that are scoring at 68% and some true positives scoring at 72%, you can try lowering your threshold to 65% and submitting both true and false positives within that range. This will help the model learn and widen the gap between true and false positive scores.
@@ -71,7 +71,7 @@ Frigate+ models support a more relevant set of objects for security cameras. The
 - **Animals**: `dog`, `cat`, `deer`, `horse`, `bird`, `raccoon`, `fox`, `bear`, `cow`, `squirrel`, `goat`, `rabbit`, `skunk`, `kangaroo`
 - **Other**: `package`, `waste_bin`, `bbq_grill`, `robot_lawnmower`, `umbrella`
 
-Other object types available in the default Frigate model are not available. Additional object types will be added in future releases.
+Other object types available in the default Kestrel model are not available. Additional object types will be added in future releases.
 
 ### Candidate labels
 
@@ -85,9 +85,9 @@ Candidate labels are not available for automatic suggestions.
 
 ### Label attributes
 
-Frigate has special handling for some labels when using Frigate+ models. `face`, `license_plate`, and delivery logos such as `amazon`, `ups`, and `fedex` are considered attribute labels which are not tracked like regular objects and do not generate review items directly. In addition, the `threshold` filter will have no effect on these labels. You should adjust the `min_score` and other filter values as needed.
+Kestrel has special handling for some labels when using Frigate+ models. `face`, `license_plate`, and delivery logos such as `amazon`, `ups`, and `fedex` are considered attribute labels which are not tracked like regular objects and do not generate review items directly. In addition, the `threshold` filter will have no effect on these labels. You should adjust the `min_score` and other filter values as needed.
 
-In order to have Frigate start using these attribute labels, you will need to add them to the list of objects to track:
+In order to have Kestrel start using these attribute labels, you will need to add them to the list of objects to track:
 
 ```yaml
 objects:
@@ -104,7 +104,7 @@ objects:
     - package
 ```
 
-When using Frigate+ models, Frigate will choose the snapshot of a person object that has the largest visible face. For cars, the snapshot with the largest visible license plate will be selected. This aids in secondary processing such as facial and license plate recognition for person and car objects.
+When using Frigate+ models, Kestrel will choose the snapshot of a person object that has the largest visible face. For cars, the snapshot with the largest visible license plate will be selected. This aids in secondary processing such as facial and license plate recognition for person and car objects.
 
 ![Face Attribute](/img/plus/attribute-example-face.jpg)
 

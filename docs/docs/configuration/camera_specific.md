@@ -110,8 +110,8 @@ cameras:
             - detect
             - record
     detect:
-      width: # <- optional, by default Frigate tries to automatically detect resolution
-      height: # <- optional, by default Frigate tries to automatically detect resolution
+      width: # <- optional, by default Kestrel tries to automatically detect resolution
+      height: # <- optional, by default Kestrel tries to automatically detect resolution
 ```
 
 ### Blue Iris RTSP Cameras
@@ -153,10 +153,10 @@ Reolink has many different camera models with inconsistently supported features 
 | Camera Resolution | Camera Generation         | Recommended Stream Type           | Additional Notes                                                                            |
 | ----------------- | ------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------- |
 | 5MP or lower      | All                       | http-flv                          | Stream is h264                                                                              |
-| 6MP or higher     | Latest (ex: Duo3, CX-8##) | http-flv with ffmpeg 8.0, or rtsp | This uses the new http-flv-enhanced over H265 which requires ffmpeg 8.0 (Frigate's default) |
+| 6MP or higher     | Latest (ex: Duo3, CX-8##) | http-flv with ffmpeg 8.0, or rtsp | This uses the new http-flv-enhanced over H265 which requires ffmpeg 8.0 (Kestrel's default) |
 | 6MP or higher     | Older (ex: RLC-8##)       | rtsp                              |                                                                                             |
 
-Frigate works much better with newer Reolink cameras that are setup with the below options:
+Kestrel works much better with newer Reolink cameras that are setup with the below options:
 
 If available, recommended settings are:
 
@@ -192,7 +192,7 @@ Reolink's latest cameras support two way audio via go2rtc and other applications
 
 NOTE: The RTSP stream can not be prefixed with `ffmpeg:`, as go2rtc needs to handle the stream to support two way audio.
 
-Ensure [HTTP is enabled](https://support.reolink.com/articles/360003452893-How-to-Access-Reolink-Cameras-NVRs-Home-Hub-Locally-via-Web-Browsers/) in the camera's advanced network settings. To use two way talk with Frigate, see the [Live view documentation](/configuration/live#two-way-talk).
+Ensure [HTTP is enabled](https://support.reolink.com/articles/360003452893-How-to-Access-Reolink-Cameras-NVRs-Home-Hub-Locally-via-Web-Browsers/) in the camera's advanced network settings. To use two way talk with Kestrel, see the [Live view documentation](/configuration/live#two-way-talk).
 
 :::
 
@@ -284,14 +284,14 @@ Some community members have found better performance on Wyze cameras by using an
 
 ## USB Cameras (aka Webcams)
 
-To use a USB camera (webcam) with Frigate, the recommendation is to use go2rtc's [FFmpeg Device](https://github.com/AlexxIT/go2rtc?tab=readme-ov-file#source-ffmpeg-device) support:
+To use a USB camera (webcam) with Kestrel, the recommendation is to use go2rtc's [FFmpeg Device](https://github.com/AlexxIT/go2rtc?tab=readme-ov-file#source-ffmpeg-device) support:
 
-- Preparation outside of Frigate:
+- Preparation outside of Kestrel:
   - Get USB camera path. Run `v4l2-ctl --list-devices` to get a listing of locally-connected cameras available. (You may need to install `v4l-utils` in a way appropriate for your Linux distribution). In the sample configuration below, we use `video=0` to correlate with a detected device path of `/dev/video0`
   - Get USB camera formats & resolutions. Run `ffmpeg -f v4l2 -list_formats all -i /dev/video0` to get an idea of what formats and resolutions the USB Camera supports. In the sample configuration below, we use a width of 1024 and height of 576 in the stream and detection settings based on what was reported back.
-  - If using Frigate in a container (e.g. Docker on TrueNAS), ensure you have USB Passthrough support enabled, along with a specific Host Device (`/dev/video0`) + Container Device (`/dev/video0`) listed.
+  - If using Kestrel in a container (e.g. Docker on TrueNAS), ensure you have USB Passthrough support enabled, along with a specific Host Device (`/dev/video0`) + Container Device (`/dev/video0`) listed.
 
-- In your Frigate Configuration File, add the go2rtc stream and roles as appropriate:
+- In your Kestrel Configuration File, add the go2rtc stream and roles as appropriate:
 
 ```yaml {4,11-12}
 go2rtc:

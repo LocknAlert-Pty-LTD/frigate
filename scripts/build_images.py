@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build (and optionally push) the Frigate images this fork publishes.
+"""Build (and optionally push) the Kestrel images this fork publishes.
 
 Why this exists instead of `make push-trt`:
 

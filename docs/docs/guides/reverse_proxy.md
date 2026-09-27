@@ -3,11 +3,11 @@ id: reverse_proxy
 title: Setting up a reverse proxy
 ---
 
-This guide outlines the basic configuration steps needed to set up a reverse proxy in front of your Frigate instance.
+This guide outlines the basic configuration steps needed to set up a reverse proxy in front of your Kestrel instance.
 
-A reverse proxy is typically needed if you want to set up Frigate on a custom URL, on a subdomain, or on a host serving multiple sites. It could also be used to set up your own authentication provider or for more advanced HTTP routing.
+A reverse proxy is typically needed if you want to set up Kestrel on a custom URL, on a subdomain, or on a host serving multiple sites. It could also be used to set up your own authentication provider or for more advanced HTTP routing.
 
-Before setting up a reverse proxy, check if any of the built-in functionality in Frigate suits your needs:
+Before setting up a reverse proxy, check if any of the built-in functionality in Kestrel suits your needs:
 |Topic|Docs|
 |-|-|
 |TLS|Please see the `tls` [configuration option](../configuration/tls.md)|
@@ -15,8 +15,8 @@ Before setting up a reverse proxy, check if any of the built-in functionality in
 |IPv6|[Enabling IPv6](../configuration/advanced/system.md#enabling-ipv6)
 
 **Note about TLS**
-When using a reverse proxy, the TLS session is usually terminated at the proxy, sending the internal request over plain HTTP. If this is the desired behavior, TLS must first be disabled in Frigate, or you will encounter an HTTP 400 error: "The plain HTTP request was sent to HTTPS port."
-To disable TLS, set the following in your Frigate configuration:
+When using a reverse proxy, the TLS session is usually terminated at the proxy, sending the internal request over plain HTTP. If this is the desired behavior, TLS must first be disabled in Kestrel, or you will encounter an HTTP 400 error: "The plain HTTP request was sent to HTTPS port."
+To disable TLS, set the following in your Kestrel configuration:
 
 ```yml
 tls:
@@ -31,7 +31,7 @@ Please use your own knowledge to assess and vet the reverse proxy software befor
 
 ## WebSocket support
 
-Frigate relies on WebSockets for real-time communication between the browser and the backend. Features such as camera controls (enabling/disabling a camera, audio, detect, recordings, and other toggles), live stream playback, and other live-updating parts of the UI will not function correctly if WebSocket connections are not proxied.
+Kestrel relies on WebSockets for real-time communication between the browser and the backend. Features such as camera controls (enabling/disabling a camera, audio, detect, recordings, and other toggles), live stream playback, and other live-updating parts of the UI will not function correctly if WebSocket connections are not proxied.
 
 Your reverse proxy must be configured to forward the `Upgrade` and `Connection` headers so that WebSocket connections can be established. Each proxy example below already includes the directives needed to do this, but if you are adapting your own configuration, ensure these headers are passed through.
 
@@ -53,8 +53,8 @@ On Debian Apache2 the configuration file will be named along the lines of `/etc/
 
 ### Step 1: Configure the Apache2 Reverse Proxy
 
-Make life easier for yourself by presenting your Frigate interface as a DNS sub-domain rather than as a sub-folder of your main domain.
-Here we access Frigate via https://cctv.mydomain.co.uk
+Make life easier for yourself by presenting your Kestrel interface as a DNS sub-domain rather than as a sub-folder of your main domain.
+Here we access Kestrel via https://cctv.mydomain.co.uk
 
 ```xml
 <VirtualHost *:443>
@@ -78,9 +78,9 @@ Here we access Frigate via https://cctv.mydomain.co.uk
 </VirtualHost>
 ```
 
-### Step 2: Use SSL to encrypt access to your Frigate instance
+### Step 2: Use SSL to encrypt access to your Kestrel instance
 
-Whilst this won't, on its own, prevent access to your Frigate webserver it will encrypt all content (such as login credentials).
+Whilst this won't, on its own, prevent access to your Kestrel webserver it will encrypt all content (such as login credentials).
 Installing SSL is beyond the scope of this document but [Let's Encrypt](https://letsencrypt.org/) is a widely used approach.
 This Apache2 configuration snippet then results in unencrypted requests being redirected to the webserver SSL port
 
@@ -168,7 +168,7 @@ The settings below enabled connection upgrade, sets up logging (optional) and pr
 
 ## Traefik Reverse Proxy
 
-This example shows how to add a `label` to the Frigate Docker compose file, enabling Traefik to automatically discover your Frigate instance.
+This example shows how to add a `label` to the Kestrel Docker compose file, enabling Traefik to automatically discover your Kestrel instance.
 Before using the example below, you must first set up Traefik with the [Docker provider](https://doc.traefik.io/traefik/providers/docker/)
 
 ```yml
@@ -187,11 +187,11 @@ services:
 The above configuration will create a "service" in Traefik, automatically adding your container's IP on port 8971 as a backend.
 It will also add a router, routing requests to "traefik.example.com" to your local container.
 
-Note that with this approach, you don't need to expose any ports for the Frigate instance since all traffic will be routed over the internal Docker network.
+Note that with this approach, you don't need to expose any ports for the Kestrel instance since all traffic will be routed over the internal Docker network.
 
 ## Caddy Reverse Proxy
 
-This example shows Frigate running under a subdomain with logging and a tls cert (in this case a wildcard domain cert obtained independently of caddy) handled via imports
+This example shows Kestrel running under a subdomain with logging and a tls cert (in this case a wildcard domain cert obtained independently of caddy) handled via imports
 
 ```caddy
 (logging) {

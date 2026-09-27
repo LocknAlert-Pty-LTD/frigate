@@ -1,7 +1,7 @@
 # Fork Rebuild Reference — TensorRT, ParkPow, Alarm System
 
 Reference for rebuilding the three LocknAlert-specific feature sets in this
-Frigate fork onto a clean upstream checkout. Written to be read cold, with no
+Kestrel fork onto a clean upstream checkout. Written to be read cold, with no
 memory of the sessions that produced the code.
 
 **Relationship to `AGENTS.md`**: `AGENTS.md` is the chronological session log —
@@ -266,7 +266,7 @@ H.264/HEVC bitstream. No "H.265+ decoder" exists in FFmpeg or in any GPU, and
 `ffprobe` reports these streams as plain `h264` / `hevc`. Their one real
 side effect is wider keyframe spacing, which slows first-frame latency and
 coarsens recording segment cuts; the fix is a fixed I-frame interval in the
-camera's own UI, not a Frigate setting.
+camera's own UI, not a Kestrel setting.
 
 Do **not** add `h264_cuvid` / `hevc_cuvid` presets as a "better" path. NVIDIA's
 own guidance is to prefer the `-hwaccel cuda`/`nvdec` route and to use the
@@ -279,7 +279,7 @@ downgrade dressed up as a feature.
 
 Sends each recognized license plate to [ParkPow](https://app.parkpow.com/documentation/),
 a hosted/self-hosted ALPR visit-management dashboard (same company as Plate
-Recognizer). Frigate keeps doing its own on-device OCR; this only forwards results.
+Recognizer). Kestrel keeps doing its own on-device OCR; this only forwards results.
 
 ### Wire contract
 
@@ -387,7 +387,7 @@ back to `[camera]`.
 
 ## 3. Alarm system (backend)
 
-A full intrusion-alarm engine layered on Frigate's existing detection stream.
+A full intrusion-alarm engine layered on Kestrel's existing detection stream.
 `AGENTS.md` §"Alarm Engine Project" documents its 12-phase build and every design
 argument; this is the structural summary.
 
@@ -472,7 +472,7 @@ cameras:
     alarm:
       enabled: True
       zones:
-        front_gate:         # must match a Frigate zone name on this camera
+        front_gate:         # must match a Kestrel zone name on this camera
           objects: [person]
           event: burglary
           min_confidence: 0.7
@@ -536,7 +536,7 @@ for name in self.done:          # names from the migratehistory table
 
 So a renamed migration does not merely re-run — the Router cannot be
 constructed at all, and startup dies with `FileNotFoundError` before any SQL
-executes. Frigate then looks alive but is not: nginx keeps serving the UI while
+executes. Kestrel then looks alive but is not: nginx keeps serving the UI while
 every `/api/*` returns 500, and the only clue in the log is
 `connect() failed (111: Connection refused) ... upstream: "http://127.0.0.1:5001/auth"`
 because uvicorn never bound `:5001`.
@@ -636,7 +636,7 @@ no extra wiring needed at the call site.
 
 ### AI verification (opt-in per zone)
 
-Uses Frigate's **existing** GenAI abstraction, not a new integration:
+Uses Kestrel's **existing** GenAI abstraction, not a new integration:
 `GenAIClient.generate_alarm_verification()` (`frigate/genai/__init__.py`) with
 `build_alarm_verification_prompt()` / structured-output `_response_format()`
 (`frigate/genai/prompts.py`). `AlarmAiVerifier` runs each call on a background

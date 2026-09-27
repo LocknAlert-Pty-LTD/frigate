@@ -1,4 +1,4 @@
-"""Tests for the Frigate detection -> canonical alarm event adapter."""
+"""Tests for the Kestrel detection -> canonical alarm event adapter."""
 
 import unittest
 

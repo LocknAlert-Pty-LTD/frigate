@@ -2,7 +2,7 @@
 
 Protocol-independent shape produced by the detection adapter (and, in later
 phases, by arm/disarm/fault sources) and consumed by the SIA/Contact ID
-protocol adapters. Those adapters must never see a Frigate detection or
+protocol adapters. Those adapters must never see a Kestrel detection or
 config object directly, only this.
 """
 
@@ -34,7 +34,7 @@ class AlarmEvent:
     confidence: float | None = None
     source: str = "detection"
     message: str | None = None
-    # The Frigate tracked-object id, which becomes Event.id once persisted
+    # The Kestrel tracked-object id, which becomes Event.id once persisted
     # (see frigate/events/maintainer.py) -- lets a downstream consumer
     # (e.g. frigate/alarm/trail.py) correlate this alarm event back to the
     # real detection it came from. None for non-detection events (arm/

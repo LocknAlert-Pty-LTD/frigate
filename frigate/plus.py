@@ -21,7 +21,7 @@ def add_hailo_alias(model_info: dict[str, Any]) -> dict[str, Any]:
 
     Frigate+ reports every Hailo model as supporting hailo8l, which this
     detector was called before it was renamed to cover every Hailo device.
-    The old key is kept so an older Frigate still matches the model.
+    The old key is kept so an older Kestrel still matches the model.
 
     Args:
         model_info: A Frigate+ model's metadata, edited in place

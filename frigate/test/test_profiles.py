@@ -817,7 +817,7 @@ class TestProfileManager(unittest.TestCase):
         """Profile changes republish MQTT switch states so HA stays in sync.
 
         Regression: activating/deactivating a profile updated the in-memory
-        config (and Frigate's behavior) but left the retained MQTT state
+        config (and Kestrel's behavior) but left the retained MQTT state
         topics stale, so external integrations like Home Assistant kept
         showing the pre-profile toggle position.
         """

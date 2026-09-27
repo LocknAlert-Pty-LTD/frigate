@@ -34,7 +34,7 @@ const MAX_FIELDS_PER_CAMERA = 5;
  * Includes enrichment sections that aren't meaningfully per-camera
  * (face recognition and LPR are intentionally omitted so the badge does show
  * there) and every System sub-page (detector hardware, database, networking,
- * etc.) which configures Frigate as a whole, not per-camera state.
+ * etc.) which configures Kestrel as a whole, not per-camera state.
  */
 const SECTIONS_WITHOUT_OVERRIDE_BADGE = new Set([
   // Enrichments (face_recognition and lpr remain enabled)

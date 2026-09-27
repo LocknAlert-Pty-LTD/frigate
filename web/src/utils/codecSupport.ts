@@ -2,7 +2,7 @@
  * Best-effort probe for whether this browser can decode a video codec
  * family.
  *
- * Frigate only stores the codec family from ffprobe (no profile or
+ * Kestrel only stores the codec family from ffprobe (no profile or
  * level), so the probe tests representative MIME samples per family.
  * The result is a hint, not proof: a 10-bit stream can fail on a
  * browser that passes the Main-profile sample, so callers must keep a

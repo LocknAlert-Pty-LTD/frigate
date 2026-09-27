@@ -50,7 +50,7 @@ type PlateComboboxProps = {
 };
 
 /**
- * Plate entry that doubles as a picker for plates Frigate has already
+ * Plate entry that doubles as a picker for plates Kestrel has already
  * recognized. Free text is still accepted so regexes remain typeable.
  */
 function PlateCombobox({

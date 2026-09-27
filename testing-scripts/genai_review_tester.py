@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Interactive tester for GenAI review description prompts.
 
-Reuses Frigate's GenAI provider plugins and prompt builders so results match
-what Frigate produces at runtime, without needing a running Frigate instance.
+Reuses Kestrel's GenAI provider plugins and prompt builders so results match
+what Kestrel produces at runtime, without needing a running Kestrel instance.
 
 Setup:
-    1. Enable `review.genai.debug_save_thumbnails: True` in Frigate so debug
+    1. Enable `review.genai.debug_save_thumbnails: True` in Kestrel so debug
        output is saved under clips/genai-requests/<review_id>/.
     2. Copy one or more of those folders (numbered frame images plus
        prompt.txt) into testing-scripts/genai-review-examples/.
@@ -187,7 +187,7 @@ def edit_settings(settings: TesterSettings) -> None:
 
 
 def build_client(settings: TesterSettings) -> Any | None:
-    """Instantiate the Frigate provider client for the saved settings."""
+    """Instantiate the Kestrel provider client for the saved settings."""
     from frigate.genai import PROVIDERS
 
     try:
@@ -230,8 +230,8 @@ def list_examples() -> list[Path]:
 def load_frames(example: Path) -> list[bytes]:
     """Load the example's frames as JPEG bytes in frame order.
 
-    Frames are saved by Frigate as <index>.jpg or <index>.webp. Non-JPEG
-    images are re-encoded to JPEG to match what Frigate sends to providers.
+    Frames are saved by Kestrel as <index>.jpg or <index>.webp. Non-JPEG
+    images are re-encoded to JPEG to match what Kestrel sends to providers.
     """
     import cv2
 
@@ -265,7 +265,7 @@ def apply_style(prompt: str, style: str) -> str:
     """Apply a style preset to a saved prompt.
 
     Presets replace the per-field response guidance lines, matching what
-    Frigate builds at runtime. Handles both the current guidance format
+    Kestrel builds at runtime. Handles both the current guidance format
     ("- `scene`: ...") and the 0.17 format ("- `scene` (string): ...").
     """
     overrides = REVIEW_RESPONSE_STYLES.get(style, {})
@@ -386,7 +386,7 @@ def main() -> None:
     EXAMPLES_DIR.mkdir(parents=True, exist_ok=True)
     settings = TesterSettings.load()
 
-    print("Frigate GenAI review prompt tester")
+    print("Kestrel GenAI review prompt tester")
     while True:
         choice = select_option(
             f"Menu (settings: {settings.describe()}):",

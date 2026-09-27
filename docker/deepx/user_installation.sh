@@ -10,7 +10,7 @@
 # driver_version, runtime_version and firmware_version below; move them
 # together, never one at a time.
 #
-# DEEPX NPU support in Frigate is maintained by Sixfab (https://sixfab.com).
+# DEEPX NPU support in Kestrel is maintained by Sixfab (https://sixfab.com).
 
 set -euo pipefail
 
@@ -99,7 +99,7 @@ rm -f "${deb_file}"
 sudo cp /usr/share/libdxrt-bin/service/dxrt.service /etc/systemd/system/
 
 # With an endpoint set, dxrtd binds that path only, so the socket goes in a
-# directory Frigate can mount (kept across restarts so the mount stays valid)
+# directory Kestrel can mount (kept across restarts so the mount stays valid)
 # and a symlink at the default /tmp path keeps host tools that do not set the
 # variable working through their own fallback.
 sudo mkdir -p /etc/systemd/system/dxrt.service.d
@@ -128,4 +128,4 @@ echo "Device node(s):   $(echo /dev/dxrt*)"
 echo
 echo "This driver expects NPU firmware ${firmware_version}. Check it with:"
 echo "  dxrt-cli --status"
-echo "Update the module if it does not match before starting Frigate."
+echo "Update the module if it does not match before starting Kestrel."

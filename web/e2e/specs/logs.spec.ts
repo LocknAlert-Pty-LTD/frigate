@@ -20,7 +20,7 @@ test.describe("Logs — service tabs @medium", () => {
     await frigateApp.page.route(/\/api\/logs\/frigate(\?|$)/, (route) =>
       route.fulfill({
         json: logsJsonBody([
-          "[2026-04-06 10:00:00] INFO: Frigate started",
+          "[2026-04-06 10:00:00] INFO: Kestrel started",
           "[2026-04-06 10:00:01] INFO: Cameras loaded",
         ]),
       }),
@@ -33,7 +33,7 @@ test.describe("Logs — service tabs @medium", () => {
     await expect(frigateApp.page.getByLabel("Select frigate")).toBeVisible({
       timeout: 5_000,
     });
-    await expect(frigateApp.page.getByText(/Frigate started/)).toBeVisible({
+    await expect(frigateApp.page.getByText(/Kestrel started/)).toBeVisible({
       timeout: 10_000,
     });
   });
@@ -76,7 +76,7 @@ test.describe("Logs — actions @medium", () => {
     await frigateApp.page.route(/\/api\/logs\/frigate(\?|$)/, (route) =>
       route.fulfill({
         json: logsJsonBody([
-          "[2026-04-06 10:00:00] INFO: Frigate started",
+          "[2026-04-06 10:00:00] INFO: Kestrel started",
           "[2026-04-06 10:00:01] INFO: Cameras loaded",
         ]),
       }),
@@ -85,7 +85,7 @@ test.describe("Logs — actions @medium", () => {
       route.fulfill({ status: 200, body: "" }),
     );
     await frigateApp.goto("/logs");
-    await expect(frigateApp.page.getByText(/Frigate started/)).toBeVisible({
+    await expect(frigateApp.page.getByText(/Kestrel started/)).toBeVisible({
       timeout: 10_000,
     });
 
@@ -94,7 +94,7 @@ test.describe("Logs — actions @medium", () => {
     await copyBtn.click();
     await expect
       .poll(() => readClipboard(frigateApp.page), { timeout: 5_000 })
-      .toContain("Frigate started");
+      .toContain("Kestrel started");
   });
 
   test("Download button fires GET /logs/<service>?download=true", async ({

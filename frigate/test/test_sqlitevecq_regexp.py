@@ -1,4 +1,4 @@
-"""Tests for the REGEXP function registered on the main Frigate database.
+"""Tests for the REGEXP function registered on the main Kestrel database.
 
 Regression coverage for GHSA-q8jx-q884-jcq9: an attacker-controlled
 catastrophic (ReDoS) pattern reaching the REGEXP sink must not be able to

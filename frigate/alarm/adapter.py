@@ -1,8 +1,8 @@
-"""Translates Frigate detections into canonical AlarmEvents.
+"""Translates Kestrel detections into canonical AlarmEvents.
 
-This is the only place that knows about Frigate-specific detection fields
+This is the only place that knows about Kestrel-specific detection fields
 (camera, zone, label, score, false_positive). The alarm state machine
-(frigate/alarm/engine.py) never sees a Frigate detection directly, only the
+(frigate/alarm/engine.py) never sees a Kestrel detection directly, only the
 AlarmEvent this adapter produces, and this adapter never sees the state
 machine at all: callers own the flow from detection -> adapter.evaluate() ->
 (optional) engine.trigger().
@@ -23,7 +23,7 @@ from frigate.alarm.state import ArmedMode
 
 
 class DetectionAlarmAdapter:
-    """Evaluates Frigate detections against per-zone alarm rules.
+    """Evaluates Kestrel detections against per-zone alarm rules.
 
     Verification is a single numeric threshold (verification_seconds): 0
     means instant-trigger, >0 means the object must remain qualified in the

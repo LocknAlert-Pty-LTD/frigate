@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Analyze keyframe and timestamp structure of Frigate recording segments.
+"""Analyze keyframe and timestamp structure of Kestrel recording segments.
 
 This is a diagnostic tool for investigating seek precision / GOP behavior on
 recorded segments. It does not modify anything.
 
-ffprobe is only available inside the Frigate container, at
+ffprobe is only available inside the Kestrel container, at
     /usr/lib/ffmpeg/$DEFAULT_FFMPEG_VERSION/bin/ffprobe
 This script auto-resolves that path from the DEFAULT_FFMPEG_VERSION env var
 (or falls back to scanning /usr/lib/ffmpeg/*/bin/ffprobe). Pass --ffprobe to
@@ -14,7 +14,7 @@ All recording segments on the filesystem are in UTC. The --timestamp flag
 expects a UTC Unix timestamp.
 
 Typical use:
-    # Inside the Frigate container (or wherever recordings are mounted)
+    # Inside the Kestrel container (or wherever recordings are mounted)
     python3 analyze_recording_keyframes.py <camera_name>
 
     # Analyze 10 most recent segments
@@ -44,7 +44,7 @@ from statistics import mean, median, stdev
 def resolve_ffprobe_path(override: str | None) -> str:
     """Resolve the ffprobe binary path.
 
-    Inside the Frigate container, ffprobe lives at
+    Inside the Kestrel container, ffprobe lives at
     /usr/lib/ffmpeg/{DEFAULT_FFMPEG_VERSION}/bin/ffprobe — the exact version
     depends on the image build and is exposed as an env var.
     """
@@ -55,7 +55,7 @@ def resolve_ffprobe_path(override: str | None) -> str:
         path = f"/usr/lib/ffmpeg/{version}/bin/ffprobe"
         if Path(path).is_file():
             return path
-    # Fall back to scanning the Frigate ffmpeg install root.
+    # Fall back to scanning the Kestrel ffmpeg install root.
     for candidate in sorted(Path("/usr/lib/ffmpeg").glob("*/bin/ffprobe")):
         if candidate.is_file():
             return str(candidate)
@@ -96,7 +96,7 @@ def find_segments_near_timestamp(
         return [], None
 
     # Largest filename_ts that is <= target_ts — that's the segment that
-    # should contain the timestamp (Frigate catalogs segments by filename).
+    # should contain the timestamp (Kestrel catalogs segments by filename).
     target_idx = -1
     for i, (ts, _) in enumerate(with_ts):
         if ts <= target_ts:
@@ -120,7 +120,7 @@ def find_segments_near_timestamp(
 
 
 def filename_to_timestamp(segment: Path) -> float | None:
-    """Parse the wall-clock time from Frigate's segment path layout."""
+    """Parse the wall-clock time from Kestrel's segment path layout."""
     try:
         date = segment.parent.parent.parent.name  # YYYY-MM-DD
         hour = segment.parent.parent.name  # HH
@@ -280,11 +280,11 @@ def analyze(ffprobe: str, segment: Path, highlight: bool = False) -> None:
         print("  !! Only one keyframe in segment — very long GOP")
 
     # Report how well filename time aligns with first-packet PTS.
-    # (Filename time is what Frigate uses as recording.start_time in the DB.)
+    # (Filename time is what Kestrel uses as recording.start_time in the DB.)
     if filename_ts is not None and first_pts is not None:
         print(
             f"  Notes: first packet PTS is {first_pts:.3f}s into the file; "
-            f"Frigate treats filename time as PTS=0 for seek math."
+            f"Kestrel treats filename time as PTS=0 for seek math."
         )
 
 
@@ -309,7 +309,7 @@ def main() -> None:
         "--ffprobe",
         default=None,
         help=(
-            "Full path to the ffprobe binary. Defaults to the Frigate-bundled "
+            "Full path to the ffprobe binary. Defaults to the Kestrel-bundled "
             "binary at /usr/lib/ffmpeg/$DEFAULT_FFMPEG_VERSION/bin/ffprobe."
         ),
     )

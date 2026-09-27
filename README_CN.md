@@ -1,8 +1,12 @@
 <p align="center">
-  <img align="center" alt="logo" src="docs/static/img/branding/frigate.png">
+  <img align="center" alt="logo" src="docs/static/img/branding/kestrel.png">
 </p>
 
-# Frigate NVR™ - 一个具有实时目标检测的本地 NVR
+> Kestrel 是 [Frigate NVR](https://frigate.video) 的分支版本，由 LocknAlert Pty Ltd 维护。
+> 它不是 Frigate 的官方产品，也未获得 Frigate, Inc. 的认可或附属于它。
+> 详见 [NOTICE.md](NOTICE.md)。
+
+# Kestrel - 一个具有实时目标检测的本地 NVR
 
 <a href="https://hosted.weblate.org/engage/frigate-nvr/-/zh_Hans/">
 <img src="https://hosted.weblate.org/widget/frigate-nvr/-/zh_Hans/svg-badge.svg" alt="翻译状态" />
@@ -41,7 +45,7 @@
 
 **代码部分**：本代码库中的源代码、配置文件和文档均遵循 [MIT 许可证](LICENSE)。您可以自由使用、修改和分发这些代码，但必须保留原始版权声明。
 
-**商标部分**：“Frigate”名称、“Frigate NVR”品牌以及 Frigate 的 Logo 为 **Frigate, Inc. 的商标**，**不在** MIT 许可证覆盖范围内。
+**上游商标**：“Frigate”名称、“Frigate NVR”品牌以及 Frigate 的 Logo 为 **Frigate, Inc. 的商标**，**不在** MIT 许可证覆盖范围内。Kestrel 未使用这些商标：它已重命名并使用自己的品牌资源，仅在说明本软件的来源时提及 Frigate。
 有关品牌资产的规范使用详情，请参阅我们的[《商标政策》](TRADEMARK.md)。
 
 ## 截图
@@ -87,4 +91,5 @@ Bilibili：https://space.bilibili.com/3546894915602564
 
 ---
 
-**Copyright © 2026 Frigate, Inc.**
+**原始作品 Copyright © 2026 Frigate, Inc. (Frigate™)，MIT 许可。**
+**修改部分 Copyright © 2026 LocknAlert Pty Ltd。**

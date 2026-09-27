@@ -9,7 +9,7 @@ This error message is due to a shm-size that is too small. Try updating your shm
 
 ### How can I get sound or audio in my recordings? {#audio-in-recordings}
 
-By default, Frigate removes audio from recordings to reduce the likelihood of failing for invalid data. If you would like to include audio, you need to set a [FFmpeg preset](/configuration/ffmpeg_presets) that supports audio:
+By default, Kestrel removes audio from recordings to reduce the likelihood of failing for invalid data. If you would like to include audio, you need to set a [FFmpeg preset](/configuration/ffmpeg_presets) that supports audio:
 
 ```yaml
 ffmpeg:
@@ -29,7 +29,7 @@ You can open `chrome://media-internals/` in another tab and then try to playback
 
 ### What do I do if my cameras sub stream is not good enough?
 
-Frigate generally [recommends cameras with configurable sub streams](/frigate/hardware.md). However, if your camera does not have a sub stream that is a suitable resolution, the main stream can be resized.
+Kestrel generally [recommends cameras with configurable sub streams](/frigate/hardware.md). However, if your camera does not have a sub stream that is a suitable resolution, the main stream can be resized.
 
 To do this efficiently the following setup is required:
 
@@ -61,11 +61,11 @@ This almost always means that the width/height defined for your camera are not c
 
 ### "[mov,mp4,m4a,3gp,3g2,mj2 @ 0x5639eeb6e140] moov atom not found"
 
-These messages in the logs are expected in certain situations. Frigate checks the integrity of the recordings before storing. Occasionally these cached files will be invalid and cleaned up automatically.
+These messages in the logs are expected in certain situations. Kestrel checks the integrity of the recordings before storing. Occasionally these cached files will be invalid and cleaned up automatically.
 
 ### "MQTT connected" repeats in the logs
 
-If you see repeated "MQTT connected" messages in your logs, check for another instance of Frigate. This happens when multiple Frigate containers are trying to connect to MQTT with the same `client_id`.
+If you see repeated "MQTT connected" messages in your logs, check for another instance of Kestrel. This happens when multiple Kestrel containers are trying to connect to MQTT with the same `client_id`.
 
 ### Error: Database Is Locked
 
@@ -75,35 +75,35 @@ SQLite does not work well on a network share, if the `/media` folder is mapped t
 
 If MQTT isn't working in docker try using the IP of the device hosting the MQTT server instead of `localhost`, `127.0.0.1`, or `mosquitto.ix-mosquitto.svc.cluster.local`.
 
-This is because Frigate does not run in host mode so localhost points to the Frigate container and not the host device's network.
+This is because Kestrel does not run in host mode so localhost points to the Kestrel container and not the host device's network.
 
 ### How do I know if my camera is offline
 
-Frigate publishes a per-role health status to [`frigate/<camera_name>/status/<role>`](/integrations/mqtt#frigatecamera_namestatusrole), where `<role>` is each enabled role on the camera (`detect`, `record`, and `audio`). The published value is one of:
+Kestrel publishes a per-role health status to [`frigate/<camera_name>/status/<role>`](/integrations/mqtt#frigatecamera_namestatusrole), where `<role>` is each enabled role on the camera (`detect`, `record`, and `audio`). The published value is one of:
 
-- `online`: Frigate's process for that role is running normally
-- `offline`: the process is down and Frigate is restarting it
+- `online`: Kestrel's process for that role is running normally
+- `offline`: the process is down and Kestrel is restarting it
 - `disabled`: the camera is turned off, either at runtime or in the configuration file
 
-These reflect the state of Frigate's process for that role, not the camera's reachability, so an unreachable camera alternates between `offline` and `online` as the watchdog restarts ffmpeg. Wait for the status to hold steady (for example with Home Assistant's `for:`) rather than acting on a single message.
+These reflect the state of Kestrel's process for that role, not the camera's reachability, so an unreachable camera alternates between `offline` and `online` as the watchdog restarts ffmpeg. Wait for the status to hold steady (for example with Home Assistant's `for:`) rather than acting on a single message.
 
 Because the status is per role, a camera whose substream is fine but whose recording stream has dropped will report `online` for `detect` and `offline` for `record`. The status is republished whenever it changes.
 
 You can also detect an offline camera through `/api/stats`, where `camera_fps` will be 0.
 
-### How can I view the Frigate log files without using the Web UI?
+### How can I view the Kestrel log files without using the Web UI?
 
-Frigate manages logs internally as well as outputs directly to Docker via standard output. To view these logs using the CLI, follow these steps:
+Kestrel manages logs internally as well as outputs directly to Docker via standard output. To view these logs using the CLI, follow these steps:
 
-- Open a terminal or command prompt on the host running your Frigate container.
+- Open a terminal or command prompt on the host running your Kestrel container.
 - Type the following command and press Enter:
   ```
   docker logs -f frigate
   ```
-  This command tells Docker to show you the logs from the Frigate container.
-  Note: If you've given your Frigate container a different name, replace "frigate" in the command with your container's actual name. The "-f" option means the logs will continue to update in real-time as new entries are added. To stop viewing the logs, press `Ctrl+C`. If you'd like to learn more about using Docker logs, including additional options and features, you can explore Docker's [official documentation](https://docs.docker.com/engine/reference/commandline/logs/).
+  This command tells Docker to show you the logs from the Kestrel container.
+  Note: If you've given your Kestrel container a different name, replace "frigate" in the command with your container's actual name. The "-f" option means the logs will continue to update in real-time as new entries are added. To stop viewing the logs, press `Ctrl+C`. If you'd like to learn more about using Docker logs, including additional options and features, you can explore Docker's [official documentation](https://docs.docker.com/engine/reference/commandline/logs/).
 
-Alternatively, when you create the Frigate Docker container, you can bind a directory on the host to the mountpoint `/dev/shm/logs` to not only be able to persist the logs to disk, but also to be able to query them directly from the host using your favorite log parsing/query utility.
+Alternatively, when you create the Kestrel Docker container, you can bind a directory on the host to the mountpoint `/dev/shm/logs` to not only be able to persist the logs to disk, but also to be able to query them directly from the host using your favorite log parsing/query utility.
 
 ```
 docker run -d \
@@ -125,17 +125,17 @@ docker run -d \
   ghcr.io/blakeblackshear/frigate:stable
 ```
 
-### My RTSP stream works fine in VLC, but it does not work when I put the same URL in my Frigate config. Is this a bug?
+### My RTSP stream works fine in VLC, but it does not work when I put the same URL in my Kestrel config. Is this a bug?
 
-No. Frigate uses the TCP protocol to connect to your camera's RTSP URL. VLC automatically switches between UDP and TCP depending on network conditions and stream availability. So a stream that works in VLC but not in Frigate is likely due to VLC selecting UDP as the transfer protocol.
+No. Kestrel uses the TCP protocol to connect to your camera's RTSP URL. VLC automatically switches between UDP and TCP depending on network conditions and stream availability. So a stream that works in VLC but not in Kestrel is likely due to VLC selecting UDP as the transfer protocol.
 
-TCP ensures that all data packets arrive in the correct order. This is crucial for video recording, decoding, and stream processing, which is why Frigate enforces a TCP connection. UDP is faster but less reliable, as it does not guarantee packet delivery or order, and VLC does not have the same requirements as Frigate.
+TCP ensures that all data packets arrive in the correct order. This is crucial for video recording, decoding, and stream processing, which is why Kestrel enforces a TCP connection. UDP is faster but less reliable, as it does not guarantee packet delivery or order, and VLC does not have the same requirements as Kestrel.
 
-You can still configure Frigate to use UDP by using ffmpeg input args or the preset `preset-rtsp-udp`. See the [ffmpeg presets](/configuration/ffmpeg_presets) documentation.
+You can still configure Kestrel to use UDP by using ffmpeg input args or the preset `preset-rtsp-udp`. See the [ffmpeg presets](/configuration/ffmpeg_presets) documentation.
 
-### Frigate is slow to start up with a "probing detect stream" message in the logs
+### Kestrel is slow to start up with a "probing detect stream" message in the logs
 
-When `detect.width` and `detect.height` are not set, Frigate probes each camera's detect stream on startup (and when saving the config) to auto-detect its resolution. For RTSP streams Frigate probes with ffprobe and automatically retries over TCP if UDP doesn't respond, with a 5 second timeout per attempt. A camera that cannot be reached over either transport will add up to ~10 seconds to startup before Frigate falls through with default dimensions, which may show up as width `0` and height `0` in Camera Probe Info under Health and Metrics.
+When `detect.width` and `detect.height` are not set, Kestrel probes each camera's detect stream on startup (and when saving the config) to auto-detect its resolution. For RTSP streams Kestrel probes with ffprobe and automatically retries over TCP if UDP doesn't respond, with a 5 second timeout per attempt. A camera that cannot be reached over either transport will add up to ~10 seconds to startup before Kestrel falls through with default dimensions, which may show up as width `0` and height `0` in Camera Probe Info under Health and Metrics.
 
 To skip the probe entirely and make startup instant, set `detect.width` and `detect.height` explicitly in your camera config:
 
@@ -149,13 +149,13 @@ cameras:
 
 ### What is the `version` key in my config file?
 
-`version` records the config format that your config was last migrated to. On startup Frigate compares it against the format the running version expects, and if it is older it copies your config to `/config/backup_config.yaml`, rewrites it to the new format, and updates `version` as the final step. A config with no `version` key is assumed to predate 0.14 and is migrated from there.
+`version` records the config format that your config was last migrated to. On startup Kestrel compares it against the format the running version expects, and if it is older it copies your config to `/config/backup_config.yaml`, rewrites it to the new format, and updates `version` as the final step. A config with no `version` key is assumed to predate 0.14 and is migrated from there.
 
-Frigate manages this key for you, so do not set or edit it. Raising it makes Frigate skip migrations your config still needs, and lowering it re-runs migrations against config that has already been converted. Either can leave you with a config that no longer validates.
+Kestrel manages this key for you, so do not set or edit it. Raising it makes Kestrel skip migrations your config still needs, and lowering it re-runs migrations against config that has already been converted. Either can leave you with a config that no longer validates.
 
-### Why does Frigate keep creating new tracked objects for my parked car?
+### Why does Kestrel keep creating new tracked objects for my parked car?
 
-Stationary tracking is designed to _prevent_ this: a parked car should remain a single tracked object rather than generating new ones. If you're repeatedly getting new tracked objects for the same car, it's likely that Frigate is losing the object and re-detecting it as a new one.
+Stationary tracking is designed to _prevent_ this: a parked car should remain a single tracked object rather than generating new ones. If you're repeatedly getting new tracked objects for the same car, it's likely that Kestrel is losing the object and re-detecting it as a new one.
 
 Open one of the tracked objects in Explore → **Tracking Details**. If the detection scores are low (< 70% or so), the model isn't confident the parked car is a car. This is common with the free [COCO-trained](https://cocodataset.org/#explore) object detection models on steep/top-down angles, partially occluded cars, foliage, or low-light footage. When detections fall below `min_score` for too many frames the tracker loses the object, and the next confident frame creates a brand new one.
 
@@ -169,21 +169,21 @@ What helps:
 
 See [Object Filters](../configuration/object_filters.md) for more on tuning `min_score` and `threshold`. Note that raising them too high will make this exact problem worse.
 
-### How do I correct Frigate when it detects something as the wrong object?
+### How do I correct Kestrel when it detects something as the wrong object?
 
-Frigate's object detection relies on a machine learning [model](../frigate/glossary.md#model), and the free [COCO-trained](https://cocodataset.org/#explore) models that ship with Frigate can misidentify objects in scenes they weren't trained on. There are two ways to handle this, depending on whether you want to _teach_ the model or just _suppress_ the bad result.
+Kestrel's object detection relies on a machine learning [model](../frigate/glossary.md#model), and the free [COCO-trained](https://cocodataset.org/#explore) models that ship with Kestrel can misidentify objects in scenes they weren't trained on. There are two ways to handle this, depending on whether you want to _teach_ the model or just _suppress_ the bad result.
 
-**Train or fine-tune a model with your own images.** The most durable fix is to improve the model itself. The biggest gains usually come from fine-tuning a model on images from your own cameras so it learns your specific scene. Some tools are freely available, and [Frigate+](https://frigate.video/plus) is a paid option that does this - models are trained on security-camera footage and can be fine-tuned on images you submit from your own setup. When Frigate mislabels something, open the tracked object in Explore, select the **Snapshot** tab, and use **Submit to Frigate+** to send the example with the correct label (or mark it as a [false positive](../frigate/glossary.md#false-positive)). Once you've submitted examples and [requested a model](../plus/first_model.md), the retrained model will be more accurate for your cameras. See [Submitting examples to Frigate+](../integrations/plus.md#submit-examples) for the full workflow.
+**Train or fine-tune a model with your own images.** The most durable fix is to improve the model itself. The biggest gains usually come from fine-tuning a model on images from your own cameras so it learns your specific scene. Some tools are freely available, and [Frigate+](https://frigate.video/plus) is a paid option that does this - models are trained on security-camera footage and can be fine-tuned on images you submit from your own setup. When Kestrel mislabels something, open the tracked object in Explore, select the **Snapshot** tab, and use **Submit to Frigate+** to send the example with the correct label (or mark it as a [false positive](../frigate/glossary.md#false-positive)). Once you've submitted examples and [requested a model](../plus/first_model.md), the retrained model will be more accurate for your cameras. See [Submitting examples to Frigate+](../integrations/plus.md#submit-examples) for the full workflow.
 
 **Suppress the misidentification with filters.** You can use filters to stop a specific false positive from being tracked:
 
 - Tune `min_score` / `threshold`, or add `min_area` / `max_area` / `min_ratio` / `max_ratio` filters. See [Object Filters](../configuration/object_filters.md).
 - If the false positive is always in the same fixed spot (like a statue or mailbox that reads as a person), add an [object filter mask](../configuration/masks.md#object-filter-masks) over that location.
 
-Filters and masks only hide the incorrect result - they don't teach Frigate what the object actually is. For that, fine-tune your own model or use Frigate+.
+Filters and masks only hide the incorrect result - they don't teach Kestrel what the object actually is. For that, fine-tune your own model or use Frigate+.
 
-### Where do I see problems Frigate has detected?
+### Where do I see problems Kestrel has detected?
 
-Open System > Health. The Notices list keeps a record of problems Frigate has found, and you can dismiss any entry to acknowledge it. Ongoing conditions, such as an offline camera or recordings deleted before their retention period, appear in the status bar for admins until they clear, and the status bar links to the Notices list while it has undismissed entries. On mobile, tap the warning icon in the bottom navigation bar to see them.
+Open System > Health. The Notices list keeps a record of problems Kestrel has found, and you can dismiss any entry to acknowledge it. Ongoing conditions, such as an offline camera or recordings deleted before their retention period, appear in the status bar for admins until they clear, and the status bar links to the Notices list while it has undismissed entries. On mobile, tap the warning icon in the bottom navigation bar to see them.
 
 The Hardware section below the notices shows whether the detection hardware, hardware acceleration, and enrichment devices in your config were found and are being used, so a GPU that silently fell back to the CPU shows up as a warning. Run stream checks to probe every camera's streams for the same problems the camera wizard reports.

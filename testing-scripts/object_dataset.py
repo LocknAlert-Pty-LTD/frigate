@@ -1,7 +1,7 @@
 """
 Object classification investigation script.
 
-Standalone replica of Frigate's custom object classification inference pipeline
+Standalone replica of Kestrel's custom object classification inference pipeline
 (see frigate/data_processing/real_time/custom_classification.py and
 frigate/util/classification.py) for analyzing a training dataset outside the
 running service. Useful for:
@@ -67,7 +67,7 @@ Recommended workflow when troubleshooting misclassifications:
        - Visual variety: other dogs/objects, partial views, empty scenes,
          not just one type of negative
 
-  4. Look for cross-class duplicates from the same Frigate event. If the
+  4. Look for cross-class duplicates from the same Kestrel event. If the
      same timestamp prefix appears across multiple class folders (e.g.
      "1772052999.x" present in Buddy AND Bailey AND Rex AND none), those
      crops came from one moment in time. Either they were extracted from a
@@ -89,7 +89,7 @@ Recommended workflow when troubleshooting misclassifications:
      the underperforming class, not delete more. Aim for at least 20 well-
      framed images per class.
 
-The dataset must be the same layout Frigate trains from:
+The dataset must be the same layout Kestrel trains from:
   <clips>/<model_name>/dataset/<class>/*.{webp,png,jpg,jpeg}
 
 The model must already be trained:
@@ -223,7 +223,7 @@ IMAGE_EXTS = (".webp", ".png", ".jpg", ".jpeg")
 
 
 # ---------------------------------------------------------------------------
-# Replicated Frigate pipeline
+# Replicated Kestrel pipeline
 # ---------------------------------------------------------------------------
 
 
@@ -248,7 +248,7 @@ def load_labelmap(path: str) -> dict[int, str]:
 def preprocess_for_inference(image_bgr: np.ndarray) -> np.ndarray:
     """Mirror the inference preprocessing in process_frame.
 
-    Frigate decodes the camera frame YUV->RGB, crops, then cv2.resize to
+    Kestrel decodes the camera frame YUV->RGB, crops, then cv2.resize to
     224x224, and passes the uint8 array directly to the int8-quantized
     interpreter. On disk we read BGR via cv2.imread, so we must convert
     to RGB to match the channel order the model was trained on.
@@ -300,7 +300,7 @@ def classify_image(
     """Mirror _classify_object's tensor flow.
 
     Returns the per-class probability vector (length = num_classes) after
-    the exact `probs = res / res.sum(axis=0)` renormalization Frigate uses
+    the exact `probs = res / res.sum(axis=0)` renormalization Kestrel uses
     on the int8-quantized output.
     """
     resized = preprocess_for_inference(image_bgr)
@@ -856,7 +856,7 @@ def save_misclassified(samples: list[ImageSample], out_dir: str) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser(
         description=(
-            "Analyze a Frigate object-classification training dataset against its "
+            "Analyze a Kestrel object-classification training dataset against its "
             "deployed TFLite model."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -870,12 +870,12 @@ def main() -> int:
     ap.add_argument(
         "--clips-dir",
         default="/media/frigate/clips",
-        help="Frigate clips directory; dataset is read from <clips>/<name>/dataset",
+        help="Kestrel clips directory; dataset is read from <clips>/<name>/dataset",
     )
     ap.add_argument(
         "--model-cache",
         default="/config/model_cache",
-        help="Frigate model_cache; model is read from <cache>/<name>/model.tflite",
+        help="Kestrel model_cache; model is read from <cache>/<name>/model.tflite",
     )
     ap.add_argument(
         "--threshold",

@@ -6,7 +6,7 @@ optional reporting queue.
 Kept separate from AlarmStateMachine (frigate/alarm/engine.py) on purpose:
 the state machine only knows about states and transitions, this class only
 knows about wiring those pieces together and answering "what's the current
-status" -- neither one needs to know about Frigate detections or FastAPI.
+status" -- neither one needs to know about Kestrel detections or FastAPI.
 """
 
 import logging

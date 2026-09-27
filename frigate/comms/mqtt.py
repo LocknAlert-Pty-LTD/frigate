@@ -36,7 +36,7 @@ class QueuedPublish:
 
 
 class MqttClient(Communicator):
-    """Frigate wrapper for mqtt client."""
+    """Kestrel wrapper for mqtt client."""
 
     def __init__(self, config: FrigateConfig) -> None:
         self.config = config
@@ -90,7 +90,7 @@ class MqttClient(Communicator):
     def publish_absolute(self, topic: str, payload: Any, retain: bool = False) -> None:
         """Publish without the topic_prefix, for topics that must be exact
         (e.g. Home Assistant MQTT discovery configs, which are always under
-        the literal "homeassistant/" tree regardless of Frigate's own
+        the literal "homeassistant/" tree regardless of Kestrel's own
         prefix)."""
         if not self.connected:
             logger.debug(f"Unable to publish to {topic}: client is not connected")
@@ -334,9 +334,9 @@ class MqttClient(Communicator):
         """Run the worker loop.
 
         An unexpected crash disables MQTT for this session rather than taking
-        Frigate down with it, so it has to announce itself: without the offline
+        Kestrel down with it, so it has to announce itself: without the offline
         publish, consumers keep the last retained values and see a healthy
-        Frigate that has simply stopped updating.
+        Kestrel that has simply stopped updating.
         """
         try:
             self._mqtt_loop_worker()
@@ -381,7 +381,7 @@ class MqttClient(Communicator):
                     break
         except Exception:
             logger.warning(
-                "MQTT is dormant and the broker could not be told Frigate is offline",
+                "MQTT is dormant and the broker could not be told Kestrel is offline",
                 exc_info=True,
             )
 
@@ -768,7 +768,7 @@ class MqttClient(Communicator):
     def _is_supported_command_topic(self, topic: str) -> bool:
         """Filter the wildcard subscription down to Dispatcher's command surface.
 
-        Load-bearing rather than an optimization: the broker echoes Frigate's own
+        Load-bearing rather than an optimization: the broker echoes Kestrel's own
         publishes back through frigate/#, and Dispatcher republishes topics it
         does not recognize, so forwarding unfiltered would loop.
         """
@@ -868,7 +868,7 @@ class MqttClient(Communicator):
         """Queue inbound MQTT messages for processing in the worker loop."""
         topic = self._strip_topic_prefix(message.topic)
 
-        # Ignore everything outside Frigate's command surface before decoding or
+        # Ignore everything outside Kestrel's command surface before decoding or
         # dispatching into the rest of the app.
         if not self._is_supported_command_topic(topic):
             return

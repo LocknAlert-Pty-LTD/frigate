@@ -26,7 +26,7 @@ rather than a verified fact:
 - The checksum digit used for DTMF transmission is omitted, matching common
   Contact-ID-over-IP implementations that rely on TCP for integrity instead.
   Verify this assumption against your specific receiver.
-- Group/zone-user numbers: Frigate zones are named, not numbered. Callers
+- Group/zone-user numbers: Kestrel zones are named, not numbered. Callers
   must supply a numeric zone/user code explicitly; this adapter does not
   invent a zone numbering scheme.
 """
@@ -324,7 +324,7 @@ def encode_contact_id_message(
 ) -> ContactIDMessage:
     """Encode a canonical AlarmEvent as a Contact ID message.
 
-    Frigate zones are named, not numbered; the caller is responsible for
+    Kestrel zones are named, not numbered; the caller is responsible for
     supplying `zone_or_user` (3 digits) if the receiver needs one, this
     adapter does not invent a numbering scheme.
     """

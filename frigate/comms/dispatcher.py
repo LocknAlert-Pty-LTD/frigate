@@ -1,4 +1,4 @@
-"""Handle communication between Frigate and other applications."""
+"""Handle communication between Kestrel and other applications."""
 
 import datetime
 import json
@@ -70,7 +70,7 @@ BARE_COMMAND_TOPICS = frozenset({"onConnect", "restart"})
 
 
 class Dispatcher:
-    """Handle communication between Frigate and communicators."""
+    """Handle communication between Kestrel and communicators."""
 
     def __init__(
         self,
@@ -155,7 +155,7 @@ class Dispatcher:
 
         Transports that fan a whole topic tree in must filter on this:
         _receive() republishes anything it does not recognize, so forwarding
-        unfiltered would echo Frigate's own publishes back.
+        unfiltered would echo Kestrel's own publishes back.
         """
         parts = topic.split("/")
 
@@ -591,7 +591,7 @@ class Dispatcher:
         return applied
 
     def restore_runtime_state(self) -> None:
-        """Replay persisted runtime overrides once Frigate startup completes.
+        """Replay persisted runtime overrides once Kestrel startup completes.
 
         Called after every ``config_updater`` subscriber is up so the resulting
         broadcasts are not dropped by ZMQ PUB/SUB.
@@ -897,7 +897,7 @@ class Dispatcher:
         alarm_control_panel command payloads (ARM_AWAY/ARM_HOME/ARM_NIGHT/
         DISARM, see the discovery config in frigate/alarm/ha_discovery.py)
         so this is usable directly from an HA alarm panel card, not just
-        Frigate's own UI. Publishing updated state back out is
+        Kestrel's own UI. Publishing updated state back out is
         AlarmSystem's job (see on_change/on_event in system.py), not this
         handler's."""
         if self.alarm_system is None:

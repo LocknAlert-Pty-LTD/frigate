@@ -1,4 +1,4 @@
-"""RKNN model conversion utility for Frigate."""
+"""RKNN model conversion utility for Kestrel."""
 
 import importlib
 import logging

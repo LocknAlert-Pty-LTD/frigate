@@ -243,7 +243,7 @@ export interface OverrideStatus {
 }
 
 export interface UseConfigOverrideOptions {
-  /** Full Frigate config */
+  /** Full Kestrel config */
   config: FrigateConfig | undefined;
   /** Camera name for per-camera settings */
   cameraName?: string;

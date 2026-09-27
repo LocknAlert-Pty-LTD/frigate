@@ -4,7 +4,7 @@ Glue layer (like event_log.py / ha_discovery.py) allowed to import
 frigate.models and frigate.embeddings directly; frigate/alarm/system.py
 stays DB-free by design, so this correlation logic lives here instead.
 
-Combines two signals Frigate already computes elsewhere, nothing new:
+Combines two signals Kestrel already computes elsewhere, nothing new:
 - an exact Event.sub_label match ("named" match) -- free once
   face_recognition is enabled and a face was matched to a known person, no
   vector search involved.

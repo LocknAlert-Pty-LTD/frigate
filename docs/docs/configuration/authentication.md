@@ -9,16 +9,16 @@ import NavPath from "@site/src/components/NavPath";
 
 # Authentication
 
-Frigate stores user information in its database. Password hashes are generated using industry standard PBKDF2-SHA256 with 600,000 iterations. Upon successful login, a JWT token is issued with an expiration date and set as a cookie. The cookie is refreshed as needed automatically. This JWT token can also be passed in the Authorization header as a bearer token.
+Kestrel stores user information in its database. Password hashes are generated using industry standard PBKDF2-SHA256 with 600,000 iterations. Upon successful login, a JWT token is issued with an expiration date and set as a cookie. The cookie is refreshed as needed automatically. This JWT token can also be passed in the Authorization header as a bearer token.
 
 Users are managed in the UI under Settings > Users.
 
-The following ports are available to access the Frigate web UI.
+The following ports are available to access the Kestrel web UI.
 
 | Port   | Description                                                                                                                                                                                                  |
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `8971` | Authenticated UI and API. Reverse proxies should use this port.                                                                                                                                              |
-| `5000` | Internal unauthenticated UI and API access. Access to this port should be limited. Intended to be used within the docker network for services that integrate with Frigate and do not support authentication. |
+| `5000` | Internal unauthenticated UI and API access. Access to this port should be limited. Intended to be used within the docker network for services that integrate with Kestrel and do not support authentication. |
 
 ## Onboarding
 
@@ -28,7 +28,7 @@ On a new install the [setup wizard](../guides/getting_started.md#configuring-fri
 
 ## Resetting admin password
 
-In the event that you are locked out of your instance, you can tell Frigate to reset the admin password and print it in the logs on next startup.
+In the event that you are locked out of your instance, you can tell Kestrel to reset the admin password and print it in the logs on next startup.
 
 <ConfigTabs>
 <TabItem value="ui">
@@ -50,7 +50,7 @@ auth:
 
 ## Password guidance
 
-Constructing secure passwords and managing them properly is important. Frigate requires a minimum length of 12 characters. For guidance on password standards see [NIST SP 800-63B](https://pages.nist.gov/800-63-3/sp800-63b.html). To learn what makes a password truly secure, read this [article](https://medium.com/peerio/how-to-build-a-billion-dollar-password-3d92568d9277).
+Constructing secure passwords and managing them properly is important. Kestrel requires a minimum length of 12 characters. For guidance on password standards see [NIST SP 800-63B](https://pages.nist.gov/800-63-3/sp800-63b.html). To learn what makes a password truly secure, read this [article](https://medium.com/peerio/how-to-build-a-billion-dollar-password-3d92568d9277).
 
 ## Login failure rate limiting
 
@@ -62,11 +62,11 @@ For example, `1/second;5/minute;20/hour` will rate limit the login endpoint when
 - 5 times per minute
 - 20 times per hour
 
-Restarting Frigate will reset the rate limits.
+Restarting Kestrel will reset the rate limits.
 
-If you are running Frigate behind a proxy, you will want to set `trusted_proxies` or these rate limits will apply to the upstream proxy IP address. This means that a brute force attack will rate limit login attempts from other devices and could temporarily lock you out of your instance. In order to ensure rate limits only apply to the actual IP address where the requests are coming from, you will need to list the upstream networks that you want to trust. These trusted proxies are checked against the `X-Forwarded-For` header when looking for the IP address where the request originated.
+If you are running Kestrel behind a proxy, you will want to set `trusted_proxies` or these rate limits will apply to the upstream proxy IP address. This means that a brute force attack will rate limit login attempts from other devices and could temporarily lock you out of your instance. In order to ensure rate limits only apply to the actual IP address where the requests are coming from, you will need to list the upstream networks that you want to trust. These trusted proxies are checked against the `X-Forwarded-For` header when looking for the IP address where the request originated.
 
-If you are running a reverse proxy in the same Docker Compose file as Frigate, configure rate limiting and trusted proxies as follows:
+If you are running a reverse proxy in the same Docker Compose file as Kestrel, configure rate limiting and trusted proxies as follows:
 
 <ConfigTabs>
 <TabItem value="ui">
@@ -93,7 +93,7 @@ auth:
 
 ## Session Length
 
-The default session length for user authentication in Frigate is 24 hours. This setting determines how long a user's authenticated session remains active before a token refresh is required. Otherwise, the user will need to log in again.
+The default session length for user authentication in Kestrel is 24 hours. This setting determines how long a user's authenticated session remains active before a token refresh is required. Otherwise, the user will need to log in again.
 
 While the default provides a balance of security and convenience, you can customize this duration to suit your specific security requirements and user experience preferences. The session length is configured in seconds.
 
@@ -122,7 +122,7 @@ auth:
 
 ## JWT Token Secret
 
-The JWT token secret needs to be kept secure. Anyone with this secret can generate valid JWT tokens to authenticate with Frigate. This should be a cryptographically random string of at least 64 characters.
+The JWT token secret needs to be kept secure. Anyone with this secret can generate valid JWT tokens to authenticate with Kestrel. This should be a cryptographically random string of at least 64 characters.
 
 You can generate a token using the Python secret library with the following command:
 
@@ -130,24 +130,24 @@ You can generate a token using the Python secret library with the following comm
 python3 -c 'import secrets; print(secrets.token_hex(64))'
 ```
 
-Frigate looks for a JWT token secret in the following order:
+Kestrel looks for a JWT token secret in the following order:
 
 1. An environment variable named `FRIGATE_JWT_SECRET`
 2. A file named `FRIGATE_JWT_SECRET` in the directory specified by the `CREDENTIALS_DIRECTORY` environment variable (defaults to the Docker Secrets directory: `/run/secrets/`)
 3. A `jwt_secret` option from the Home Assistant App options
 4. A `.jwt_secret` file in the config directory
 
-If no secret is found on startup, Frigate generates one and stores it in a `.jwt_secret` file in the config directory.
+If no secret is found on startup, Kestrel generates one and stores it in a `.jwt_secret` file in the config directory.
 
 Changing the secret will invalidate current tokens.
 
 ## Proxy configuration
 
-Frigate can be configured to leverage features of common upstream authentication proxies such as Authelia, Authentik, oauth2_proxy, or traefik-forward-auth. Frigate does not implement OIDC, SAML, or LDAP natively; as an NVR focused on recording and object detection, it relies on robust, battle-tested proxies to handle those protocols and passes the authenticated user and role through via headers (see below).
+Kestrel can be configured to leverage features of common upstream authentication proxies such as Authelia, Authentik, oauth2_proxy, or traefik-forward-auth. Kestrel does not implement OIDC, SAML, or LDAP natively; as an NVR focused on recording and object detection, it relies on robust, battle-tested proxies to handle those protocols and passes the authenticated user and role through via headers (see below).
 
-If you are leveraging the authentication of an upstream proxy, you likely want to disable Frigate's authentication as there is no correspondence between users in Frigate's database and users authenticated via the proxy. Optionally, if communication between the reverse proxy and Frigate is over an untrusted network, you should set an `auth_secret` in the `proxy` config and configure the proxy to send the secret value as a header named `X-Proxy-Secret`. Assuming this is an untrusted network, you will also want to [configure a real TLS certificate](tls.md) to ensure the traffic can't simply be sniffed to steal the secret.
+If you are leveraging the authentication of an upstream proxy, you likely want to disable Kestrel's authentication as there is no correspondence between users in Kestrel's database and users authenticated via the proxy. Optionally, if communication between the reverse proxy and Kestrel is over an untrusted network, you should set an `auth_secret` in the `proxy` config and configure the proxy to send the secret value as a header named `X-Proxy-Secret`. Assuming this is an untrusted network, you will also want to [configure a real TLS certificate](tls.md) to ensure the traffic can't simply be sniffed to steal the secret.
 
-To disable Frigate's authentication and ensure requests come only from your known proxy:
+To disable Kestrel's authentication and ensure requests come only from your known proxy:
 
 <ConfigTabs>
 <TabItem value="ui">
@@ -179,7 +179,7 @@ python3 -c 'import secrets; print(secrets.token_hex(64))'
 
 ### Header mapping
 
-If you have disabled Frigate's authentication and your proxy supports passing a header with authenticated usernames and/or roles, you can use the `header_map` config to specify the header name so it is passed to Frigate. For example, the following will map the `X-Forwarded-User` and `X-Forwarded-Groups` values. Header names are not case sensitive. Multiple values can be included in the role header. Frigate expects that the character separating the roles is a comma, but this can be specified using the `separator` config entry.
+If you have disabled Kestrel's authentication and your proxy supports passing a header with authenticated usernames and/or roles, you can use the `header_map` config to specify the header name so it is passed to Kestrel. For example, the following will map the `X-Forwarded-User` and `X-Forwarded-Groups` values. Header names are not case sensitive. Multiple values can be included in the role header. Kestrel expects that the character separating the roles is a comma, but this can be specified using the `separator` config entry.
 
 <ConfigTabs>
 <TabItem value="ui">
@@ -207,7 +207,7 @@ proxy:
 </TabItem>
 </ConfigTabs>
 
-Frigate supports `admin`, `viewer`, and custom roles (see below). When using port `8971`, Frigate validates these headers and subsequent requests use the headers `remote-user` and `remote-role` for authorization.
+Kestrel supports `admin`, `viewer`, and custom roles (see below). When using port `8971`, Kestrel validates these headers and subsequent requests use the headers `remote-user` and `remote-role` for authorization.
 
 A default role can be provided. Any value in the mapped `role` header will override the default.
 
@@ -232,7 +232,7 @@ proxy:
 </TabItem>
 </ConfigTabs>
 
-Setting `default_role` to `none` denies access instead of falling back to a role. Any proxy-authenticated user whose headers do not match an explicit `role_map` entry receives a 403 response. This is useful when the upstream proxy authenticates a broader set of users than should reach Frigate, so that only mapped groups are allowed in.
+Setting `default_role` to `none` denies access instead of falling back to a role. Any proxy-authenticated user whose headers do not match an explicit `role_map` entry receives a 403 response. This is useful when the upstream proxy authenticates a broader set of users than should reach Kestrel, so that only mapped groups are allowed in.
 
 ```yaml
 proxy:
@@ -242,7 +242,7 @@ proxy:
 
 ## Role mapping
 
-In some environments, upstream identity providers (OIDC, SAML, LDAP, etc.) do not pass a Frigate-compatible role directly, but instead pass one or more group claims. To handle this, Frigate supports a `role_map` that translates upstream group names into Frigate's internal roles (`admin`, `viewer`, or custom). This is configurable via YAML in the configuration file:
+In some environments, upstream identity providers (OIDC, SAML, LDAP, etc.) do not pass a Kestrel-compatible role directly, but instead pass one or more group claims. To handle this, Kestrel supports a `role_map` that translates upstream group names into Kestrel's internal roles (`admin`, `viewer`, or custom). This is configurable via YAML in the configuration file:
 
 ```yaml
 proxy:
@@ -265,16 +265,16 @@ In this example:
 - If the proxy passes a role header containing `sysadmins` or `access-level-security`, the user is assigned the `admin` role.
 - If the proxy passes a role header containing `camera-viewer`, the user is assigned the `viewer` role.
 - If the proxy passes a role header containing `operators`, the user is assigned the `operator` custom role.
-- If no mapping matches, Frigate falls back to `default_role` if configured, or denies access if `default_role` is `none`.
-- If `role_map` is not defined, Frigate assumes the role header directly contains `admin`, `viewer`, or a custom role name.
+- If no mapping matches, Kestrel falls back to `default_role` if configured, or denies access if `default_role` is `none`.
+- If `role_map` is not defined, Kestrel assumes the role header directly contains `admin`, `viewer`, or a custom role name.
 
 **Note on matching semantics:**
 
-- Admin precedence: if the `admin` mapping matches, Frigate resolves the session to `admin` to avoid accidental downgrade when a user belongs to multiple groups (for example both `admin` and `viewer` groups).
+- Admin precedence: if the `admin` mapping matches, Kestrel resolves the session to `admin` to avoid accidental downgrade when a user belongs to multiple groups (for example both `admin` and `viewer` groups).
 
 :::note
 
-If a user isn't getting the role you expect, enable debug logging to see exactly what headers Frigate is receiving from your proxy:
+If a user isn't getting the role you expect, enable debug logging to see exactly what headers Kestrel is receiving from your proxy:
 
 ```yaml
 logger:
@@ -325,7 +325,7 @@ If you would like to add more options, you can overwrite the default file with a
 
 ### Login page redirection
 
-Frigate gracefully performs login page redirection that should work with most authentication proxies. If your reverse proxy returns a `Location` header on `401`, `302`, or `307` unauthorized responses, Frigate's frontend will automatically detect it and redirect to that URL.
+Kestrel gracefully performs login page redirection that should work with most authentication proxies. If your reverse proxy returns a `Location` header on `401`, `302`, or `307` unauthorized responses, Kestrel's frontend will automatically detect it and redirect to that URL.
 
 ### Custom logout url
 
@@ -333,7 +333,7 @@ If your reverse proxy has a dedicated logout url, you can specify using the `log
 
 ## User Roles
 
-Frigate supports user roles to control access to certain features in the UI and API, such as managing users or modifying configuration settings. Roles are assigned to users in the database or through proxy headers and are enforced when accessing the UI or API through the authenticated port (`8971`).
+Kestrel supports user roles to control access to certain features in the UI and API, such as managing users or modifying configuration settings. Roles are assigned to users in the database or through proxy headers and are enforced when accessing the UI or API through the authenticated port (`8971`).
 
 ### Supported Roles
 
@@ -392,7 +392,7 @@ When using the authenticated port (`8971`), roles are validated via the JWT toke
 
 On the internal **unauthenticated** port (`5000`), roles are **not enforced**. All requests are treated as **anonymous**, granting access equivalent to the **admin** role without restrictions.
 
-To use role-based access control, you must connect to Frigate via the **authenticated port (`8971`)** directly or through a reverse proxy.
+To use role-based access control, you must connect to Kestrel via the **authenticated port (`8971`)** directly or through a reverse proxy.
 
 ### Role Visibility in the UI
 
@@ -409,7 +409,7 @@ To use role-based access control, you must connect to Frigate via the **authenti
 
 ### Getting a Bearer Token
 
-To use the Frigate API, you need to authenticate first. Follow these steps to obtain a Bearer token:
+To use the Kestrel API, you need to authenticate first. Follow these steps to obtain a Bearer token:
 
 #### 1. Login
 
@@ -423,7 +423,7 @@ curl -i -X POST https://frigate_ip:8971/api/login \
 
 :::note
 
-You may need to include `-k` in the argument list in these steps (eg: `curl -k -i -X POST ...`) if your Frigate instance is using a self-signed certificate.
+You may need to include `-k` in the argument list in these steps (eg: `curl -k -i -X POST ...`) if your Kestrel instance is using a self-signed certificate.
 
 :::
 

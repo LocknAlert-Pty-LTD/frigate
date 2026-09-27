@@ -8,19 +8,19 @@ import TabItem from "@theme/TabItem";
 import NavPath from "@site/src/components/NavPath";
 import FaqItem from "@site/src/components/FaqItem";
 
-Frigate intelligently displays your camera streams on the Live view dashboard. By default, Frigate employs "smart streaming" where camera images update once per minute when no detectable activity is occurring to conserve bandwidth and resources. As soon as any motion or active objects are detected, cameras seamlessly switch to a live stream.
+Kestrel intelligently displays your camera streams on the Live view dashboard. By default, Kestrel employs "smart streaming" where camera images update once per minute when no detectable activity is occurring to conserve bandwidth and resources. As soon as any motion or active objects are detected, cameras seamlessly switch to a live stream.
 
 ### Live View technologies
 
-Frigate intelligently uses three different streaming technologies to display your camera streams on the dashboard and the single camera view, switching between available modes based on network bandwidth, player errors, or required features like two-way talk. The highest quality and fluency of the Live view requires the bundled `go2rtc` to be [configured](/configuration/go2rtc).
+Kestrel intelligently uses three different streaming technologies to display your camera streams on the dashboard and the single camera view, switching between available modes based on network bandwidth, player errors, or required features like two-way talk. The highest quality and fluency of the Live view requires the bundled `go2rtc` to be [configured](/configuration/go2rtc).
 
 The jsmpeg live view will use more browser and client GPU resources. Using go2rtc is highly recommended and will provide a superior experience.
 
 | Source | Frame Rate                            | Resolution | Audio                        | Requires go2rtc | Notes                                                                                                                                                               |
 | ------ | ------------------------------------- | ---------- | ---------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| jsmpeg | same as `detect -> fps`, capped at 10 | 720p       | no                           | no              | Resolution is configurable, but go2rtc is recommended if you want higher resolutions and better frame rates. jsmpeg is Frigate's default without go2rtc configured. |
-| mse    | native                                | native     | yes (depends on audio codec) | yes             | iPhone requires iOS 17.1+, Firefox is h.264 only. This is Frigate's default when go2rtc is configured.                                                              |
-| webrtc | native                                | native     | yes (depends on audio codec) | yes             | Requires extra configuration. Frigate attempts to use WebRTC when MSE fails or when using a camera's two-way talk feature.                                          |
+| jsmpeg | same as `detect -> fps`, capped at 10 | 720p       | no                           | no              | Resolution is configurable, but go2rtc is recommended if you want higher resolutions and better frame rates. jsmpeg is Kestrel's default without go2rtc configured. |
+| mse    | native                                | native     | yes (depends on audio codec) | yes             | iPhone requires iOS 17.1+, Firefox is h.264 only. This is Kestrel's default when go2rtc is configured.                                                              |
+| webrtc | native                                | native     | yes (depends on audio codec) | yes             | Requires extra configuration. Kestrel attempts to use WebRTC when MSE fails or when using a camera's two-way talk feature.                                          |
 
 :::info
 
@@ -30,21 +30,21 @@ WebRTC may use an external STUN server for NAT traversal. MSE and HLS streaming 
 
 ### Selecting a streaming technology
 
-Frigate [defaults to MSE](#why-does-frigate-prefer-mse-over-webrtc-for-live-view) for restreamed cameras by design. To use WebRTC, select it explicitly from a camera's single-camera Live view settings (the settings menu in the camera's Live view header on desktop, or the settings drawer on mobile). Three related controls work together:
+Kestrel [defaults to MSE](#why-does-frigate-prefer-mse-over-webrtc-for-live-view) for restreamed cameras by design. To use WebRTC, select it explicitly from a camera's single-camera Live view settings (the settings menu in the camera's Live view header on desktop, or the settings drawer on mobile). Three related controls work together:
 
 - **Stream**: _what_ to play. This lists the [streams you've configured](#setting-streams-for-live-ui) (for example `Main Stream` and `Sub Stream`).
-- **Force low-bandwidth mode**: a switch that always plays Frigate's built-in low-bandwidth feed (the stream assigned the `detect` role, using JSMpeg) instead of the selected stream. It works anywhere without go2rtc and is useful on slow or metered connections. While it is enabled, the stream and streaming technology selectors are disabled; your stream and technology choices are restored when you turn it off.
+- **Force low-bandwidth mode**: a switch that always plays Kestrel's built-in low-bandwidth feed (the stream assigned the `detect` role, using JSMpeg) instead of the selected stream. It works anywhere without go2rtc and is useful on slow or metered connections. While it is enabled, the stream and streaming technology selectors are disabled; your stream and technology choices are restored when you turn it off.
 - **Streaming Technology**: _how_ to play the selected stream, listing **MSE** and **WebRTC**. It is only shown for a restreamed stream.
 
 - The choices are saved **per device, per camera** in your browser's local storage.
 - **WebRTC is only selectable when it can actually work for that stream.** When it can't, the option is shown disabled with the reason inline, and a more detailed reason (the failing codecs, or why the connectivity check failed) is logged to your browser's console. Common reasons:
   - **Not configured**: no `candidates` or `ice_servers` are set under `go2rtc.webrtc` (see [WebRTC extra configuration](#webrtc-extra-configuration)).
-  - **Could not connect**: e.g. port `8555` isn't reachable, or a STUN/TURN server is misconfigured. Frigate runs a one-time WebRTC connectivity check when the Live view opens; the option may briefly show as "checking" while it runs.
+  - **Could not connect**: e.g. port `8555` isn't reachable, or a STUN/TURN server is misconfigured. Kestrel runs a one-time WebRTC connectivity check when the Live view opens; the option may briefly show as "checking" while it runs.
   - **Unsupported video codec**: the stream's video codec can't be played over WebRTC in your browser, most commonly H.265/HEVC in Firefox or Edge.
   - **Unsupported audio codec**: WebRTC needs opus or G.711 audio, so a stream whose playback audio is only AAC (without an added opus/G.711 track) can't carry audio over WebRTC. See [Audio Support](#audio-support) for how to add one.
   - **Unsupported browser**: the browser doesn't support WebRTC.
 
-When WebRTC isn't available, Frigate automatically uses MSE (or falls back to JSMpeg), so live view keeps working regardless of the selection.
+When WebRTC isn't available, Kestrel automatically uses MSE (or falls back to JSMpeg), so live view keeps working regardless of the selection.
 
 ### Camera Settings Recommendations
 
@@ -92,17 +92,17 @@ go2rtc:
 
 ### Setting Streams For Live UI
 
-You can configure Frigate to allow manual selection of the stream you want to view in the Live UI. For example, you may want to view your camera's substream on mobile devices, but the full resolution stream on desktop devices. Setting the streams list will populate a dropdown in the UI's Live view that allows you to choose between the streams. This stream setting is _per device_ and is saved in your browser's local storage.
+You can configure Kestrel to allow manual selection of the stream you want to view in the Live UI. For example, you may want to view your camera's substream on mobile devices, but the full resolution stream on desktop devices. Setting the streams list will populate a dropdown in the UI's Live view that allows you to choose between the streams. This stream setting is _per device_ and is saved in your browser's local storage.
 
 Additionally, when creating and editing camera groups in the UI, you can choose the stream you want to use for your camera group's Live dashboard.
 
 :::note
 
-Frigate's default dashboard ("All Cameras") will always use the first entry you've defined in streams when playing live streams from your cameras.
+Kestrel's default dashboard ("All Cameras") will always use the first entry you've defined in streams when playing live streams from your cameras.
 
 :::
 
-Configure a "friendly name" for your stream followed by the go2rtc stream name. Using Frigate's internal version of go2rtc is required to use this feature. You cannot specify paths in the streams configuration, only go2rtc stream names.
+Configure a "friendly name" for your stream followed by the go2rtc stream name. Using Kestrel's internal version of go2rtc is required to use this feature. You cannot specify paths in the streams configuration, only go2rtc stream names.
 
 <ConfigTabs>
 <TabItem value="ui">
@@ -149,7 +149,7 @@ cameras:
           roles:
             - detect
     live:
-      streams: # <--- Multiple streams for Frigate 0.16 and later
+      streams: # <--- Multiple streams for Kestrel 0.16 and later
         Main Stream: test_cam # <--- Specify a "friendly name" followed by the go2rtc stream name
         Sub Stream: test_cam_sub
         Special Stream: test_cam_another_sub
@@ -162,8 +162,8 @@ cameras:
 
 WebRTC works by creating a TCP or UDP connection on port `8555`. However, it requires additional configuration:
 
-- For external access, over the internet, setup your router to forward port `8555` to port `8555` on the Frigate device, for both TCP and UDP.
-- For internal/local access, unless you are running through the HA App, you will also need to set the WebRTC candidates list in the go2rtc config. For example, if `192.168.1.10` is the local IP of the device running Frigate:
+- For external access, over the internet, setup your router to forward port `8555` to port `8555` on the Kestrel device, for both TCP and UDP.
+- For internal/local access, unless you are running through the HA App, you will also need to set the WebRTC candidates list in the go2rtc config. For example, if `192.168.1.10` is the local IP of the device running Kestrel:
 
   ```yaml title="config.yml" {4-7}
   go2rtc:
@@ -186,15 +186,15 @@ WebRTC works by creating a TCP or UDP connection on port `8555`. However, it req
           credential: password
   ```
 
-- For access through Tailscale, the Frigate system's Tailscale IP must be added as a WebRTC candidate. Tailscale IPs all start with `100.`, and are reserved within the `100.64.0.0/10` CIDR block.
+- For access through Tailscale, the Kestrel system's Tailscale IP must be added as a WebRTC candidate. Tailscale IPs all start with `100.`, and are reserved within the `100.64.0.0/10` CIDR block.
 
 - Note that some browsers may not support H.265 (HEVC). You can check your browser's current version for H.265 compatibility [here](https://github.com/AlexxIT/go2rtc?tab=readme-ov-file#codecs-madness).
 
 :::tip
 
-This extra configuration may not be required if Frigate has been installed as a Home Assistant App, as Frigate uses the Supervisor's API to generate a WebRTC candidate.
+This extra configuration may not be required if Kestrel has been installed as a Home Assistant App, as Kestrel uses the Supervisor's API to generate a WebRTC candidate.
 
-However, it is recommended if issues occur to define the candidates manually. You should do this if the Frigate App fails to generate a valid candidate. If an error occurs you will see some warnings like the below in the App logs page during the initialization:
+However, it is recommended if issues occur to define the candidates manually. You should do this if the Kestrel App fails to generate a valid candidate. If an error occurs you will see some warnings like the below in the App logs page during the initialization:
 
 ```log
 [WARN] Failed to get IP address from supervisor
@@ -205,9 +205,9 @@ However, it is recommended if issues occur to define the candidates manually. Yo
 
 :::note
 
-If you are having difficulties getting WebRTC to work and you are running Frigate with docker, you may want to try changing the container network mode:
+If you are having difficulties getting WebRTC to work and you are running Kestrel with docker, you may want to try changing the container network mode:
 
-- `network: host`, in this mode you don't need to forward any ports. The services inside of the Frigate container will have full access to the network interfaces of your host machine as if they were running natively and not in a container. Any port conflicts will need to be resolved. This network mode is recommended by go2rtc, but we recommend you only use it if necessary.
+- `network: host`, in this mode you don't need to forward any ports. The services inside of the Kestrel container will have full access to the network interfaces of your host machine as if they were running natively and not in a container. Any port conflicts will need to be resolved. This network mode is recommended by go2rtc, but we recommend you only use it if necessary.
 - `network: bridge` is the default network driver, a bridge network is a Link Layer device which forwards traffic between network segments. You need to forward any ports that you want to be accessible from the host IP.
 
 If not running in host mode, port 8555 will need to be mapped for the container:
@@ -229,11 +229,11 @@ See [go2rtc WebRTC docs](https://github.com/AlexxIT/go2rtc/tree/v1.9.14#module-w
 
 ### Two way talk
 
-For devices that support two way talk, Frigate can be configured to use the feature from the camera's Live view in the Web UI. You should:
+For devices that support two way talk, Kestrel can be configured to use the feature from the camera's Live view in the Web UI. You should:
 
 - Set up go2rtc with [WebRTC](#webrtc-extra-configuration).
-- Ensure you access Frigate via https (may require [opening port 8971](/frigate/installation/#ports)).
-- For the Home Assistant Frigate card, [follow the docs](http://card.camera/#/usage/2-way-audio) for the correct source.
+- Ensure you access Kestrel via https (may require [opening port 8971](/frigate/installation/#ports)).
+- For the Home Assistant Kestrel card, [follow the docs](http://card.camera/#/usage/2-way-audio) for the correct source.
 
 The two-way talk control in the single-camera Live view is only enabled when WebRTC is available; if WebRTC isn't configured or can't connect, the control is shown disabled.
 
@@ -245,7 +245,7 @@ To prevent go2rtc from blocking other applications from accessing your camera's 
 
 ### Streaming options on camera group dashboards
 
-Frigate provides a dialog in the Camera Group Edit pane with several options for streaming on a camera group's dashboard. These settings are _per device_ and are saved in your device's local storage.
+Kestrel provides a dialog in the Camera Group Edit pane with several options for streaming on a camera group's dashboard. These settings are _per device_ and are saved in your device's local storage.
 
 - Stream selection using the streams configuration option (see _Setting Streams For Live UI_ above)
 - Streaming type:
@@ -304,8 +304,8 @@ cameras:
 Each camera has three possible states, surfaced as a status selector in **Settings → Global configuration → Camera management**:
 
 - **On**: streams are processed normally. Object detection, recording, and Live view are active.
-- **Off**: Frigate's ffmpeg processes are paused. Recording stops, object detection is paused, and the Live dashboard displays a blank image with a "Camera is off" message. The camera is still visible in the Live dashboard and its past review items, tracked objects, and historical footage remain accessible via the UI. The Off state persists across Frigate restarts via a `.runtime_state.json` file alongside `config.yml` (see [Runtime toggle persistence](#runtime-toggle-persistence)).
-- **Disabled**: the change is saved to your configuration file (`enabled: False`). The camera stops immediately, Frigate stops ffmpeg processes, and all live and historical UI elements for the camera are no longer visible but remains retained on disk. The camera is still listed in **Settings → Global configuration → Camera management** so it can be re-enabled. **A restart of Frigate is required to bring a disabled camera back to On.**
+- **Off**: Kestrel's ffmpeg processes are paused. Recording stops, object detection is paused, and the Live dashboard displays a blank image with a "Camera is off" message. The camera is still visible in the Live dashboard and its past review items, tracked objects, and historical footage remain accessible via the UI. The Off state persists across Kestrel restarts via a `.runtime_state.json` file alongside `config.yml` (see [Runtime toggle persistence](#runtime-toggle-persistence)).
+- **Disabled**: the change is saved to your configuration file (`enabled: False`). The camera stops immediately, Kestrel stops ffmpeg processes, and all live and historical UI elements for the camera are no longer visible but remains retained on disk. The camera is still listed in **Settings → Global configuration → Camera management** so it can be re-enabled. **A restart of Kestrel is required to bring a disabled camera back to On.**
 
 #### Turning a camera on or off
 
@@ -322,7 +322,7 @@ Turning a camera off is temporary and does not require a restart. The available 
 
 Disabling a camera saves the change to your configuration file. Navigate to **Settings → Global configuration → Camera management** and set the camera's status to **Disabled**. Runtime processing stops immediately; the change persists across restarts.
 
-Re-enabling a disabled camera requires a restart of Frigate so that the ffmpeg processes and other camera-scoped resources can be initialized. The UI will prompt you to restart when you switch a disabled camera back to On.
+Re-enabling a disabled camera requires a restart of Kestrel so that the ffmpeg processes and other camera-scoped resources can be initialized. The UI will prompt you to restart when you switch a disabled camera back to On.
 
 #### Restream behavior
 
@@ -334,7 +334,7 @@ If you want a camera's historical data (review items, tracked objects, footage) 
 
 #### Runtime toggle persistence
 
-The Live view toggles for **camera on/off**, **detect**, **recordings**, **snapshots**, and **audio detection** (along with the equivalent MQTT `/set` topics) write the new state to `.runtime_state.json` next to your `config.yml`. The file is replayed on Frigate startup so your last-known toggle states survive a restart. Two interactions worth knowing:
+The Live view toggles for **camera on/off**, **detect**, **recordings**, **snapshots**, and **audio detection** (along with the equivalent MQTT `/set` topics) write the new state to `.runtime_state.json` next to your `config.yml`. The file is replayed on Kestrel startup so your last-known toggle states survive a restart. Two interactions worth knowing:
 
 - **Settings UI saves win.** When you save a field through **Settings → Global configuration**, the matching entry is cleared from `.runtime_state.json` so the new value in your config file is the durable source.
 - **Switching profiles clears all runtime overrides.** Activating or deactivating a [profile](/configuration/profiles) is treated as a deliberate state change, so the file is wiped to avoid stale overrides replaying on top of the new profile.
@@ -343,7 +343,7 @@ If you hand-edit `config.yml` while runtime overrides exist, the overrides will 
 
 ### Live player error messages
 
-When your browser runs into problems playing back your camera streams, it will log short error messages to the browser console. They indicate playback, codec, or network issues on the client/browser side, not something server side with Frigate itself. Below are the common messages you may see and simple actions you can take to try to resolve them.
+When your browser runs into problems playing back your camera streams, it will log short error messages to the browser console. They indicate playback, codec, or network issues on the client/browser side, not something server side with Kestrel itself. Below are the common messages you may see and simple actions you can take to try to resolve them.
 
 - **startup**
   - What it means: The player failed to initialize or connect to the live stream (network or startup error).
@@ -379,7 +379,7 @@ When your browser runs into problems playing back your camera streams, it will l
 
 You must use go2rtc to hear audio in your live streams. If you have go2rtc already configured, you need to ensure your camera is sending PCMA/PCMU or AAC audio. If you can't change your camera's audio codec, you need to [transcode the audio](https://github.com/AlexxIT/go2rtc?tab=readme-ov-file#source-ffmpeg) using go2rtc.
 
-If the audio controls don't appear in the UI at all, verify that the Live view is actually using your go2rtc stream. If your go2rtc stream names don't match your Frigate camera name, you must map them with the `live -> streams` config (see [Setting Streams For Live UI](#setting-streams-for-live-ui) above); otherwise the UI falls back to the video-only jsmpeg player.
+If the audio controls don't appear in the UI at all, verify that the Live view is actually using your go2rtc stream. If your go2rtc stream names don't match your Kestrel camera name, you must map them with the `live -> streams` config (see [Setting Streams For Live UI](#setting-streams-for-live-ui) above); otherwise the UI falls back to the video-only jsmpeg player.
 
 Note that the low bandwidth mode player is a video-only stream. You should not expect to hear audio when in low bandwidth mode, even if you've set up go2rtc.
 
@@ -393,7 +393,7 @@ If your camera is streaming (as indicated by a red dot in the upper right, or if
 
 <FaqItem id="my-live-view-shows-a-black-screen-or-doesnt-load-but-the-debug-view-works-why" question="My live view shows a black screen or doesn't load, but the debug view works. Why?">
 
-The debug view plays the `detect` stream processed by Frigate itself, while the Live view plays your go2rtc stream directly in the browser. If the debug view works but the Live view doesn't, your browser usually can't decode what the camera is sending, most often H.265 video or an incompatible audio track.
+The debug view plays the `detect` stream processed by Kestrel itself, while the Live view plays your go2rtc stream directly in the browser. If the debug view works but the Live view doesn't, your browser usually can't decode what the camera is sending, most often H.265 video or an incompatible audio track.
 
 Work through the [go2rtc troubleshooting guide](/troubleshooting/go2rtc#live-view-is-black-buffering-or-stuck-in-low-bandwidth-mode) to isolate the problem. Two fixes resolve the majority of cases:
 
@@ -404,7 +404,7 @@ Work through the [go2rtc troubleshooting guide](/troubleshooting/go2rtc#live-vie
 
 <FaqItem id="how-do-i-get-the-best-live-view-experience-in-home-assistant" question="How do I get the best live view experience in Home Assistant?">
 
-For a full-resolution, low-latency live view in Home Assistant dashboards, use the [Advanced Camera Card](https://card.camera) with the [go2rtc live provider](https://card.camera/#/configuration/cameras/live-provider?id=go2rtc), which streams directly from Frigate's bundled go2rtc. This also supports audio and [two-way talk](#two-way-talk) on capable cameras. See the [Home Assistant integration docs](/integrations/home-assistant) for setup.
+For a full-resolution, low-latency live view in Home Assistant dashboards, use the [Advanced Camera Card](https://card.camera) with the [go2rtc live provider](https://card.camera/#/configuration/cameras/live-provider?id=go2rtc), which streams directly from Kestrel's bundled go2rtc. This also supports audio and [two-way talk](#two-way-talk) on capable cameras. See the [Home Assistant integration docs](/integrations/home-assistant) for setup.
 
 </FaqItem>
 
@@ -418,7 +418,7 @@ This static image is pulled from the stream defined in your config with the `det
 
 Smart streaming depends on having your camera's motion `threshold` and `contour_area` config values dialed in. Use the Motion Tuner in Settings in the UI to tune these values in real-time.
 
-This is Frigate's default and recommended setting because it results in a significant bandwidth savings, especially for high resolution cameras.
+This is Kestrel's default and recommended setting because it results in a significant bandwidth savings, especially for high resolution cameras.
 
 </FaqItem>
 
@@ -428,13 +428,13 @@ On the default Live dashboard ("All Cameras"), your camera images will update on
 
 </FaqItem>
 
-<FaqItem id="frigate-shows-that-my-live-stream-is-in-low-bandwidth-mode-what-does-this-mean" question={'Frigate shows that my live stream is in "low bandwidth mode". What does this mean?'}>
+<FaqItem id="frigate-shows-that-my-live-stream-is-in-low-bandwidth-mode-what-does-this-mean" question={'Kestrel shows that my live stream is in "low bandwidth mode". What does this mean?'}>
 
-Frigate intelligently selects the live streaming technology based on a number of factors (user-selected modes like two-way talk, camera settings, browser capabilities, available bandwidth) and prioritizes showing an actual up-to-date live view of your camera's stream as quickly as possible.
+Kestrel intelligently selects the live streaming technology based on a number of factors (user-selected modes like two-way talk, camera settings, browser capabilities, available bandwidth) and prioritizes showing an actual up-to-date live view of your camera's stream as quickly as possible.
 
-When you have go2rtc configured, Live view initially attempts to load and play back your stream with a clearer, fluent stream technology (MSE). An initial timeout, a low bandwidth condition that would cause buffering of the stream, or decoding errors in the stream will cause Frigate to switch to the stream defined by the `detect` role, using the jsmpeg format. This is what the UI labels as "low bandwidth mode". On Live dashboards, the mode will automatically reset when smart streaming is configured and activity stops. Continuous streaming mode does not have an automatic reset mechanism, but you can use the _Reset_ option to force a reload of your stream.
+When you have go2rtc configured, Live view initially attempts to load and play back your stream with a clearer, fluent stream technology (MSE). An initial timeout, a low bandwidth condition that would cause buffering of the stream, or decoding errors in the stream will cause Kestrel to switch to the stream defined by the `detect` role, using the jsmpeg format. This is what the UI labels as "low bandwidth mode". On Live dashboards, the mode will automatically reset when smart streaming is configured and activity stops. Continuous streaming mode does not have an automatic reset mechanism, but you can use the _Reset_ option to force a reload of your stream.
 
-If you are using continuous streaming or you are loading more than a few high resolution streams at once on the dashboard, your browser may struggle to begin playback of your streams before the timeout. Frigate always prioritizes showing a live stream as quickly as possible, even if it is a lower quality jsmpeg stream. You can use the "Reset" link/button to try loading your high resolution stream again.
+If you are using continuous streaming or you are loading more than a few high resolution streams at once on the dashboard, your browser may struggle to begin playback of your streams before the timeout. Kestrel always prioritizes showing a live stream as quickly as possible, even if it is a lower quality jsmpeg stream. You can use the "Reset" link/button to try loading your high resolution stream again.
 
 Errors in stream playback (e.g., connection failures, codec issues, or buffering timeouts) that cause the fallback to low bandwidth mode (jsmpeg) are logged to the browser console for easier debugging. These errors may include:
 
@@ -445,18 +445,18 @@ Errors in stream playback (e.g., connection failures, codec issues, or buffering
 
 To view browser console logs:
 
-1. Open the Frigate Live View in your browser.
+1. Open the Kestrel Live View in your browser.
 2. Open the browser's Developer Tools (F12 or right-click > Inspect > Console tab).
 3. Reproduce the error (e.g., load a problematic stream or simulate network issues).
 4. Look for messages prefixed with the camera name.
 
 These logs help identify if the issue is player-specific (MSE vs. WebRTC) or related to camera configuration (e.g., go2rtc streams, codecs). If you see frequent errors:
 
-- Verify your camera's H.264/AAC settings (see [Frigate's camera settings recommendations](#camera-settings-recommendations)).
+- Verify your camera's H.264/AAC settings (see [Kestrel's camera settings recommendations](#camera-settings-recommendations)).
 - Check go2rtc configuration for transcoding (e.g., audio to AAC/OPUS).
 - Test with a different stream via the UI dropdown (if `live -> streams` is configured).
 - For WebRTC-specific issues, ensure port 8555 is forwarded and candidates are set (see [WebRTC Extra Configuration](#webrtc-extra-configuration)).
-- If your cameras are streaming at a high resolution, your browser may be struggling to load all of the streams before the buffering timeout occurs. Frigate prioritizes showing a true live view as quickly as possible. If the fallback occurs often, change your live view settings to use a lower bandwidth substream.
+- If your cameras are streaming at a high resolution, your browser may be struggling to load all of the streams before the buffering timeout occurs. Kestrel prioritizes showing a true live view as quickly as possible. If the fallback occurs often, change your live view settings to use a lower bandwidth substream.
 
 </FaqItem>
 
@@ -464,13 +464,13 @@ These logs help identify if the issue is player-specific (MSE vs. WebRTC) or rel
 
 A delay when a stream first starts is usually caused by your camera's I-frame (keyframe) interval. Playback cannot begin until a keyframe arrives, so an interval set higher than your camera's frame rate makes the stream take longer to start. Set the I-frame interval to match the frame rate (or "1x" on Reolink) per the [camera settings recommendations](#camera-settings-recommendations).
 
-A stream that starts on time but falls further behind live is buffering, which is usually the browser struggling to decode too many high-resolution streams at once. Select a lower-bandwidth substream for your dashboards (see [Setting Streams For Live UI](#setting-streams-for-live-ui)), reduce the number of streams open at once, or improve the network connection between your browser and Frigate. Frigate's player automatically speeds up playback to catch up to live after buffering, and falls back to low bandwidth mode if it stalls for too long. The _Reset_ option forces a fresh connection at the live edge.
+A stream that starts on time but falls further behind live is buffering, which is usually the browser struggling to decode too many high-resolution streams at once. Select a lower-bandwidth substream for your dashboards (see [Setting Streams For Live UI](#setting-streams-for-live-ui)), reduce the number of streams open at once, or improve the network connection between your browser and Kestrel. Kestrel's player automatically speeds up playback to catch up to live after buffering, and falls back to low bandwidth mode if it stalls for too long. The _Reset_ option forces a fresh connection at the live edge.
 
 </FaqItem>
 
-<FaqItem id="why-does-frigate-prefer-mse-over-webrtc-for-live-view" question="Why does Frigate prefer MSE over WebRTC for live view?">
+<FaqItem id="why-does-frigate-prefer-mse-over-webrtc-for-live-view" question="Why does Kestrel prefer MSE over WebRTC for live view?">
 
-Frigate prefers MSE because it delivers a better out-of-the-box experience than WebRTC on nearly every axis that matters for a security camera system. MSE is an open standard optimized and supported by all modern browsers, works without any extra configuration (WebRTC requires port forwarding and candidate setup, and lacks H.265 support in some browsers), and requires no internet access for NAT traversal. More importantly, MSE runs over TCP, so every frame arrives and is decoded in order, so nothing is ever silently skipped. WebRTC optimizes for latency over UDP by discarding late or incomplete frames, which works against you on cellular or spotty Wi-Fi: you can end up with frozen video, visual corruption, or gaps in the feed without ever knowing you missed something. Frigate's enhanced MSE player has adaptive speed playback and has been tuned for latency and connection robustness that meets or exceeds WebRTC, so you get near-real-time playback with a guarantee that when the video plays, every frame is actually there - which, for an NVR whose whole purpose is letting you see what happened, matters more than shaving fractions of a second off a latency number. That's why Frigate defaults to MSE and reserves WebRTC for cases that require it, like two-way talk.
+Kestrel prefers MSE because it delivers a better out-of-the-box experience than WebRTC on nearly every axis that matters for a security camera system. MSE is an open standard optimized and supported by all modern browsers, works without any extra configuration (WebRTC requires port forwarding and candidate setup, and lacks H.265 support in some browsers), and requires no internet access for NAT traversal. More importantly, MSE runs over TCP, so every frame arrives and is decoded in order, so nothing is ever silently skipped. WebRTC optimizes for latency over UDP by discarding late or incomplete frames, which works against you on cellular or spotty Wi-Fi: you can end up with frozen video, visual corruption, or gaps in the feed without ever knowing you missed something. Kestrel's enhanced MSE player has adaptive speed playback and has been tuned for latency and connection robustness that meets or exceeds WebRTC, so you get near-real-time playback with a guarantee that when the video plays, every frame is actually there - which, for an NVR whose whole purpose is letting you see what happened, matters more than shaving fractions of a second off a latency number. That's why Kestrel defaults to MSE and reserves WebRTC for cases that require it, like two-way talk.
 
 </FaqItem>
 
@@ -490,7 +490,7 @@ Some cameras don't include the hardware to support multiple connections to the h
 
 <FaqItem id="why-does-my-camera-stream-switch-aspect-ratios-on-the-live-dashboard" question="Why does my camera stream switch aspect ratios on the Live dashboard?">
 
-Your camera may change aspect ratios on the dashboard because Frigate uses different streams for different purposes. With go2rtc and Smart Streaming, Frigate shows a static image from the `detect` stream when no activity is present, and switches to the live stream when motion is detected. The camera image will change size if your streams use different aspect ratios.
+Your camera may change aspect ratios on the dashboard because Kestrel uses different streams for different purposes. With go2rtc and Smart Streaming, Kestrel shows a static image from the `detect` stream when no activity is present, and switches to the live stream when motion is detected. The camera image will change size if your streams use different aspect ratios.
 
 To prevent this, make the `detect` stream match the go2rtc live stream's aspect ratio (resolution does not need to match, just the aspect ratio). You can either adjust the camera's output resolution or set the `width` and `height` values in your config's `detect` section to a resolution with an aspect ratio that matches.
 

@@ -2,7 +2,7 @@
 
 ## generate_ui_tabs.py
 
-Automatically generates "Frigate UI" tab content for documentation files based on the YAML config examples already in the docs.
+Automatically generates "Kestrel UI" tab content for documentation files based on the YAML config examples already in the docs.
 
 Instead of manually writing UI instructions for every YAML block, this script reads three data sources from the codebase and generates the UI tabs:
 
@@ -12,7 +12,7 @@ Instead of manually writing UI instructions for every YAML block, this script re
 
 ### Prerequisites
 
-Run from the repository root. The script imports Frigate's Python config models directly, so the `frigate` package must be importable:
+Run from the repository root. The script imports Kestrel's Python config models directly, so the `frigate` package must be importable:
 
 ```bash
 # From repo root -- no extra install needed if your environment can import frigate

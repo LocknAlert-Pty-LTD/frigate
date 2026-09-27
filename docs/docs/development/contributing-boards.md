@@ -5,9 +5,9 @@ title: Community Supported Boards
 
 ## About Community Supported Boards
 
-There are many SBCs (small board computers) that have a passionate community behind them, Jetson Nano for example. These SBCs often have dedicated hardware that can greatly accelerate Frigate's AI and video workloads, but this hardware requires very specific frameworks for interfacing with it.
+There are many SBCs (small board computers) that have a passionate community behind them, Jetson Nano for example. These SBCs often have dedicated hardware that can greatly accelerate Kestrel's AI and video workloads, but this hardware requires very specific frameworks for interfacing with it.
 
-This means it would be very difficult for Frigate's maintainers to support these different boards especially given the relatively low userbase.
+This means it would be very difficult for Kestrel's maintainers to support these different boards especially given the relatively low userbase.
 
 The community support boards framework allows a user in the community to be the codeowner to add support for an SBC or other detector by providing the code, maintenance, and user support.
 
@@ -69,7 +69,7 @@ COPY --from=rootfs / /
 
 ### CI/CD
 
-The images for each board will be built for each Frigate release, this is done in the `.github/workflows/ci.yml` file. The board build workflow will need to be added here.
+The images for each board will be built for each Kestrel release, this is done in the `.github/workflows/ci.yml` file. The board build workflow will need to be added here.
 
 ```yml
 - name: Build and push board build

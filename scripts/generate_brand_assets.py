@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate the Kestrel brand mark as SVG plus the raster icon set.
 
-The Frigate logo is a separate visual trademark (TRADEMARK.md section 5) and
+The Kestrel logo is a separate visual trademark (TRADEMARK.md section 5) and
 cannot be redistributed by a fork, so every icon and the inline SVG in
 web/src/components/Logo.tsx had to be replaced.
 
@@ -194,6 +194,8 @@ def main() -> None:
         "web/public/images/android-chrome-192x192.png": 192,
         "web/public/images/android-chrome-512x512.png": 512,
         "web/public/images/maskable-icon.png": 180,
+        "web/images/branding/mstile-150x150.png": 150,
+        "docs/static/img/branding/kestrel.png": 512,
     }
     for rel, size in rasters.items():
         write_png(REPO_ROOT / rel, rasterize(polys, size, light))

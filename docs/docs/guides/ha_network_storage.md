@@ -5,7 +5,7 @@ title: Home Assistant network storage
 
 As of Home Assistant 2023.6, Network Mounted Storage is supported for Apps.
 
-## Setting Up Remote Storage For Frigate
+## Setting Up Remote Storage For Kestrel
 
 ### Prerequisites
 
@@ -14,7 +14,7 @@ As of Home Assistant 2023.6, Network Mounted Storage is supported for Apps.
 
 ### Initial Setup
 
-1. Stop the Frigate App
+1. Stop the Kestrel App
 
 ### Move current data
 
@@ -37,4 +37,4 @@ Keeping the current data is optional, but the data will need to be moved regardl
 4. Fill out the additional required info for your particular NAS
 5. Connect
 6. Move files from `/media/frigate_tmp` to `/media/frigate` if they were kept in previous step
-7. Start the Frigate App
+7. Start the Kestrel App

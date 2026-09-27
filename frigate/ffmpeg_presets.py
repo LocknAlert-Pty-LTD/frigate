@@ -76,7 +76,7 @@ TIMEOUT_PARAM = "-timeout" if LIBAVFORMAT_VERSION_MAJOR >= 59 else "-stimeout"
 _gpu_selector = LibvaGpuSelector()
 _user_agent_args = [
     "-user_agent",
-    f"FFmpeg Frigate/{VERSION}",
+    f"FFmpeg Kestrel/{VERSION}",
 ]
 
 # Presets for FFMPEG Stream Decoding (detect role)
@@ -405,7 +405,7 @@ PRESETS_INPUT = {
     "preset-rtsp-blue-iris": _user_agent_args
     + [
         "-user_agent",
-        f"FFmpeg Frigate/{VERSION}",
+        f"FFmpeg Kestrel/{VERSION}",
         "-avoid_negative_ts",
         "make_zero",
         "-flags",

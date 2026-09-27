@@ -9,25 +9,25 @@ import NavPath from "@site/src/components/NavPath";
 
 This page covers common problems with the bundled [go2rtc](/configuration/go2rtc) and how to resolve them, whether your cameras were added with the setup wizard or configured by hand.
 
-When a stream won't play or behaves oddly, the most important first step is to figure out **where** in the pipeline it breaks. Frigate's live view is a chain (_camera → go2rtc → your browser_), and each stage fails for different reasons. Work through the checks below in order, then jump to the matching problem category.
+When a stream won't play or behaves oddly, the most important first step is to figure out **where** in the pipeline it breaks. Kestrel's live view is a chain (_camera → go2rtc → your browser_), and each stage fails for different reasons. Work through the checks below in order, then jump to the matching problem category.
 
 ## Start by isolating the problem
 
 ### 1. Read the go2rtc logs
 
-Access the go2rtc logs in the Frigate UI under <NavPath path="Logs" /> in the sidebar (select the **go2rtc** tab). If go2rtc cannot connect to your camera you will usually see a clear error here: `401 Unauthorized` (bad or incorrectly encoded credentials), `Connection refused` / `timeout` (wrong IP, port, or the camera is at its connection limit), or `404 Not Found` (wrong RTSP path, or the referenced stream name does not exist).
+Access the go2rtc logs in the Kestrel UI under <NavPath path="Logs" /> in the sidebar (select the **go2rtc** tab). If go2rtc cannot connect to your camera you will usually see a clear error here: `401 Unauthorized` (bad or incorrectly encoded credentials), `Connection refused` / `timeout` (wrong IP, port, or the camera is at its connection limit), or `404 Not Found` (wrong RTSP path, or the referenced stream name does not exist).
 
 ### 2. Test the stream in the go2rtc web interface
 
-If the logs look clean, open go2rtc's own web interface on port `1984`. This is the single most useful diagnostic, because it takes Frigate's UI out of the equation entirely.
+If the logs look clean, open go2rtc's own web interface on port `1984`. This is the single most useful diagnostic, because it takes Kestrel's UI out of the equation entirely.
 
-- If using Frigate through Home Assistant, enable the web interface at port `1984` (it is disabled by default, see [Home Assistant ports](#home-assistant-and-port-access)).
+- If using Kestrel through Home Assistant, enable the web interface at port `1984` (it is disabled by default, see [Home Assistant ports](#home-assistant-and-port-access)).
 - If using Docker, forward port `1984` before accessing the web interface.
 
 Open the stream page for your camera (`http://<frigate_host>:1984/stream.html?src=back`) and try each player link:
 
-- **If nothing plays here**, the problem is between the camera and go2rtc (codec, credentials, or transport), _not_ your browser. Fix it at the source before touching anything in Frigate.
-- **If a player works here but Frigate's live view does not**, the problem is browser/codec related. Compare the **MSE** and **WebRTC** links. Frigate prefers MSE and only attempts WebRTC when MSE fails (or for two-way talk). If `mode=mse` plays but `mode=webrtc` does not, you have a [WebRTC codec problem](#webrtc-and-two-way-talk); if neither plays, your browser cannot decode the codec (commonly H.265, see [H.265 / HEVC cameras](#h265--hevc-cameras)).
+- **If nothing plays here**, the problem is between the camera and go2rtc (codec, credentials, or transport), _not_ your browser. Fix it at the source before touching anything in Kestrel.
+- **If a player works here but Kestrel's live view does not**, the problem is browser/codec related. Compare the **MSE** and **WebRTC** links. Kestrel prefers MSE and only attempts WebRTC when MSE fails (or for two-way talk). If `mode=mse` plays but `mode=webrtc` does not, you have a [WebRTC codec problem](#webrtc-and-two-way-talk); if neither plays, your browser cannot decode the codec (commonly H.265, see [H.265 / HEVC cameras](#h265--hevc-cameras)).
 
 ### 3. Inspect the negotiated codecs
 
@@ -37,7 +37,7 @@ You can view detailed stream info, including the exact video and audio codecs go
 
 If the camera plays in go2rtc but not in your browser, the video or audio codec is unsupported. Browsers can reliably play **H.264** video and **AAC** audio; many cannot play H.265/HEVC, and some camera audio (G.711/PCM, MJPEG containers, etc.) is not playable at all. The fix is to have go2rtc re-encode the stream on demand using its FFmpeg module.
 
-In the Frigate UI this is the **Use compatibility mode (ffmpeg)** toggle on a stream source; in YAML it is the `ffmpeg:` prefix on the source URL.
+In the Kestrel UI this is the **Use compatibility mode (ffmpeg)** toggle on a stream source; in YAML it is the `ffmpeg:` prefix on the source URL.
 
 <ConfigTabs>
 <TabItem value="ui">
@@ -78,7 +78,7 @@ go2rtc:
 
 :::warning
 
-The transcoding modifiers (`#video=`, `#audio=`, `#hardware`, …) **only take effect on a source that is prefixed with `ffmpeg:`**. Adding them to a bare `rtsp://…#audio=opus` source does nothing: go2rtc ignores them. Likewise, when a source references another stream by name (e.g. `ffmpeg:back#audio=aac`), the name must match the stream key **exactly** (it is case sensitive), or the transcode is silently never produced. This is the single most common configuration mistake. In the Frigate UI, the **Use compatibility mode (ffmpeg)** toggle adds the `ffmpeg:` prefix for you.
+The transcoding modifiers (`#video=`, `#audio=`, `#hardware`, …) **only take effect on a source that is prefixed with `ffmpeg:`**. Adding them to a bare `rtsp://…#audio=opus` source does nothing: go2rtc ignores them. Likewise, when a source references another stream by name (e.g. `ffmpeg:back#audio=aac`), the name must match the stream key **exactly** (it is case sensitive), or the transcode is silently never produced. This is the single most common configuration mistake. In the Kestrel UI, the **Use compatibility mode (ffmpeg)** toggle adds the `ffmpeg:` prefix for you.
 
 A bare `rtsp://` source reads a different set of modifiers: `#backchannel=`, `#media=`, `#timeout=`, and `#transport=`. These do nothing on an `ffmpeg:` source. Adding **any** modifier to a bare `rtsp://` source also disables the camera's backchannel unless the URL explicitly contains `#backchannel=1`, so a stream dedicated to two-way talk should carry no modifiers at all.
 
@@ -88,11 +88,11 @@ Transcoding video is resource intensive. Always prefer `#video=copy` (the **Copy
 
 ## Live view is black, buffering, or stuck in "low-bandwidth mode"
 
-When the live view shows a black screen, spins forever, or repeatedly drops to the lower-quality jsmpeg player ("low-bandwidth mode"), the stream almost always contains something the browser cannot decode over MSE, usually H.265 video or a non-AAC audio track. Confirm this in the go2rtc web UI (port `1984`): if MSE won't play there, Frigate can't play it either, since it uses the same pipeline.
+When the live view shows a black screen, spins forever, or repeatedly drops to the lower-quality jsmpeg player ("low-bandwidth mode"), the stream almost always contains something the browser cannot decode over MSE, usually H.265 video or a non-AAC audio track. Confirm this in the go2rtc web UI (port `1984`): if MSE won't play there, Kestrel can't play it either, since it uses the same pipeline.
 
 The fix is to produce an **H.264 + AAC** stream, either by changing your camera's firmware codecs or by transcoding in go2rtc (see [Fix the codec with the FFmpeg module](#4-fix-the-codec-with-the-ffmpeg-module)). A few other things worth checking:
 
-- **Set the camera's I-frame (keyframe) interval to match its frame rate** (or "1x" on Reolink), and avoid "smart"/"+" codecs like _H.264+_ or _H.265+_. A long keyframe interval delays the first decodable frame past Frigate's startup timeout, which forces the fallback to jsmpeg. See [camera settings recommendations](/configuration/live#camera-settings-recommendations).
+- **Set the camera's I-frame (keyframe) interval to match its frame rate** (or "1x" on Reolink), and avoid "smart"/"+" codecs like _H.264+_ or _H.265+_. A long keyframe interval delays the first decodable frame past Kestrel's startup timeout, which forces the fallback to jsmpeg. See [camera settings recommendations](/configuration/live#camera-settings-recommendations).
 - **A spinner that never clears, even though video plays in VLC**, is often an unplayable _audio_ track stalling playback. Drop or transcode the audio (see below).
 - **Remote/VPN viewing that buffers** while the LAN is fine is usually latency/jitter exceeding MSE's startup buffer. Set up [WebRTC](/configuration/live#webrtc-extra-configuration), which drops late frames instead of buffering.
 
@@ -100,7 +100,7 @@ The general live-view behavior (smart streaming, the MSE → WebRTC → jsmpeg f
 
 ## H.265 / HEVC cameras
 
-H.265/HEVC playback in the browser is unreliable and version-dependent. WebRTC does not support H.265 on some browsers, and MSE/HEVC support varies by browser, OS, and whether a hardware decoder is present. An H.265 stream that plays fine in VLC, the go2rtc web UI, and Frigate's recordings can still be blank in a live view.
+H.265/HEVC playback in the browser is unreliable and version-dependent. WebRTC does not support H.265 on some browsers, and MSE/HEVC support varies by browser, OS, and whether a hardware decoder is present. An H.265 stream that plays fine in VLC, the go2rtc web UI, and Kestrel's recordings can still be blank in a live view.
 
 For dependable live viewing, use **H.264** for the stream the live view consumes:
 
@@ -159,19 +159,19 @@ WebRTC is only attempted when MSE fails or when using a camera's two-way talk fe
 
 ## High CPU usage
 
-If go2rtc is using a lot of CPU, it is almost always transcoding in software. An FFmpeg source with a codec modifier like `#video=h264` or `#audio=aac` but **no** `#hardware` re-encodes on the CPU. (Frigate's `ffmpeg.hwaccel_args` only applies to Frigate's own detect/record processes. It does _not_ accelerate go2rtc's transcodes.)
+If go2rtc is using a lot of CPU, it is almost always transcoding in software. An FFmpeg source with a codec modifier like `#video=h264` or `#audio=aac` but **no** `#hardware` re-encodes on the CPU. (Kestrel's `ffmpeg.hwaccel_args` only applies to Kestrel's own detect/record processes. It does _not_ accelerate go2rtc's transcodes.)
 
 To keep CPU usage down:
 
 - Only transcode the track that is genuinely unsupported, and use `#video=copy` to pass video through untouched whenever possible.
 - When you must transcode video, always add `#hardware` (the **Automatic** hardware option in the UI) so the encode runs on the GPU. Note the [FFmpeg 8 device requirement](#hardware-accelerated-transcoding-with-ffmpeg-8) below.
-- Don't restream a high-resolution main stream just to feed the live view: even with `#video=copy`, muxing a 4K/8MP+ stream is inherently expensive. Use the camera's lower-resolution substream for live and detect, and let Frigate pull the main stream directly for recording.
+- Don't restream a high-resolution main stream just to feed the live view: even with `#video=copy`, muxing a 4K/8MP+ stream is inherently expensive. Use the camera's lower-resolution substream for live and detect, and let Kestrel pull the main stream directly for recording.
 
 ## Connection, authentication, and complex passwords
 
-If go2rtc logs `401 Unauthorized` for a URL that works in VLC, the password almost certainly contains reserved URL characters. **Frigate URL-encodes passwords for its own `cameras.ffmpeg.inputs`, but it does not touch what you write under `go2rtc.streams`**: go2rtc parses that URL itself. You must URL-encode special characters yourself in the `go2rtc.streams` section (`@` → `%40`, `#` → `%23`, `?` → `%3F`, `%` → `%25`, etc.).
+If go2rtc logs `401 Unauthorized` for a URL that works in VLC, the password almost certainly contains reserved URL characters. **Kestrel URL-encodes passwords for its own `cameras.ffmpeg.inputs`, but it does not touch what you write under `go2rtc.streams`**: go2rtc parses that URL itself. You must URL-encode special characters yourself in the `go2rtc.streams` section (`@` → `%40`, `#` → `%23`, `?` → `%3F`, `%` → `%25`, etc.).
 
-Note the asymmetry: under `cameras.ffmpeg.inputs` you should use the **raw** password (Frigate encodes it for you). Pre-encoding it there causes a double-encode and fails. See [Handling Complex Passwords](/configuration/restream#handling-complex-passwords).
+Note the asymmetry: under `cameras.ffmpeg.inputs` you should use the **raw** password (Kestrel encodes it for you). Pre-encoding it there causes a double-encode and fails. See [Handling Complex Passwords](/configuration/restream#handling-complex-passwords).
 
 Repeated `401`/`Connection refused` errors can also mean the camera hit its **concurrent connection limit** or triggered a login lockout. Routing all roles through a single [RTSP restream](/configuration/restream#reduce-connections-to-camera) means the camera only ever sees one connection from go2rtc.
 
@@ -182,9 +182,9 @@ A surprising number of "the better live options aren't available" or `404 Not Fo
 - the **go2rtc stream key** (`go2rtc.streams.<name>`),
 - any `ffmpeg:<name>#…` source that references it,
 - the camera's restream input path (`rtsp://127.0.0.1:8554/<name>`), and
-- the camera name itself (so Frigate auto-maps it for MSE/WebRTC), or an explicit `live -> streams` mapping pointing at the go2rtc stream **name** (never a path).
+- the camera name itself (so Kestrel auto-maps it for MSE/WebRTC), or an explicit `live -> streams` mapping pointing at the go2rtc stream **name** (never a path).
 
-If you rename or remove a go2rtc stream while experimenting and the live stream selector then shows a blank entry, clear your browser's site data for the Frigate URL. The selected stream is cached per-device in local storage.
+If you rename or remove a go2rtc stream while experimenting and the live stream selector then shows a blank entry, clear your browser's site data for the Kestrel URL. The selected stream is cached per-device in local storage.
 
 ## Camera-specific behavior
 
@@ -201,7 +201,7 @@ go2rtc's native zero-copy handling only supports well-formed RTSP H.264/H.265. A
 
 ## Hardware-accelerated transcoding with FFmpeg 8
 
-Frigate 0.18 ships **FFmpeg 8.0** as the default, and FFmpeg 8 is stricter about hardware-accelerated filtering than earlier versions. Whenever go2rtc transcodes video with hardware acceleration (any source using `#hardware`, `#hardware=vaapi`, or the **Automatic** hardware option in the UI), it builds a filter chain that uploads frames to the GPU with the `hwupload` filter. FFmpeg 8 now refuses to do this unless it is told **which device** to use. Earlier versions selected one automatically. The result is that an otherwise-working transcode fails to start, the live view never loads, and go2rtc logs:
+Kestrel 0.18 ships **FFmpeg 8.0** as the default, and FFmpeg 8 is stricter about hardware-accelerated filtering than earlier versions. Whenever go2rtc transcodes video with hardware acceleration (any source using `#hardware`, `#hardware=vaapi`, or the **Automatic** hardware option in the UI), it builds a filter chain that uploads frames to the GPU with the `hwupload` filter. FFmpeg 8 now refuses to do this unless it is told **which device** to use. Earlier versions selected one automatically. The result is that an otherwise-working transcode fails to start, the live view never loads, and go2rtc logs:
 
 ```
 [hwupload] A hardware device reference is required to upload frames to.
@@ -226,12 +226,12 @@ If you use a **different hardware acceleration backend**, you will likely need t
 
 :::tip
 
-If you don't transcode in go2rtc with hardware acceleration, this does not affect you. If you want to avoid the change entirely, you can pin Frigate (and the go2rtc it bundles) back to FFmpeg 7.0 by setting `ffmpeg -> path: "7.0"` in your config.
+If you don't transcode in go2rtc with hardware acceleration, this does not affect you. If you want to avoid the change entirely, you can pin Kestrel (and the go2rtc it bundles) back to FFmpeg 7.0 by setting `ffmpeg -> path: "7.0"` in your config.
 
 :::
 
 ## Home Assistant and port access
 
-When running Frigate as a Home Assistant App, the go2rtc API (port `1984`), the RTSP restream (port `8554`), and WebRTC (port `8555`) are **disabled and hidden by default**. To use them (for example to reach the go2rtc web interface for troubleshooting, or to open a go2rtc stream externally in an app like VLC), go to <NavPath path="Settings > Apps > Frigate > Configuration > Network" />, click **Show disabled ports**, enable the port you need, and save. Use the host's IP address rather than an mDNS name like `homeassistant.local`.
+When running Kestrel as a Home Assistant App, the go2rtc API (port `1984`), the RTSP restream (port `8554`), and WebRTC (port `8555`) are **disabled and hidden by default**. To use them (for example to reach the go2rtc web interface for troubleshooting, or to open a go2rtc stream externally in an app like VLC), go to <NavPath path="Settings > Apps > Kestrel > Configuration > Network" />, click **Show disabled ports**, enable the port you need, and save. Use the host's IP address rather than an mDNS name like `homeassistant.local`.
 
-If live view works in the Frigate UI but not in Home Assistant, the most common cause is the go2rtc stream name not matching the camera name: name the primary go2rtc stream exactly like the camera, or add a `live -> streams` mapping, so the integration can resolve the restream.
+If live view works in the Kestrel UI but not in Home Assistant, the most common cause is the go2rtc stream name not matching the camera name: name the primary go2rtc stream exactly like the camera, or add a `live -> streams` mapping, so the integration can resolve the restream.

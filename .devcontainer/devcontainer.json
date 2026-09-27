@@ -1,5 +1,5 @@
 {
-  "name": "Frigate Devcontainer",
+  "name": "Kestrel Devcontainer",
   "dockerComposeFile": "../docker-compose.yml",
   "service": "devcontainer",
   "workspaceFolder": "/workspace/frigate",
@@ -37,7 +37,7 @@
       "onAutoForward": "silent"
     },
     "5001": {
-      "label": "Frigate API",
+      "label": "Kestrel API",
       "onAutoForward": "silent"
     },
     "5173": {

@@ -376,7 +376,7 @@ def _ws_allowed_cameras(ws: Any, config: FrigateConfig) -> set[str]:
 def _wrap_envelope(topic: str, inner_payload: Any) -> str:
     """Re-serialize a (topic, payload) message after payload reshaping.
 
-    Frigate's wire format keeps payloads as JSON-encoded strings inside the
+    Kestrel's wire format keeps payloads as JSON-encoded strings inside the
     outer envelope, mirroring what producers send today.
     """
     return json.dumps({"topic": topic, "payload": json.dumps(inner_payload)})
@@ -479,7 +479,7 @@ class WebSocket(WebSocket_):  # type: ignore[misc]
 
 
 class WebSocketClient(Communicator):
-    """Frigate wrapper for ws client."""
+    """Kestrel wrapper for ws client."""
 
     def __init__(self, config: FrigateConfig) -> None:
         self.config = config

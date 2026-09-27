@@ -8,7 +8,7 @@ this module's own import graph -- Dispatcher.publish's signature
 (topic, payload, retain) is all this needs to know about it.
 
 Topics (see AGENTS.md phase 1 architecture note for the reasoning):
-- "alarm/state": global, retained. Rich JSON status, for Frigate's own
+- "alarm/state": global, retained. Rich JSON status, for Kestrel's own
   frontend/API. Published on every state change.
 - "alarm/fault": global, retained. Published alongside alarm/state.
 - "alarm/event": published per qualifying detection event, not retained.
@@ -43,7 +43,7 @@ HA_STATE_TOPIC = "alarm/ha/state"
 HA_FAULT_TOPIC = "alarm/ha/fault"
 HA_REPORTING_TOPIC = "alarm/ha/reporting"
 
-# Home Assistant's alarm_control_panel state vocabulary. Frigate's own
+# Home Assistant's alarm_control_panel state vocabulary. Kestrel's own
 # AlarmState is richer (needed for the state machine itself); this is the
 # one place that translates down to what HA actually recognizes.
 # alarm_memory has no HA equivalent (HA doesn't model "disarmed but
@@ -64,7 +64,7 @@ _HA_STATE_MAP: dict[AlarmState, str] = {
 
 
 def translate_state_for_ha(state: AlarmState) -> str:
-    """Map Frigate's internal AlarmState to Home Assistant's
+    """Map Kestrel's internal AlarmState to Home Assistant's
     alarm_control_panel state vocabulary."""
     return _HA_STATE_MAP[state]
 

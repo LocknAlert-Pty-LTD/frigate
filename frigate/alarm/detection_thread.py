@@ -1,8 +1,8 @@
-"""Background thread that feeds Frigate's internal detection stream into the
+"""Background thread that feeds Kestrel's internal detection stream into the
 alarm engine.
 
 Subscribes to EventUpdateSubscriber, the same MQTT-independent internal ZMQ
-event bus every other Frigate subsystem (review, events, timeline) already
+event bus every other Kestrel subsystem (review, events, timeline) already
 uses -- not MQTT -- so the alarm engine's "no MQTT dependency" constraint
 holds even in the piece that's wired into the live process. Modeled on
 EventProcessor (frigate/events/maintainer.py).

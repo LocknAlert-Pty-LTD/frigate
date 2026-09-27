@@ -71,7 +71,7 @@ networking:
   # Optional: Enable IPv6 on 5000, and 8971 if tls is configured (default: shown below)
   ipv6:
     enabled: False
-  # Optional: Override ports Frigate uses for listening (defaults: shown below)
+  # Optional: Override ports Kestrel uses for listening (defaults: shown below)
   # An IP address may also be provided to bind to a specific interface, e.g. ip:port
   # NOTE: This setting is for advanced users and may break some integrations. The majority
   #       of users should change ports in the docker compose file
@@ -82,7 +82,7 @@ networking:
 
 # Optional: Proxy configuration
 proxy:
-  # Optional: Mapping for headers from upstream proxies. Only used if Frigate's auth
+  # Optional: Mapping for headers from upstream proxies. Only used if Kestrel's auth
   # is disabled.
   # NOTE: Many authentication proxies pass a header downstream with the authenticated
   #       user name and role. Not all values are supported. It must be a whitelisted header.
@@ -324,7 +324,7 @@ detect:
   fps: 5
   # Optional: Number of consecutive detection hits required for an object to be initialized in the tracker. (default: 1/2 the frame rate)
   min_initialized: 2
-  # Optional: Number of frames without a detection before Frigate considers an object to be gone. (default: 5x the frame rate)
+  # Optional: Number of frames without a detection before Kestrel considers an object to be gone. (default: 5x the frame rate)
   max_disappeared: 25
   # Optional: Configuration for stationary object tracking
   stationary:
@@ -833,7 +833,7 @@ audio_transcription:
   # Optional: Enable live and speech event audio transcription (default: shown below)
   enabled: False
   # Optional: The transcription backend (default: shown below)
-  # Either 'whisper' for Frigate's built-in local models, or the name of a genai
+  # Either 'whisper' for Kestrel's built-in local models, or the name of a genai
   # provider that has 'transcribe' in its roles. device and model_size are ignored
   # when a genai provider is named.
   model: whisper
@@ -938,9 +938,9 @@ cameras:
   back:
     # Optional: Enable/Disable the camera (default: shown below).
     # When False, ffmpeg is not started and the camera is hidden from the UI
-    # (except Camera Management). Re-enabling requires a Frigate restart.
+    # (except Camera Management). Re-enabling requires a Kestrel restart.
     enabled: True
-    # Optional: camera type used for some Frigate features (default: shown below)
+    # Optional: camera type used for some Kestrel features (default: shown below)
     # Options are "generic" and "lpr"
     type: "generic"
     # Required: ffmpeg settings for the camera
@@ -1083,7 +1083,7 @@ cameras:
         # Optional: calibrate the camera on startup (default: shown below)
         # A calibration will move the PTZ in increments and measure the time it takes to move.
         # The results are used to help estimate the position of tracked objects after a camera move.
-        # Frigate will update your config file automatically after a calibration with
+        # Kestrel will update your config file automatically after a calibration with
         # a "movement_weights" entry for the camera. You should then set calibrate_on_startup to False.
         calibrate_on_startup: False
         # Optional: the mode to use for zooming in/out on objects during autotracking. (default: shown below)
@@ -1094,7 +1094,7 @@ cameras:
         zooming: disabled
         # Optional: A value to change the behavior of zooming on autotracked objects. (default: shown below)
         # A lower value will keep more of the scene in view around a tracked object.
-        # A higher value will zoom in more on a tracked object, but Frigate may lose tracking more quickly.
+        # A higher value will zoom in more on a tracked object, but Kestrel may lose tracking more quickly.
         # The value should be between 0.1 and 0.75
         zoom_factor: 0.3
         # Optional: list of objects to track from labelmap.txt (default: shown below)

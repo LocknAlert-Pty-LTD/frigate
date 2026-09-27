@@ -13,7 +13,7 @@ from frigate.alarm.state import ArmedMode
 
 @dataclass(frozen=True)
 class ZoneAlarmRule:
-    """Resolved alarm configuration for one Frigate camera/zone pair."""
+    """Resolved alarm configuration for one Kestrel camera/zone pair."""
 
     camera: str
     zone: str

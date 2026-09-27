@@ -1,13 +1,13 @@
 ---
 id: config
-title: Frigate Configuration
+title: Kestrel Configuration
 ---
 
 import ConfigTabs from "@site/src/components/ConfigTabs";
 import TabItem from "@theme/TabItem";
 import NavPath from "@site/src/components/NavPath";
 
-Frigate can be configured through the **Settings UI** or by editing the YAML configuration file directly. The Settings UI is the recommended approach. It provides validation and a guided experience for all configuration options.
+Kestrel can be configured through the **Settings UI** or by editing the YAML configuration file directly. The Settings UI is the recommended approach. It provides validation and a guided experience for all configuration options.
 
 ## Using the Settings UI
 
@@ -25,7 +25,7 @@ When a camera-level section is left untouched, the camera simply inherits the gl
 To undo an override and go back to inheriting from the parent scope, use the reset button at the bottom of the section:
 
 - On a camera section, the button is labeled **Reset to Global** and restores the camera to the global value.
-- On a global section, the button is labeled **Reset to Default** and restores Frigate's built-in default.
+- On a global section, the button is labeled **Reset to Default** and restores Kestrel's built-in default.
 
 Resetting asks for confirmation and cannot be undone once applied.
 
@@ -40,9 +40,9 @@ Because pending changes can span multiple sections (and multiple cameras), the h
 
 ### Restart-required indicators
 
-Most settings take effect immediately, but some require Frigate to restart before they apply. Fields that require a restart are marked with a small restart icon and a **Restart required** tooltip next to the field label.
+Most settings take effect immediately, but some require Kestrel to restart before they apply. Fields that require a restart are marked with a small restart icon and a **Restart required** tooltip next to the field label.
 
-When you save a change that touches one of these fields, Frigate confirms the save and reminds you that a restart is needed (for example, _"Settings saved successfully. Restart Frigate to apply your changes."_). The notification includes a one-click **Restart Frigate** action so you can apply the change right away, or you can continue editing and restart later.
+When you save a change that touches one of these fields, Kestrel confirms the save and reminds you that a restart is needed (for example, _"Settings saved successfully. Restart Kestrel to apply your changes."_). The notification includes a one-click **Restart Kestrel** action so you can apply the change right away, or you can continue editing and restart later.
 
 ### The colored dots in the camera configuration menu
 
@@ -81,26 +81,26 @@ cameras:
 
 ## Accessing the Home Assistant App configuration directory {#accessing-app-config-dir}
 
-When running Frigate through the HA App, the Frigate `/config` directory is mapped to `/addon_configs/<addon_directory>` in the host, where `<addon_directory>` is specific to the variant of the Frigate App you are running.
+When running Kestrel through the HA App, the Kestrel `/config` directory is mapped to `/addon_configs/<addon_directory>` in the host, where `<addon_directory>` is specific to the variant of the Kestrel App you are running.
 
 | App Variant                | Configuration directory                   |
 | -------------------------- | ----------------------------------------- |
-| Frigate                    | `/addon_configs/ccab4aaf_frigate`         |
-| Frigate (Full Access)      | `/addon_configs/ccab4aaf_frigate-fa`      |
-| Frigate Beta               | `/addon_configs/ccab4aaf_frigate-beta`    |
-| Frigate Beta (Full Access) | `/addon_configs/ccab4aaf_frigate-fa-beta` |
+| Kestrel                    | `/addon_configs/ccab4aaf_frigate`         |
+| Kestrel (Full Access)      | `/addon_configs/ccab4aaf_frigate-fa`      |
+| Kestrel Beta               | `/addon_configs/ccab4aaf_frigate-beta`    |
+| Kestrel Beta (Full Access) | `/addon_configs/ccab4aaf_frigate-fa-beta` |
 
 **Whenever you see `/config` in the documentation, it refers to this directory.**
 
-If for example you are running the standard App variant and use the [VS Code App](https://github.com/hassio-addons/addon-vscode) to browse your files, you can click _File_ > _Open folder..._ and navigate to `/addon_configs/ccab4aaf_frigate` to access the Frigate `/config` directory and edit the `config.yaml` file. You can also use the built-in config editor in the Frigate UI.
+If for example you are running the standard App variant and use the [VS Code App](https://github.com/hassio-addons/addon-vscode) to browse your files, you can click _File_ > _Open folder..._ and navigate to `/addon_configs/ccab4aaf_frigate` to access the Kestrel `/config` directory and edit the `config.yaml` file. You can also use the built-in config editor in the Kestrel UI.
 
 ## VS Code Configuration Schema
 
-VS Code supports JSON schemas for automatically validating configuration files. You can enable this feature by adding `# yaml-language-server: $schema=http://frigate_host:5000/api/config/schema.json` to the beginning of the configuration file. Replace `frigate_host` with the IP address or hostname of your Frigate server. If you're using both VS Code and Frigate as an App, you should use `ccab4aaf-frigate` instead. Make sure to expose the internal unauthenticated port `5000` when accessing the config from VS Code on another machine.
+VS Code supports JSON schemas for automatically validating configuration files. You can enable this feature by adding `# yaml-language-server: $schema=http://frigate_host:5000/api/config/schema.json` to the beginning of the configuration file. Replace `frigate_host` with the IP address or hostname of your Kestrel server. If you're using both VS Code and Kestrel as an App, you should use `ccab4aaf-frigate` instead. Make sure to expose the internal unauthenticated port `5000` when accessing the config from VS Code on another machine.
 
 ## Environment Variable Substitution
 
-Frigate supports the use of environment variables starting with `FRIGATE_` **only** where specifically indicated in the [reference config](./advanced/reference.md). See [substitution sources and precedence](./advanced/system.md#substitution-sources-and-precedence) for where those values can come from, including `secrets.yaml`. For example, the following values can be replaced at runtime by using environment variables:
+Kestrel supports the use of environment variables starting with `FRIGATE_` **only** where specifically indicated in the [reference config](./advanced/reference.md). See [substitution sources and precedence](./advanced/system.md#substitution-sources-and-precedence) for where those values can come from, including `secrets.yaml`. For example, the following values can be replaced at runtime by using environment variables:
 
 ```yaml
 mqtt:

@@ -29,7 +29,7 @@ SQL = pw.SQL
 def migrate(migrator, database, fake=False, **kwargs):
     # SQLite has no ALTER TABLE ... ADD COLUMN IF NOT EXISTS, and a bare ADD
     # COLUMN against an existing column aborts the whole migration run, which
-    # takes Frigate's startup down with it: uvicorn never binds 127.0.0.1:5001
+    # takes Kestrel's startup down with it: uvicorn never binds 127.0.0.1:5001
     # and every request 500s behind nginx with only "connect() failed (111:
     # Connection refused)" to go on.
     #

@@ -400,7 +400,7 @@ export function buildConfigDataForPath(
 // requiresRestartForOverrides — determine whether a restart is needed
 // ---------------------------------------------------------------------------
 
-// Check whether the given overrides include fields that require a Frigate
+// Check whether the given overrides include fields that require a Kestrel
 // restart.  When `restartRequired` is `undefined` the caller's default is
 // used; an empty array means "never restart"; otherwise the function checks
 // if any of the listed field paths are present in the overrides object.

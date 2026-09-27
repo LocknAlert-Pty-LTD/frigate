@@ -152,7 +152,7 @@ class TestDatabaseFromEarlierBuild(MigrationTestCase):
 
         Router.migrator is a cached property that replays every name in the
         history table by reading its file. A renamed migration therefore blows
-        up before any SQL runs -- this is what takes Frigate's startup down,
+        up before any SQL runs -- this is what takes Kestrel's startup down,
         not the duplicate column.
         """
         self._simulate_old_build()

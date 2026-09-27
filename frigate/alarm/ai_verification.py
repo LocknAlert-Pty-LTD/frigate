@@ -1,6 +1,6 @@
 """Optional AI confirmation step for qualifying alarm detections.
 
-Wraps GenAIClientManager.description_client -- the same provider Frigate
+Wraps GenAIClientManager.description_client -- the same provider Kestrel
 already uses for object/review descriptions, not a new AI integration --
 with a background-thread call, mirroring the exact pattern
 frigate/data_processing/post/object_descriptions.py uses for its own GenAI

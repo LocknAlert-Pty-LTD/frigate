@@ -1,4 +1,4 @@
-"""Load JSON schema from Frigate's Pydantic config models."""
+"""Load JSON schema from Kestrel's Pydantic config models."""
 
 from typing import Any
 

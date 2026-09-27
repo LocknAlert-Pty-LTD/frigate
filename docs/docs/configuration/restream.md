@@ -9,9 +9,9 @@ import NavPath from "@site/src/components/NavPath";
 
 ## RTSP
 
-Frigate can restream your video feed as an RTSP feed for other applications such as Home Assistant to utilize it at `rtsp://<frigate_host>:8554/<camera_name>`. Port 8554 must be open. [This allows you to use a video feed for detection in Frigate and Home Assistant live view at the same time without having to make two separate connections to the camera](#reduce-connections-to-camera). The video feed is copied from the original video feed directly to avoid re-encoding. This feed does not include any annotation by Frigate.
+Kestrel can restream your video feed as an RTSP feed for other applications such as Home Assistant to utilize it at `rtsp://<frigate_host>:8554/<camera_name>`. Port 8554 must be open. [This allows you to use a video feed for detection in Kestrel and Home Assistant live view at the same time without having to make two separate connections to the camera](#reduce-connections-to-camera). The video feed is copied from the original video feed directly to avoid re-encoding. This feed does not include any annotation by Kestrel.
 
-Frigate uses [go2rtc](https://github.com/AlexxIT/go2rtc/tree/v1.9.14) to provide its restream and MSE/WebRTC capabilities. The go2rtc config is hosted at the `go2rtc` in the config, see [go2rtc docs](https://github.com/AlexxIT/go2rtc/tree/v1.9.14#configuration) for more advanced configurations and features.
+Kestrel uses [go2rtc](https://github.com/AlexxIT/go2rtc/tree/v1.9.14) to provide its restream and MSE/WebRTC capabilities. The go2rtc config is hosted at the `go2rtc` in the config, see [go2rtc docs](https://github.com/AlexxIT/go2rtc/tree/v1.9.14#configuration) for more advanced configurations and features.
 
 :::note
 
@@ -30,7 +30,7 @@ birdseye:
 
 :::tip
 
-To improve connection speed when using Birdseye via restream you can enable a small idle heartbeat by setting `birdseye.idle_heartbeat_fps` to a low value (e.g. `1–2`). This makes Frigate periodically push the last frame even when no motion is detected, reducing initial connection latency.
+To improve connection speed when using Birdseye via restream you can enable a small idle heartbeat by setting `birdseye.idle_heartbeat_fps` to a low value (e.g. `1–2`). This makes Kestrel periodically push the last frame even when no motion is detected, reducing initial connection latency.
 
 :::
 
@@ -61,7 +61,7 @@ Configure the go2rtc stream and point the camera inputs at the local restream.
 <ConfigTabs>
 <TabItem value="ui">
 
-Navigate to <NavPath path="Settings > System > go2rtc streams" /> and add stream entries for each camera. Then navigate to <NavPath path="Settings > Camera configuration > Streams (FFmpeg)" /> for each camera. For each input, choose **Restream (go2rtc)** and pick the matching stream from the dropdown. Frigate uses the local restream URL (`rtsp://127.0.0.1:8554/<camera_name>`) and the `preset-rtsp-restream` input args for that input automatically. (Choose **Manual input path** instead to type a URL directly.)
+Navigate to <NavPath path="Settings > System > go2rtc streams" /> and add stream entries for each camera. Then navigate to <NavPath path="Settings > Camera configuration > Streams (FFmpeg)" /> for each camera. For each input, choose **Restream (go2rtc)** and pick the matching stream from the dropdown. Kestrel uses the local restream URL (`rtsp://127.0.0.1:8554/<camera_name>`) and the `preset-rtsp-restream` input args for that input automatically. (Choose **Manual input path** instead to type a URL directly.)
 
 </TabItem>
 <TabItem value="yaml">
@@ -111,7 +111,7 @@ Two connections are made to the camera. One for the sub stream, one for the rest
 <ConfigTabs>
 <TabItem value="ui">
 
-Navigate to <NavPath path="Settings > System > go2rtc streams" /> and add stream entries for each camera and its sub stream. Then navigate to <NavPath path="Settings > Camera configuration > Streams (FFmpeg)" /> for each camera and add separate inputs for the main and sub streams. Set each input's source to **Restream (go2rtc)** and pick the matching stream from the dropdown. Frigate uses the local restream URL and the `preset-rtsp-restream` input args for that input automatically.
+Navigate to <NavPath path="Settings > System > go2rtc streams" /> and add stream entries for each camera and its sub stream. Then navigate to <NavPath path="Settings > Camera configuration > Streams (FFmpeg)" /> for each camera and add separate inputs for the main and sub streams. Set each input's source to **Restream (go2rtc)** and pick the matching stream from the dropdown. Kestrel uses the local restream URL and the `preset-rtsp-restream` input args for that input automatically.
 
 </TabItem>
 <TabItem value="yaml">
@@ -192,12 +192,12 @@ See [this comment](https://github.com/AlexxIT/go2rtc/issues/1217#issuecomment-22
 
 ## Preventing go2rtc from blocking two-way audio {#two-way-talk-restream}
 
-For cameras that support two-way talk, go2rtc will automatically establish an audio output backchannel when connecting to an RTSP stream. This backchannel blocks access to the camera's audio output for two-way talk functionality, preventing both Frigate and other applications from using it.
+For cameras that support two-way talk, go2rtc will automatically establish an audio output backchannel when connecting to an RTSP stream. This backchannel blocks access to the camera's audio output for two-way talk functionality, preventing both Kestrel and other applications from using it.
 
 To prevent this, you must configure two separate stream instances:
 
-1. One stream instance with `#backchannel=0` for Frigate's viewing, recording, and detection (prevents go2rtc from establishing the blocking backchannel)
-2. A second stream instance with no `#` parameters at all for two-way talk functionality (can be used by Frigate's WebRTC viewer or other applications)
+1. One stream instance with `#backchannel=0` for Kestrel's viewing, recording, and detection (prevents go2rtc from establishing the blocking backchannel)
+2. A second stream instance with no `#` parameters at all for two-way talk functionality (can be used by Kestrel's WebRTC viewer or other applications)
 
 Configuration example:
 
@@ -212,10 +212,10 @@ go2rtc:
 
 In this configuration:
 
-- `front_door` stream is used by Frigate for viewing, recording, and detection. The `#backchannel=0` parameter prevents go2rtc from establishing the audio output backchannel, so it won't block two-way talk access.
-- `front_door_twoway` stream is used for two-way talk functionality. This stream can be used by Frigate's WebRTC viewer when two-way talk is enabled, or by other applications (like Home Assistant Advanced Camera Card) that need access to the camera's audio output channel.
+- `front_door` stream is used by Kestrel for viewing, recording, and detection. The `#backchannel=0` parameter prevents go2rtc from establishing the audio output backchannel, so it won't block two-way talk access.
+- `front_door_twoway` stream is used for two-way talk functionality. This stream can be used by Kestrel's WebRTC viewer when two-way talk is enabled, or by other applications (like Home Assistant Advanced Camera Card) that need access to the camera's audio output channel.
 
-Any `#` parameter on a bare `rtsp://` source disables the backchannel unless the URL explicitly contains `#backchannel=1`. A two-way talk stream with something like `#video=h264` on it silently loses two-way audio, and Frigate will report that two-way talk is unavailable for that stream.
+Any `#` parameter on a bare `rtsp://` source disables the backchannel unless the URL explicitly contains `#backchannel=1`. A two-way talk stream with something like `#video=h264` on it silently loses two-way audio, and Kestrel will report that two-way talk is unavailable for that stream.
 
 ## Security: Restricted Stream Sources
 
@@ -223,7 +223,7 @@ For security reasons, the `echo:`, `expr:`, and `exec:` stream sources are disab
 
 If you attempt to use these sources in your configuration, the streams will be removed and an error message will be printed in the logs.
 
-To enable these sources, you must set the environment variable `GO2RTC_ALLOW_ARBITRARY_EXEC=true`. This can be done in your Docker Compose file or container environment, or for Home Assistant App users with the `go2rtc_allow_arbitrary_exec` option in the App's configuration. The `environment_vars` section of the Frigate config can't enable it:
+To enable these sources, you must set the environment variable `GO2RTC_ALLOW_ARBITRARY_EXEC=true`. This can be done in your Docker Compose file or container environment, or for Home Assistant App users with the `go2rtc_allow_arbitrary_exec` option in the App's configuration. The `environment_vars` section of the Kestrel config can't enable it:
 
 ```yaml
 environment:

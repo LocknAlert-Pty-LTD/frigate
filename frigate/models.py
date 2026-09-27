@@ -237,7 +237,7 @@ class AlarmEventLog(Model):
     source = CharField(max_length=10)
     message = TextField(null=True)
     false_alarm = BooleanField(default=False)
-    # The Frigate tracked-object id (== Event.id once persisted), so the
+    # The Kestrel tracked-object id (== Event.id once persisted), so the
     # trail lookup (frigate/alarm/trail.py) can resolve this entry back to
     # the real detection. Null for entries recorded before this field
     # existed, and for non-detection alarm events (arm/disarm/fault/etc).

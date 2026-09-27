@@ -212,7 +212,7 @@ test.describe("Command menu - actions @high", () => {
     await frigateApp.goto("/");
     await openMenu(frigateApp);
     await frigateApp.page.keyboard.type("restart");
-    await commands(frigateApp, "Restart Frigate").click();
+    await commands(frigateApp, "Restart Kestrel").click();
 
     const confirm = frigateApp.page.getByRole("alertdialog");
     await expect(confirm).toBeVisible();
@@ -234,7 +234,7 @@ test.describe("Command menu - permissions @high", () => {
 
     await expect(commands(frigateApp, "Front Door").first()).toBeVisible();
     await expect(commands(frigateApp, "UI settings")).toHaveCount(1);
-    await expect(commands(frigateApp, "Restart Frigate")).toHaveCount(0);
+    await expect(commands(frigateApp, "Restart Kestrel")).toHaveCount(0);
     await expect(commands(frigateApp, "Configuration Editor")).toHaveCount(0);
     await expect(commands(frigateApp, "Motion tuner")).toHaveCount(0);
   });

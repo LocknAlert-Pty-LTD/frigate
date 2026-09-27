@@ -4,7 +4,7 @@ import type { Config, PluginConfig } from "@docusaurus/types";
 import type * as OpenApiPlugin from "docusaurus-plugin-openapi-docs";
 
 const config: Config = {
-  title: "Frigate",
+  title: "Kestrel",
   tagline: "NVR With Realtime Object Detection for IP Cameras",
   url: "https://docs.frigate.video",
   baseUrl: "/",
@@ -62,7 +62,7 @@ const config: Config = {
         primaryBrandColor: "#010101",
       },
       aiChatSettings: {
-        chatSubjectName: "Frigate",
+        chatSubjectName: "Kestrel",
         botAvatarSrcUrl: "https://frigate.video/images/favicon.png",
         getHelpCallToActions: [
           {
@@ -124,9 +124,9 @@ const config: Config = {
       },
     ],
     navbar: {
-      title: "Frigate",
+      title: "Kestrel",
       logo: {
-        alt: "Frigate",
+        alt: "Kestrel",
         src: "img/branding/logo.svg",
         srcDark: "img/branding/logo-dark.svg",
       },

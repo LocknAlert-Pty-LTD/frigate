@@ -191,7 +191,7 @@ export default function CameraWizardDialog({
         !!wizardData.appleCompatibility &&
         !!hevcRecordingStreamId(wizardData.streams);
 
-      // Convert wizard data to Frigate config format
+      // Convert wizard data to Kestrel config format
       const configData: CameraConfigData = {
         cameras: {
           [finalCameraName]: {

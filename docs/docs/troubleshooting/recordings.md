@@ -7,7 +7,7 @@ import FaqItem from "@site/src/components/FaqItem";
 
 ## Why are my recordings not working? (empty Recordings, "No recordings found for this time")
 
-If Frigate shows live video but the History view is empty, or you see "No recordings found for this time", the cause is almost always in one of the three categories below. Segments are first written to the RAM cache and are only moved to disk if they match a retention policy _and_ the camera's `record` stream is producing valid, storable video. Work through the categories in order: retention configuration is by far the most common cause.
+If Kestrel shows live video but the History view is empty, or you see "No recordings found for this time", the cause is almost always in one of the three categories below. Segments are first written to the RAM cache and are only moved to disk if they match a retention policy _and_ the camera's `record` stream is producing valid, storable video. Work through the categories in order: retention configuration is by far the most common cause.
 
 Before diving in, enable debug logging for the recording maintainer so you can see whether segments are being written to disk at all:
 
@@ -40,7 +40,7 @@ See [Recording](/configuration/record) for the full set of common configurations
 
 <FaqItem id="motion-or-event-only-recording-keeps-less-than-you-expect" question="Motion or event-only recording keeps less than you expect">
 
-If you only configured `motion`, `alerts`, or `detections` retention (with no `continuous`), Frigate keeps footage selectively based on the retention `mode`:
+If you only configured `motion`, `alerts`, or `detections` retention (with no `continuous`), Kestrel keeps footage selectively based on the retention `mode`:
 
 - **`mode: motion`** (the default) only retains segments that contain motion. If your [motion masks](/configuration/motion_detection) cover the areas where activity happens, or your motion sensitivity is too low, nothing will be retained even though recording is "on".
 - **`mode: active_objects`** only retains segments where a tracked object was actively moving.
@@ -55,7 +55,7 @@ If you expected continuous footage but only configured motion/event retention, a
 `alerts` and `detections` retention only keep footage that overlaps a tracked object, so they depend on object detection running:
 
 - **Detection must be enabled.** If `detect: enabled: False`, no alerts or detections are ever created, so alert/detection retention keeps nothing. (Continuous and motion retention still work with detection disabled.)
-- **The object must be supported by your model.** If you track an object your model doesn't support (for example `deer` or `license_plate` on the default model), Frigate never detects it and never records for it. Check your logs for warnings such as `... is configured to track ['deer'] objects, which are not supported by the current model` and remove unsupported objects or switch to a model (e.g. [Frigate+](/plus/)) that includes them.
+- **The object must be supported by your model.** If you track an object your model doesn't support (for example `deer` or `license_plate` on the default model), Kestrel never detects it and never records for it. Check your logs for warnings such as `... is configured to track ['deer'] objects, which are not supported by the current model` and remove unsupported objects or switch to a model (e.g. [Frigate+](/plus/)) that includes them.
 
 </FaqItem>
 
@@ -69,7 +69,7 @@ Configuration keys change between major versions. The old `clips` config, for ex
 
 <FaqItem id="incompatible-audio-codec-recordings-silently-fail-to-save" question="Incompatible audio codec (recordings silently fail to save)">
 
-Frigate stores recordings in an MP4 container, and some camera audio codecs (most commonly `pcm_alaw`, `pcm_mulaw`, or other G.711 variants) **cannot be placed in an MP4 container**. When this happens, ffmpeg fails to write the segment and no recording is saved, even though the live view works fine. This is a frequent cause on Tapo, TP-Link VIGI, and some Reolink cameras.
+Kestrel stores recordings in an MP4 container, and some camera audio codecs (most commonly `pcm_alaw`, `pcm_mulaw`, or other G.711 variants) **cannot be placed in an MP4 container**. When this happens, ffmpeg fails to write the segment and no recording is saved, even though the live view works fine. This is a frequent cause on Tapo, TP-Link VIGI, and some Reolink cameras.
 
 Transcode the audio to AAC (or drop it entirely) using the appropriate [ffmpeg preset](/configuration/ffmpeg_presets):
 
@@ -99,11 +99,11 @@ A message like `No new recording segments were created for <camera> in the last 
 
 <FaqItem id="the-storage-volume-isnt-mounted-correctly" question="The storage volume isn't mounted correctly">
 
-If the recordings volume (`/media/frigate`) points at the wrong location, isn't writable, or a network/encrypted mount failed to mount at boot, Frigate cannot save recordings, or it silently writes to the boot drive and then purges aggressively because the drive appears far smaller than expected.
+If the recordings volume (`/media/frigate`) points at the wrong location, isn't writable, or a network/encrypted mount failed to mount at boot, Kestrel cannot save recordings, or it silently writes to the boot drive and then purges aggressively because the drive appears far smaller than expected.
 
-- Compare the host's real capacity (`df -h`) against what the **Storage** page in the Frigate UI reports. A mismatch (for example Frigate reporting ~220 GB when your storage drive is 4 TB) means the bind mount is resolving to the wrong filesystem.
+- Compare the host's real capacity (`df -h`) against what the **Storage** page in the Kestrel UI reports. A mismatch (for example Kestrel reporting ~220 GB when your storage drive is 4 TB) means the bind mount is resolving to the wrong filesystem.
 - Verify the host path in your Docker `volumes` mapping (`- /your/storage:/media/frigate`) exists and is writable by the container.
-- For a mount that may fail intermittently, protecting the mount point with `chattr +i` on an empty directory forces Frigate to error out (rather than silently writing to the boot drive) when the mount is missing.
+- For a mount that may fail intermittently, protecting the mount point with `chattr +i` on an empty directory forces Kestrel to error out (rather than silently writing to the boot drive) when the mount is missing.
 - Check `dmesg` and system logs for filesystem or I/O errors around the time recordings disappeared.
 
 If recordings _are_ being written but the copy is too slow to keep up, see the ["Unable to keep up with recording segments"](#i-see-the-message-warning--unable-to-keep-up-with-recording-segments-in-cache-for-camera-keeping-the-5-most-recent-segments-out-of-6-and-discarding-the-rest) question below.
@@ -114,13 +114,13 @@ If recordings _are_ being written but the copy is too slow to keep up, see the [
 
 <FaqItem id="pipeline-error-decode" question={"Recordings won't play back: \"PIPELINE_ERROR_DECODE\" (or \"Media failed to decode\")"}>
 
-When a recording refuses to play in the Frigate UI and you see an error like `Failed to play recordings (error 3): PIPELINE_ERROR_DECODE`, the message is coming from **your browser**, not from Frigate. `PIPELINE_ERROR_DECODE` is emitted exclusively by the media pipeline in **Chromium-based browsers** (Chrome, Edge, Brave, Vivaldi, Opera, Arc, and the Android WebView used by many in-app browsers) when the browser cannot decode a video or audio packet in the recording. WebKit browsers (Safari) report the same underlying problem with a different message, usually `Media failed to decode` or `DECODER_ERROR_NOT_SUPPORTED`.
+When a recording refuses to play in the Kestrel UI and you see an error like `Failed to play recordings (error 3): PIPELINE_ERROR_DECODE`, the message is coming from **your browser**, not from Kestrel. `PIPELINE_ERROR_DECODE` is emitted exclusively by the media pipeline in **Chromium-based browsers** (Chrome, Edge, Brave, Vivaldi, Opera, Arc, and the Android WebView used by many in-app browsers) when the browser cannot decode a video or audio packet in the recording. WebKit browsers (Safari) report the same underlying problem with a different message, usually `Media failed to decode` or `DECODER_ERROR_NOT_SUPPORTED`.
 
-Frigate copies the `record` stream to disk **without re-encoding it**, so the browser must decode exactly what your camera produced, and Chromium's decoder is far stricter about malformed or nonstandard media than VLC or ffmpeg.
+Kestrel copies the `record` stream to disk **without re-encoding it**, so the browser must decode exactly what your camera produced, and Chromium's decoder is far stricter about malformed or nonstandard media than VLC or ffmpeg.
 
 :::warning
 
-The same recording playing perfectly in VLC, decoding cleanly with `ffprobe`/`ffmpeg`, or having a valid MP4 container does **not** mean the browser can decode it. VLC and ffmpeg are much more tolerant of codec quirks and damaged packets than a browser's media pipeline, so a "valid" file can still trigger `PIPELINE_ERROR_DECODE`. This is outside of Frigate's control, because Frigate never modifies the recording stream.
+The same recording playing perfectly in VLC, decoding cleanly with `ffprobe`/`ffmpeg`, or having a valid MP4 container does **not** mean the browser can decode it. VLC and ffmpeg are much more tolerant of codec quirks and damaged packets than a browser's media pipeline, so a "valid" file can still trigger `PIPELINE_ERROR_DECODE`. This is outside of Kestrel's control, because Kestrel never modifies the recording stream.
 
 :::
 
@@ -195,7 +195,7 @@ The browser decodes the video locally, so a stream that is too demanding can fai
 
 <FaqItem id="recordings-play-back-with-no-video-or-wont-play-at-all" question="Recordings play back with no video (or won't play at all)">
 
-Frigate copies the `record` stream directly without re-encoding, so playback depends on your browser supporting the camera's codec. H265/HEVC recordings may not be playable in some browsers. If recordings appear as audio-only or a black screen, your camera is likely sending a codec your browser can't decode. Configure the camera to output **H264** for maximum compatibility.
+Kestrel copies the `record` stream directly without re-encoding, so playback depends on your browser supporting the camera's codec. H265/HEVC recordings may not be playable in some browsers. If recordings appear as audio-only or a black screen, your camera is likely sending a codec your browser can't decode. Configure the camera to output **H264** for maximum compatibility.
 
 If playback instead fails with an explicit `PIPELINE_ERROR_DECODE` or `Media failed to decode` error, see [Recordings won't play back with "PIPELINE_ERROR_DECODE"](#pipeline-error-decode) above.
 
@@ -211,7 +211,7 @@ If the record stream uses a "Smart Codec"/H.264+ mode or changes encoding parame
 
 <FaqItem id="invalid-or-missing-video-stream-in-segment" question="I see the message: WARNING : Invalid or missing video stream in segment ... Discarding.">
 
-Every recording segment is validated before it leaves the cache. Frigate probes each finished `.mp4` in `/tmp/cache` and requires a readable video stream and a valid duration before moving to storage. A segment that fails is deleted, so those ~10 seconds of footage are lost. Three messages come from this check:
+Every recording segment is validated before it leaves the cache. Kestrel probes each finished `.mp4` in `/tmp/cache` and requires a readable video stream and a valid duration before moving to storage. A segment that fails is deleted, so those ~10 seconds of footage are lost. Three messages come from this check:
 
 - `Invalid or missing video stream in segment <path>. Discarding.` The segment holds no video, or could not be read at all.
 - `Failed to probe corrupt segment <path>` followed by `Discarding a corrupt recording segment: <path>`. The segment was read, but its length could not be determined.
@@ -221,41 +221,41 @@ For each one, the camera watchdog also logs `Invalid recording segment detected 
 
 :::warning
 
-This is almost always a **camera or network problem**, not a Frigate one. A segment is only complete once ffmpeg has finished writing it, so anything that interrupts the stream partway through leaves behind a file that cannot be saved. Frigate is reporting the interruption, not causing it.
+This is almost always a **camera or network problem**, not a Kestrel one. A segment is only complete once ffmpeg has finished writing it, so anything that interrupts the stream partway through leaves behind a file that cannot be saved. Kestrel is reporting the interruption, not causing it.
 
 :::
 
 #### Start with the camera and the network
 
-- **The camera dropped the connection.** Cameras reboot, reinitialize their stream when switching to night mode, and cut clients off when they are overloaded or out of simultaneous connections. Count everything pulling from the camera at once: Frigate's detect and record streams, go2rtc, a phone app, and any other NVR each use one. Routing all roles through a single [RTSP restream](/configuration/restream#reduce-connections-to-camera) so the camera only ever sees one connection often resolves this by itself.
+- **The camera dropped the connection.** Cameras reboot, reinitialize their stream when switching to night mode, and cut clients off when they are overloaded or out of simultaneous connections. Count everything pulling from the camera at once: Kestrel's detect and record streams, go2rtc, a phone app, and any other NVR each use one. Routing all roles through a single [RTSP restream](/configuration/restream#reduce-connections-to-camera) so the camera only ever sees one connection often resolves this by itself.
 - **The link to the camera is unreliable.** WiFi cameras, powerline adapters, a saturated uplink, a failing switch port, or a marginal cable all produce this pattern, and usually only on one camera at a time. WiFi cameras are [not recommended](https://ipcamtalk.com/threads/multiple-cameras-high-bandwidth.77100/#post-861110).
 - **The camera cannot reliably send what it is being asked for.** A high bitrate 4K stream can be more than the camera's own hardware can encode and push out under load. Lower the bitrate, or record a lower-resolution profile.
 - **The camera is using a "Smart Codec", H.264+, or H.265+ mode.** These change encoding parameters mid-stream and produce the broken timestamps behind the corrupt-segment variant. Turn the mode off and set the camera's keyframe interval equal to its frame rate. See [Segments are only ~1 second long](#segments-are-only-1-second-long).
 
-Read the rest of the Frigate and/or go2rtc log around the **first** occurrence. When the camera or the network is at fault, other messages show up with it, such as `No frames received from <camera> in 20 seconds`, `Non-monotonic DTS`, `RTP: PT=xx: bad cseq`, `error while decoding MB`, or a connection timeout. Each of those is explained in [Common error messages](/troubleshooting/common_errors). To confirm the camera is the source, open its stream in the [go2rtc web interface](/troubleshooting/go2rtc) on port `1984` or play the same URL in VLC, and leave it running long enough for the failures to happen again.
+Read the rest of the Kestrel and/or go2rtc log around the **first** occurrence. When the camera or the network is at fault, other messages show up with it, such as `No frames received from <camera> in 20 seconds`, `Non-monotonic DTS`, `RTP: PT=xx: bad cseq`, `error while decoding MB`, or a connection timeout. Each of those is explained in [Common error messages](/troubleshooting/common_errors). To confirm the camera is the source, open its stream in the [go2rtc web interface](/troubleshooting/go2rtc) on port `1984` or play the same URL in VLC, and leave it running long enough for the failures to happen again.
 
 #### If the camera and network check out
 
 - **Audio the recording cannot store.** Some cameras send G.711 audio, which cannot be saved in an MP4 and stops segments from finalizing. See [Incompatible audio codec](#incompatible-audio-codec-recordings-silently-fail-to-save).
-- **Frigate itself was stopped or restarted.** A single warning per camera around a restart is expected and needs no action.
-- **The system ran out of room or memory.** A full `/tmp/cache`, or the host killing Frigate for using too much memory, cuts off the segment being written. Both leave other errors in the log alongside this one. See [No space left on device](#errno-28-no-space-left-on-device).
+- **Kestrel itself was stopped or restarted.** A single warning per camera around a restart is expected and needs no action.
+- **The system ran out of room or memory.** A full `/tmp/cache`, or the host killing Kestrel for using too much memory, cuts off the segment being written. Both leave other errors in the log alongside this one. See [No space left on device](#errno-28-no-space-left-on-device).
 
 </FaqItem>
 
 <FaqItem id="no-new-recording-segments-were-created" question="I see the message: ERROR : No new recording segments were created for <camera> in the last 120s. Restarting the ffmpeg record process...">
 
-When a camera stops producing usable recordings for two minutes, Frigate restarts that camera's record process to try to recover. The wording tells you how far the recordings got:
+When a camera stops producing usable recordings for two minutes, Kestrel restarts that camera's record process to try to recover. The wording tells you how far the recordings got:
 
 - **`No new recording segments were created`**: no new segment file showed up in the cache at all, so ffmpeg isn't getting video out of the record stream. The camera is unreachable or refusing the connection, the stream URL, path, or credentials are wrong, or the camera accepted the connection and then sent nothing. See [The record stream isn't connecting](#the-record-stream-isnt-connecting).
 - **`No new valid recording segments were created`** and **`No valid segments created since last invalid segment`**: recordings are arriving, but they keep failing validation, so the camera is sending video that cannot be saved. See [Invalid or missing video stream in segment](#invalid-or-missing-video-stream-in-segment) above.
 
-The restart is Frigate recovering from a problem, not causing one. One of these after a camera reboot or a brief network drop is normal. Seeing them repeat every couple of minutes means the camera or the network is still failing, and the restarts can extend the damage, because each one cuts off the segment that was being written. Work from the earliest failure in that camera's log rather than from the restarts.
+The restart is Kestrel recovering from a problem, not causing one. One of these after a camera reboot or a brief network drop is normal. Seeing them repeat every couple of minutes means the camera or the network is still failing, and the restarts can extend the damage, because each one cuts off the segment that was being written. Work from the earliest failure in that camera's log rather than from the restarts.
 
 </FaqItem>
 
 <FaqItem id="i-see-the-message-warning--unable-to-keep-up-with-recording-segments-in-cache-for-camera-keeping-the-5-most-recent-segments-out-of-6-and-discarding-the-rest" question="I see the message: WARNING : Unable to keep up with recording segments in cache for camera. Keeping the 5 most recent segments out of 6 and discarding the rest...">
 
-This warning means the recording maintainer cannot move recording segments from the RAM cache to disk fast enough. When the cache fills up, Frigate discards the oldest segments to avoid running out of memory and crashing, so you lose recorded footage. This is almost always a storage throughput or system resource problem. Work through the steps below to identify which.
+This warning means the recording maintainer cannot move recording segments from the RAM cache to disk fast enough. When the cache fills up, Kestrel discards the oldest segments to avoid running out of memory and crashing, so you lose recorded footage. This is almost always a storage throughput or system resource problem. Work through the steps below to identify which.
 
 #### Step 1: Enable recording debug logging
 
@@ -284,7 +284,7 @@ The copy duration tells you which direction to investigate:
 
 #### Step 3: Check RAM, swap, cache, and disk utilization
 
-If CPU, RAM, disk throughput, or bus I/O is insufficient, nothing inside Frigate will help. Review each aspect of available system resources while the warnings are occurring.
+If CPU, RAM, disk throughput, or bus I/O is insufficient, nothing inside Kestrel will help. Review each aspect of available system resources while the warnings are occurring.
 
 On Linux, some helpful tools/commands for diagnosing this are:
 
@@ -320,7 +320,7 @@ NOTE: These are hard limits for the container, so be sure there is enough headro
 
 #### Step 4: Check your storage type
 
-Mounting a network share is a popular option for storing recordings, but it can lead to reduced copy times and cause problems. Some users have found that using `NFS` instead of `SMB` considerably decreased copy times and fixed the issue. It is also important to ensure that the network connection between the device running Frigate and the network share is stable and fast. A saturated or unreliable link will stall copies.
+Mounting a network share is a popular option for storing recordings, but it can lead to reduced copy times and cause problems. Some users have found that using `NFS` instead of `SMB` considerably decreased copy times and fixed the issue. It is also important to ensure that the network connection between the device running Kestrel and the network share is stable and fast. A saturated or unreliable link will stall copies.
 
 #### Step 5: Check your mount options
 
@@ -328,27 +328,27 @@ Some users found that mounting a drive via `fstab` with the `sync` option dramat
 
 #### Step 6: Rule out CPU load
 
-If the copy times are consistently under 1 second but you still see the warning, the machine's CPU load is likely too high for Frigate to have the resources to keep up. Try temporarily shutting down other services, and any resource-intensive Frigate features, to see if the issue improves.
+If the copy times are consistently under 1 second but you still see the warning, the machine's CPU load is likely too high for Kestrel to have the resources to keep up. Try temporarily shutting down other services, and any resource-intensive Kestrel features, to see if the issue improves.
 
 </FaqItem>
 
 <FaqItem id="i-see-the-message-warning--too-many-unprocessed-recording-segments-in-cache-for-camera-this-likely-indicates-an-issue-with-the-detect-stream" question="I see the message: WARNING : Too many unprocessed recording segments in cache for camera. This likely indicates an issue with the detect stream...">
 
-This warning means that the detect stream for the affected camera has fallen behind or stopped processing frames. Frigate's recording cache holds segments waiting to be analyzed by the detector. When more than 6 segments pile up without being processed, Frigate discards the oldest ones to prevent the cache from filling up.
+This warning means that the detect stream for the affected camera has fallen behind or stopped processing frames. Kestrel's recording cache holds segments waiting to be analyzed by the detector. When more than 6 segments pile up without being processed, Kestrel discards the oldest ones to prevent the cache from filling up.
 
 :::warning
 
-This error is a **symptom**, not the root cause. The actual cause is always logged **before** these messages start appearing. You must review the full logs from Frigate startup through the first occurrence of this warning to identify the real issue.
+This error is a **symptom**, not the root cause. The actual cause is always logged **before** these messages start appearing. You must review the full logs from Kestrel startup through the first occurrence of this warning to identify the real issue.
 
 :::
 
 #### Step 1: Get the full logs
 
-Collect complete Frigate logs from startup through the first occurrence of the error. Look for errors or warnings that appear **before** the "Too many unprocessed" messages begin. That is where the root cause will be found.
+Collect complete Kestrel logs from startup through the first occurrence of the error. Look for errors or warnings that appear **before** the "Too many unprocessed" messages begin. That is where the root cause will be found.
 
 #### Step 2: Check the cache directory
 
-Exec into the Frigate container and inspect the recording cache:
+Exec into the Kestrel container and inspect the recording cache:
 
 ```
 docker exec -it frigate ls -la /tmp/cache
@@ -385,7 +385,7 @@ If the detect stream is not processing frames, segments will accumulate. Common 
 - **Detection resolution too high**: Use a substream for detection, not the full resolution main stream.
 - **Detection FPS too high**: 5 fps is the recommended maximum for detection.
 - **Model too large**: Use smaller model variants (e.g., YOLO `s` or `t` size, not `e` or `x`). Use 320x320 input size rather than 640x640 unless you have a powerful dedicated detector.
-- **Virtualization**: Running Frigate in a VM (especially Proxmox) can cause the detector to hang or stall. This is a known issue with GPU/TPU passthrough in virtualized environments and is not something Frigate can fix. Running Frigate in Docker on bare metal is recommended.
+- **Virtualization**: Running Kestrel in a VM (especially Proxmox) can cause the detector to hang or stall. This is a known issue with GPU/TPU passthrough in virtualized environments and is not something Kestrel can fix. Running Kestrel in Docker on bare metal is recommended.
 
 #### Step 5: Check for GPU hangs
 
@@ -401,9 +401,9 @@ Messages like `trying reset from guc_exec_queue_timedout_job` or similar GPU res
 
 An incorrect `hwaccel_args` preset can cause ffmpeg to fail silently or consume excessive CPU, starving the detector of resources.
 
-- After upgrading Frigate, verify your preset matches your hardware (e.g., `preset-intel-qsv-h264` instead of the deprecated `preset-vaapi`).
+- After upgrading Kestrel, verify your preset matches your hardware (e.g., `preset-intel-qsv-h264` instead of the deprecated `preset-vaapi`).
 - For h265 cameras, use the corresponding h265 preset (e.g., `preset-intel-qsv-h265`).
-- Note that `hwaccel_args` are only relevant for the detect stream. Frigate does not decode the record stream.
+- Note that `hwaccel_args` are only relevant for the detect stream. Kestrel does not decode the record stream.
 
 #### Step 7: Verify go2rtc stream configuration
 
@@ -416,7 +416,7 @@ If none of the above apply, the issue may be a general resource constraint. Moni
 - **CPU usage**: An overloaded CPU can prevent the detector from keeping up.
 - **RAM and swap**: Excessive swapping dramatically slows all I/O operations.
 - **Disk I/O**: Use `iotop` or `iostat` to check for saturation.
-- **Storage space**: Verify you have free space on the Frigate storage volume (check the Storage page in the Frigate UI).
+- **Storage space**: Verify you have free space on the Kestrel storage volume (check the Storage page in the Kestrel UI).
 
 Try temporarily disabling resource-intensive features like `genai` and `face_recognition` to see if the issue resolves. This can help isolate whether the detector is being starved of resources.
 
@@ -424,7 +424,7 @@ Try temporarily disabling resource-intensive features like `genai` and `face_rec
 
 <FaqItem id="i-see-the-message-error--error-occurred-when-attempting-to-maintain-recording-cache" question="I see the message: ERROR : Error occurred when attempting to maintain recording cache">
 
-This message means the recording maintainer hit an error while moving segments from the cache to disk. It is a **generic wrapper**: the actual cause is always logged on the **very next line**. Frigate usually recovers and keeps running, but any affected segments are lost, so it is worth resolving.
+This message means the recording maintainer hit an error while moving segments from the cache to disk. It is a **generic wrapper**: the actual cause is always logged on the **very next line**. Kestrel usually recovers and keeps running, but any affected segments are lost, so it is worth resolving.
 
 :::warning
 
@@ -432,16 +432,16 @@ Always read the line immediately following this message. `Error occurred when at
 
 :::
 
-Because these are operating-system-level errors, they must be resolved on the **host**, not within Frigate's configuration. The most common underlying errors are below.
+Because these are operating-system-level errors, they must be resolved on the **host**, not within Kestrel's configuration. The most common underlying errors are below.
 
 #### [Errno 28] No space left on device
 
-The filesystem Frigate is writing to is full. Things to check:
+The filesystem Kestrel is writing to is full. Things to check:
 
-- **The recordings volume is genuinely full.** Check free space on the host with `df -h` for the path mapped to `/media/frigate`, and review the **Storage** page in the Frigate UI.
+- **The recordings volume is genuinely full.** Check free space on the host with `df -h` for the path mapped to `/media/frigate`, and review the **Storage** page in the Kestrel UI.
 - **The disk shows free space but is still "full".** This usually means the filesystem has run out of **inodes** (check with `df -i`), or recordings are landing on a different, smaller filesystem than you expect because of an incorrect bind mount. See [The storage volume isn't mounted correctly](#the-storage-volume-isnt-mounted-correctly) above.
 - **`/tmp/cache` is full.** If you mounted `/tmp/cache` as a small `tmpfs`, a backlog of segments can fill it. Increase the tmpfs size, or address whatever is causing segments to pile up (see the [Too many unprocessed recording segments](#i-see-the-message-warning--too-many-unprocessed-recording-segments-in-cache-for-camera-this-likely-indicates-an-issue-with-the-detect-stream) question above).
-- **The host blocks writes before Frigate can purge.** On some systems (for example Unraid with a fill-up threshold), the host stops writes before Frigate's emergency cleanup can run. Leave more headroom on the volume, or lower your retention so Frigate purges sooner.
+- **The host blocks writes before Kestrel can purge.** On some systems (for example Unraid with a fill-up threshold), the host stops writes before Kestrel's emergency cleanup can run. Leave more headroom on the volume, or lower your retention so Kestrel purges sooner.
 
 #### [Errno 17] File exists (with ffmpeg "Error writing trailer" or "unable to re-open output file")
 
@@ -457,13 +457,13 @@ Errors like `[Errno 17] File exists: '/media/frigate/recordings/.../<camera>'`, 
 If the next-line error references a camera name that no longer exists in your config, orphaned data is left over from a rename or removal in a persistent `/tmp/cache` volume.
 
 - Using a `tmpfs` mount for `/tmp/cache` as recommended in the [installation docs](/frigate/installation#storage) prevents stale cache files under the old camera name from surviving a restart, which avoids this issue entirely.
-- If errors persist, stop Frigate and remove any leftover segments for the old camera name from `/tmp/cache`.
+- If errors persist, stop Kestrel and remove any leftover segments for the old camera name from `/tmp/cache`.
 
 </FaqItem>
 
 ## Other recording questions
 
-<FaqItem id="i-have-frigate-configured-for-motion-recording-only-but-it-still-seems-to-be-recording-even-with-no-motion-why" question="I have Frigate configured for motion recording only, but it still seems to be recording even with no motion. Why?">
+<FaqItem id="i-have-frigate-configured-for-motion-recording-only-but-it-still-seems-to-be-recording-even-with-no-motion-why" question="I have Kestrel configured for motion recording only, but it still seems to be recording even with no motion. Why?">
 
 You'll want to:
 
@@ -473,11 +473,11 @@ You'll want to:
 
 </FaqItem>
 
-<FaqItem id="my-timeline-previews-are-black-after-restarting-frigate-or-recreating-the-container" question="My timeline previews are black after restarting Frigate or recreating the container. Why?">
+<FaqItem id="my-timeline-previews-are-black-after-restarting-frigate-or-recreating-the-container" question="My timeline previews are black after restarting Kestrel or recreating the container. Why?">
 
-The scrubbing previews (the timelapse clips shown when dragging the History timeline, the secondary-camera previews, and the preview that plays when hovering a review card) are not recorded continuously. Frigate caches low-resolution preview frames in `/tmp/cache` throughout each hour and only assembles them into a finished preview clip **at the top of the hour**.
+The scrubbing previews (the timelapse clips shown when dragging the History timeline, the secondary-camera previews, and the preview that plays when hovering a review card) are not recorded continuously. Kestrel caches low-resolution preview frames in `/tmp/cache` throughout each hour and only assembles them into a finished preview clip **at the top of the hour**.
 
-In the recommended configuration, `/tmp/cache` is a small in-memory (`tmpfs`) area. When Frigate starts, it tries to restore the current hour's cached frames, so a **soft restart from the UI** preserves them. But if you recreate the Docker container or stop Frigate forcibly by any other means partway through an hour, the in-memory cache is discarded, so no preview clip is produced for that partial hour.
+In the recommended configuration, `/tmp/cache` is a small in-memory (`tmpfs`) area. When Kestrel starts, it tries to restore the current hour's cached frames, so a **soft restart from the UI** preserves them. But if you recreate the Docker container or stop Kestrel forcibly by any other means partway through an hour, the in-memory cache is discarded, so no preview clip is produced for that partial hour.
 
 This is expected behavior, not a bug:
 
@@ -485,6 +485,6 @@ This is expected behavior, not a bug:
 - The next full hour after a restart will generate previews normally.
 - This is unrelated to `shm_size`; increasing shared memory does not change it.
 
-To avoid the gap, use the **Restart Frigate** button in the UI's Settings menu rather than recreating the container when possible.
+To avoid the gap, use the **Restart Kestrel** button in the UI's Settings menu rather than recreating the container when possible.
 
 </FaqItem>

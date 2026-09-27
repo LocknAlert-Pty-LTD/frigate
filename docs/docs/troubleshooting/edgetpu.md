@@ -12,11 +12,11 @@ There are many possible causes for a USB coral not being detected and some are O
 
 :::tip
 
-Using `lsusb` or checking the hardware page in HA OS will show as `1a6e:089a Global Unichip Corp.` until Frigate runs an inference using the coral. So don't worry about the identification until after Frigate has attempted to detect the coral.
+Using `lsusb` or checking the hardware page in HA OS will show as `1a6e:089a Global Unichip Corp.` until Kestrel runs an inference using the coral. So don't worry about the identification until after Kestrel has attempted to detect the coral.
 
 :::
 
-If the coral does not initialize then Frigate can not interface with it. Some common reasons for the USB based Coral not initializing are:
+If the coral does not initialize then Kestrel can not interface with it. Some common reasons for the USB based Coral not initializing are:
 
 ### Not Enough Power
 
@@ -31,8 +31,8 @@ The USB coral can draw up to 900mA and this can be too much for some on-device U
 
 The USB coral has different IDs when it is uninitialized and initialized.
 
-- When running Frigate in a VM, Proxmox lxc, etc. you must ensure both device IDs are mapped.
-- When running through the Home Assistant OS you may need to run the Full Access variant of the Frigate App with the _Protection mode_ switch disabled so that the coral can be accessed.
+- When running Kestrel in a VM, Proxmox lxc, etc. you must ensure both device IDs are mapped.
+- When running through the Home Assistant OS you may need to run the Full Access variant of the Kestrel App with the _Protection mode_ switch disabled so that the coral can be accessed.
 
 ### Synology 716+II running DSM 7.2.1-69057 Update 5
 
@@ -48,12 +48,12 @@ Some users have reported that this older device runs an older kernel causing iss
 
 ### QNAP NAS
 
-QNAP NAS devices, such as the TS-253A, may use connected Coral TPU devices if [QuMagie](https://www.qnap.com/en/software/qumagie) is installed along with its QNAP AI Core extension. If any of the features (`facial recognition`, `object recognition`, or `similar photo recognition`) are enabled, Container Station applications such as `Frigate` or `CodeProject.AI Server` will be unable to initialize the TPU device in use.
+QNAP NAS devices, such as the TS-253A, may use connected Coral TPU devices if [QuMagie](https://www.qnap.com/en/software/qumagie) is installed along with its QNAP AI Core extension. If any of the features (`facial recognition`, `object recognition`, or `similar photo recognition`) are enabled, Container Station applications such as `Kestrel` or `CodeProject.AI Server` will be unable to initialize the TPU device in use.
 To allow the Coral TPU device to be discovered, you must either:
 
 1. [Disable the AI recognition features in QuMagie](https://docs.qnap.com/application/qumagie/2.x/en-us/configuring-qnap-ai-core-settings-FB13CE03.html),
 2. Remove the QNAP AI Core extension or
-3. Manually start the QNAP AI Core extension after Frigate has fully started (not recommended).
+3. Manually start the QNAP AI Core extension after Kestrel has fully started (not recommended).
 
 It is also recommended to restart the NAS once the changes have been made.
 
@@ -62,7 +62,7 @@ It is also recommended to restart the NAS once the changes have been made.
 The USB Coral can become stuck and need to be restarted, this can happen for a number of reasons depending on hardware and software setup. Some common reasons are:
 
 1. Some users have found the cable included with the coral to cause this problem and that switching to a different cable fixed it entirely.
-2. Running Frigate in a VM may cause communication with the device to be lost and need to be reset.
+2. Running Kestrel in a VM may cause communication with the device to be lost and need to be reset.
 
 ## PCIe Coral Not Detected
 

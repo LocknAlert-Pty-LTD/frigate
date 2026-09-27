@@ -5,11 +5,11 @@ title: Running as a non-root user
 
 # Running as a non-root user
 
-Frigate's services run as an unprivileged user inside the container. The main Frigate process and nginx run as `frigate`, and go2rtc runs as its own more restricted `go2rtc` user. Only the s6 init system and the certsync helper stay root.
+Kestrel's services run as an unprivileged user inside the container. The main Kestrel process and nginx run as `frigate`, and go2rtc runs as its own more restricted `go2rtc` user. Only the s6 init system and the certsync helper stay root.
 
-The runtime user is uid/gid `1000:1000` by default. You can change it with `PUID`/`PGID`, or bypass Frigate's user handling entirely with Docker's own `user:`.
+The runtime user is uid/gid `1000:1000` by default. You can change it with `PUID`/`PGID`, or bypass Kestrel's user handling entirely with Docker's own `user:`.
 
-Most upgrades need nothing. Frigate aligns your volume ownership on the first boot and grants access to your hardware at startup. The sections below cover the cases that need attention: large storage volumes, network storage, and hardware the automatic grant can't reach.
+Most upgrades need nothing. Kestrel aligns your volume ownership on the first boot and grants access to your hardware at startup. The sections below cover the cases that need attention: large storage volumes, network storage, and hardware the automatic grant can't reach.
 
 ## Run modes
 
@@ -17,7 +17,7 @@ Most upgrades need nothing. Frigate aligns your volume ownership on the first bo
 | ------------------- | ------------------------------- | ------------------------------------------------------ | ----------------- |
 | Default             | nothing, this is the default    | Aligned to `1000:1000` on first boot                   | Supported         |
 | `PUID`/`PGID`       | `PUID=1001`, `PGID=1001`        | Aligned to the values you set, on first boot           | Not supported     |
-| Docker-native user  | `user: "1001:1001"`             | You own it, Frigate never changes ownership            | Supported         |
+| Docker-native user  | `user: "1001:1001"`             | You own it, Kestrel never changes ownership            | Supported         |
 | Root (escape hatch) | `FRIGATE_RUN_AS_ROOT=true`      | Never touched                                          | Not supported     |
 | Granular root       | `FRIGATE_ROOT_SERVICES=frigate` | Aligned at boot; recordings and exports also at create | Not supported     |
 
@@ -38,7 +38,7 @@ Try the device grants and `EXTRA_GROUPS` first. The `frigate` service runs the A
 
 A listed service also stops honoring a [custom ffmpeg or go2rtc build](/configuration/advanced/system#custom-dependencies) kept in `/config`, since that directory stays owned by the unprivileged user and a binary there would run as root. `FRIGATE_RUN_AS_ROOT=true` has no such restriction.
 
-Recordings and exports are owned by `PUID`/`PGID` as soon as they're written, even by a root service. Snapshots, thumbnails, and other files under `clips/` are corrected on each restart, so they can show as root-owned from the host until then. A listed service also keeps root's home directory, so library caches go to the container layer instead of `/config`. The same applies to the [detector runtimes](/frigate/network_requirements#detector-runtimes) Frigate installs at first start (Hailo, MemryX, AXEngine): a root `frigate` service installs them into `/root/.local`, which is lost when the container is recreated, and never loads a copy left behind in `/config/.local`.
+Recordings and exports are owned by `PUID`/`PGID` as soon as they're written, even by a root service. Snapshots, thumbnails, and other files under `clips/` are corrected on each restart, so they can show as root-owned from the host until then. A listed service also keeps root's home directory, so library caches go to the container layer instead of `/config`. The same applies to the [detector runtimes](/frigate/network_requirements#detector-runtimes) Kestrel installs at first start (Hailo, MemryX, AXEngine): a root `frigate` service installs them into `/root/.local`, which is lost when the container is recreated, and never loads a copy left behind in `/config/.local`.
 
 Listing all three services is not the same as `FRIGATE_RUN_AS_ROOT=true`. The escape hatch never touches ownership; the list keeps the ownership handling active. A few more details:
 
@@ -49,11 +49,11 @@ Listing all three services is not the same as `FRIGATE_RUN_AS_ROOT=true`. The es
 
 ## Migrating an existing install
 
-Volumes from earlier versions of Frigate are owned by root, so ownership has to be aligned with the runtime user once. This happens automatically on the first boot after upgrading.
+Volumes from earlier versions of Kestrel are owned by root, so ownership has to be aligned with the runtime user once. This happens automatically on the first boot after upgrading.
 
 On large recordings volumes, do it from the host beforehand instead. The boot sweep runs before any service starts, so a multi-terabyte `/media/frigate` can hold the container in startup long enough for Docker's healthcheck to mark it unhealthy, and orchestrators that watch health will restart it mid-sweep. If you'd rather not run the script, raise the healthcheck start period instead (`--start-period=1800s`, or `start_period: 1800s` under `healthcheck:` in compose).
 
-Grab [`fix-permissions.sh`](https://github.com/blakeblackshear/frigate/blob/dev/docker/migration/fix-permissions.sh) from the Frigate repo and dry run it first:
+Grab [`fix-permissions.sh`](https://github.com/blakeblackshear/frigate/blob/dev/docker/migration/fix-permissions.sh) from the Kestrel repo and dry run it first:
 
 ```bash
 ./fix-permissions.sh --dry-run /path/to/your/config /path/to/your/storage
@@ -79,7 +79,7 @@ Both the script and the boot sweep report progress, so you can tell a slow sweep
 
 The scan has no percentage because the total isn't known until it finishes. Watch the boot sweep with `docker logs -f frigate`.
 
-Once the volumes are aligned, start Frigate normally. A file at `/config/.permissions_version` records what was done, so later boots skip the sweep unless you change `PUID`/`PGID`.
+Once the volumes are aligned, start Kestrel normally. A file at `/config/.permissions_version` records what was done, so later boots skip the sweep unless you change `PUID`/`PGID`.
 
 If something under your volumes can't be chowned, a read-only btrfs snapshot directory for example, the sweep warns and names the path and doesn't record the migration as finished. It retries on the next boot instead. Either move those paths outside `/media/frigate` or expect the scan to repeat.
 
@@ -91,7 +91,7 @@ Recordings on a NAS behave differently, so check what you have before migrating:
 findmnt -T /path/to/your/storage -o TARGET,FSTYPE,OPTIONS
 ```
 
-**SMB and CIFS** don't store per-file ownership at all. It's synthesized from the mount options, so a per-file `chown` fails and isn't needed. Mount the share as the uid and gid Frigate runs as, and every file already looks correct to the sweep:
+**SMB and CIFS** don't store per-file ownership at all. It's synthesized from the mount options, so a per-file `chown` fails and isn't needed. Mount the share as the uid and gid Kestrel runs as, and every file already looks correct to the sweep:
 
 ```
 //nas/frigate /media/frigate cifs credentials=/root/.smb,uid=1000,gid=1000,file_mode=0664,dir_mode=0775 0 0
@@ -106,13 +106,13 @@ The best fix is to not chown over NFS at all. Do it on the server, where there's
 chown -R 1000:1000 /export/frigate
 ```
 
-Frigate's sweep then finds nothing to change and records the migration normally. If you can't get a shell on the server, you can export temporarily with `no_root_squash`, migrate, and put it back, or leave ownership alone and set `PUID`/`PGID` to whichever uid already owns the files.
+Kestrel's sweep then finds nothing to change and records the migration normally. If you can't get a shell on the server, you can export temporarily with `no_root_squash`, migrate, and put it back, or leave ownership alone and set `PUID`/`PGID` to whichever uid already owns the files.
 
 Either way the uid has to mean the same thing on both machines. NFS sends numeric uids, so container uid 1000 is uid 1000 on the server no matter what the usernames are.
 
 Expect the first boot to be slow even when nothing needs changing, because checking ownership costs a round trip per file. That's a one-time cost. **If the sweep runs on every boot rather than once, ownership isn't actually being applied**, and the warning above will say so.
 
-Keep `/config` on local storage either way. Frigate's database is SQLite and network shares handle its locking poorly. That's a long-standing recommendation, not something running non-root introduces.
+Keep `/config` on local storage either way. Kestrel's database is SQLite and network shares handle its locking poorly. That's a long-standing recommendation, not something running non-root introduces.
 
 ## Rolling back
 
@@ -122,7 +122,7 @@ The escape hatch never changes ownership, and it clears the record of the last s
 
 ## Hardware device access
 
-Frigate grants the runtime user access to your devices at startup. Pass your hardware with `--device` (or `devices:` in compose) and detection and hardware acceleration work with no group or udev setup on the host.
+Kestrel grants the runtime user access to your devices at startup. Pass your hardware with `--device` (or `devices:` in compose) and detection and hardware acceleration work with no group or udev setup on the host.
 
 The grant covers the common accelerator and camera nodes: GPU render nodes, Intel/AMD NPUs (`/dev/accel`), Coral, Hailo, Rockchip, Jetson, `/dev/video*`, and the USB bus. For hardware it misses, add your own paths with `DEVICE_ACL_PATHS`, a comma separated list of globs:
 
@@ -131,15 +131,15 @@ environment:
   DEVICE_ACL_PATHS: "/dev/mydev*"
 ```
 
-Set `FRIGATE_DEVICE_ACLS=false` if you manage device permissions yourself and want Frigate to leave them alone.
+Set `FRIGATE_DEVICE_ACLS=false` if you manage device permissions yourself and want Kestrel to leave them alone.
 
-Frigate grants access by adding an ACL entry for the runtime users. The device's owner and mode are unchanged, and nothing is made world accessible. One thing to know: `--device` nodes belong to the container, but a bind mounted `/dev/bus/usb` (the usual Coral USB setup) shares the host's device nodes, so the entry is visible on the host until udev recreates the node.
+Kestrel grants access by adding an ACL entry for the runtime users. The device's owner and mode are unchanged, and nothing is made world accessible. One thing to know: `--device` nodes belong to the container, but a bind mounted `/dev/bus/usb` (the usual Coral USB setup) shares the host's device nodes, so the entry is visible on the host until udev recreates the node.
 
 ### Manual setup
 
 You only need this for hardware the automatic grant can't reach, or for Docker's `user:` mode, where there's no root startup to do the granting.
 
-Your accelerator most likely worked in older versions because Frigate ran as root. Device nodes are usually owned by `root:root`, and root either matches the group or skips the check entirely. The runtime user does neither, so a device that worked before can become unreadable with no change to your Frigate config.
+Your accelerator most likely worked in older versions because Kestrel ran as root. Device nodes are usually owned by `root:root`, and root either matches the group or skips the check entirely. The runtime user does neither, so a device that worked before can become unreadable with no change to your Kestrel config.
 
 #### Read what your device requires
 
@@ -174,11 +174,11 @@ environment:
   EXTRA_GROUPS: "105,44" # host render and video GIDs
 ```
 
-Use numeric GIDs from the host, not names. Group names don't have to match between the host and the container, and the kernel only checks the number. If the GID doesn't exist in the image, Frigate creates a placeholder group for it.
+Use numeric GIDs from the host, not names. Group names don't have to match between the host and the container, and the kernel only checks the number. If the GID doesn't exist in the image, Kestrel creates a placeholder group for it.
 
 Two things that look like they should work but don't:
 
-- Docker's `group_add` has no effect in the default or `PUID` modes. Frigate rebuilds the supplementary group list from `/etc/group` when it drops privileges, which discards what Docker passed in. It is the right tool with Docker's `user:`, where no privilege drop happens and `EXTRA_GROUPS` does nothing.
+- Docker's `group_add` has no effect in the default or `PUID` modes. Kestrel rebuilds the supplementary group list from `/etc/group` when it drops privileges, which discards what Docker passed in. It is the right tool with Docker's `user:`, where no privilege drop happens and `EXTRA_GROUPS` does nothing.
 - `privileged: true` doesn't help. It grants capabilities to root, and the runtime user isn't root, so the file permissions on the node still apply.
 
 If the node's group is `root` or the mode denies the group, no `EXTRA_GROUPS` value will help. You need a udev rule first.
@@ -261,7 +261,7 @@ What each device needs when you're setting it up by hand. The automatic grant co
 | VeriSilicon NPU (Teflon)  | per the driver, commonly `/dev/galcore`                     | Unverified. Check node ownership on your hardware before assuming this works                                     |
 | CPU detector              | none                                                        | Nothing, no device is opened                                                                                     |
 | ZMQ detector              | none                                                        | Nothing, inference happens over a socket                                                                         |
-| Apple Silicon             | none                                                        | Nothing, the NPU client runs on the host and Frigate reaches it over the network                                 |
+| Apple Silicon             | none                                                        | Nothing, the NPU client runs on the host and Kestrel reaches it over the network                                 |
 
 ## Hardened deployment
 
@@ -303,7 +303,7 @@ Size `/tmp` deliberately. It now carries nginx's config copy and its five proxy 
 
 The self signed certificate is written to `/config/tls`, which stays writable. Certificates you mount at `/etc/letsencrypt/live/frigate` work unchanged and still take precedence.
 
-[Detector runtimes](/frigate/network_requirements#detector-runtimes) that Frigate installs at first start (Hailo, MemryX, AXEngine) are staged in `/tmp` and installed into `/config/.local`, so they work with a read-only root filesystem in the default mode and under `user:`. A root `frigate` service installs into `/root/.local` instead, which a read-only root filesystem prevents; either leave `frigate` out of `FRIGATE_ROOT_SERVICES` or drop `read_only`.
+[Detector runtimes](/frigate/network_requirements#detector-runtimes) that Kestrel installs at first start (Hailo, MemryX, AXEngine) are staged in `/tmp` and installed into `/config/.local`, so they work with a read-only root filesystem in the default mode and under `user:`. A root `frigate` service installs into `/root/.local` instead, which a read-only root filesystem prevents; either leave `frigate` out of `FRIGATE_ROOT_SERVICES` or drop `read_only`.
 
 Soak a hardened deployment for 24 hours against real cameras before relying on it. A read-only root filesystem turns an occasional write into a failure that startup won't reveal.
 
@@ -323,7 +323,7 @@ To remove root from the container entirely, add Docker's `user:`:
 
 This only bites once root is genuinely gone. s6's init helper is setuid, so `user:` on its own still lets init regain root and correct `/run` itself. The `no-new-privileges:true` above is what blocks that, which is also what makes the `/run` ownership mandatory. Dropping it would hide the problem by handing init root again.
 
-Two things change, and the first one will break a working install if you skip it. The startup device grants can't run, because there is no root left to run them, so every device you pass stops working until you grant that uid access yourself with `group_add:` or a udev rule; see [Manual setup](#manual-setup). Expect this to surface as a driver error rather than a permission error, like `No VA display found` from VAAPI. And every service then runs as that one uid, so go2rtc no longer gets its own restricted user. `/config` and `/media/frigate` have to be owned by that uid already, since Frigate never adjusts ownership in this mode. Switching an existing install over also leaves `/config/go2rtc_homekit.yml` owned by the go2rtc user, which this mode can't write; `chown` it to your uid or HomeKit pairing changes stop persisting. Frigate warns and starts either way.
+Two things change, and the first one will break a working install if you skip it. The startup device grants can't run, because there is no root left to run them, so every device you pass stops working until you grant that uid access yourself with `group_add:` or a udev rule; see [Manual setup](#manual-setup). Expect this to surface as a driver error rather than a permission error, like `No VA display found` from VAAPI. And every service then runs as that one uid, so go2rtc no longer gets its own restricted user. `/config` and `/media/frigate` have to be owned by that uid already, since Kestrel never adjusts ownership in this mode. Switching an existing install over also leaves `/config/go2rtc_homekit.yml` owned by the go2rtc user, which this mode can't write; `chown` it to your uid or HomeKit pairing changes stop persisting. Kestrel warns and starts either way.
 
 This mode can also take `cap_drop: [ALL]`, which the default mode cannot: starting as root needs `CAP_CHOWN` for the ownership sweep, `CAP_SETUID` and `CAP_SETGID` to drop to the runtime user, and `CAP_FOWNER` for the device grants.
 
@@ -334,11 +334,11 @@ This mode can also take `cap_drop: [ALL]`, which the default mode cannot: starti
 
 ## Network isolation
 
-Everything above limits what a compromised container can do to the host. It doesn't limit what your cameras can do to your network. Camera firmware is closed source, rarely patched, and not something you can audit, and none of it needs internet access for Frigate to work.
+Everything above limits what a compromised container can do to the host. It doesn't limit what your cameras can do to your network. Camera firmware is closed source, rarely patched, and not something you can audit, and none of it needs internet access for Kestrel to work.
 
-Put the cameras on their own VLAN or subnet, give the Frigate host a route into it, and deny that VLAN any route out. Frigate reaches in to pull streams, the cameras reach nothing. A second NIC on the Frigate host is the simplest version of this, and a tagged VLAN on the NIC you already have works just as well.
+Put the cameras on their own VLAN or subnet, give the Kestrel host a route into it, and deny that VLAN any route out. Kestrel reaches in to pull streams, the cameras reach nothing. A second NIC on the Kestrel host is the simplest version of this, and a tagged VLAN on the NIC you already have works just as well.
 
-Here's the deny as nftables on the router, with cameras on `vlan20` and the Frigate host at `192.168.10.5`:
+Here's the deny as nftables on the router, with cameras on `vlan20` and the Kestrel host at `192.168.10.5`:
 
 ```
 table inet cameras {
@@ -352,11 +352,11 @@ table inet cameras {
 }
 ```
 
-It's in its own table so it can sit alongside an existing ruleset without touching it. Streams keep working because Frigate opens those connections and the return traffic is `established`. Cameras can still reach each other on their own VLAN, since that traffic never reaches the router, so use client isolation on the switch if that matters to you.
+It's in its own table so it can sit alongside an existing ruleset without touching it. Streams keep working because Kestrel opens those connections and the return traffic is `established`. Cameras can still reach each other on their own VLAN, since that traffic never reaches the router, so use client isolation on the switch if that matters to you.
 
-Two things break when you do this. The manufacturer's phone app stops working, which is the point, and camera clocks drift, because most of them set their time over NTP and are bad at it. Point them at an NTP server on your own network rather than opening the VLAN back up, or their timestamps and Frigate's will disagree.
+Two things break when you do this. The manufacturer's phone app stops working, which is the point, and camera clocks drift, because most of them set their time over NTP and are bad at it. Point them at an NTP server on your own network rather than opening the VLAN back up, or their timestamps and Kestrel's will disagree.
 
-Frigate itself needs some outbound access, though nearly all of it is optional. The startup version check is the only piece that's on by default, and `telemetry.version_check: false` turns it off. Everything else (model downloads for the enrichment features, push notifications, Frigate+, and cloud GenAI providers) only reaches out once you enable that feature. See [Network Requirements](/frigate/network_requirements) for the full list and how to run fully offline.
+Kestrel itself needs some outbound access, though nearly all of it is optional. The startup version check is the only piece that's on by default, and `telemetry.version_check: false` turns it off. Everything else (model downloads for the enrichment features, push notifications, Frigate+, and cloud GenAI providers) only reaches out once you enable that feature. See [Network Requirements](/frigate/network_requirements) for the full list and how to run fully offline.
 
 For containers that only talk to each other, an internal compose network gets you the same isolation without involving the router:
 
@@ -374,17 +374,17 @@ networks:
     internal: true
 ```
 
-`internal: true` gives that network no route off the host, so the broker isn't reachable from anywhere else on your LAN. Frigate sits on both networks and keeps its normal outbound path.
+`internal: true` gives that network no route off the host, so the broker isn't reachable from anywhere else on your LAN. Kestrel sits on both networks and keeps its normal outbound path.
 
 One Docker specific trap: published ports are inserted ahead of the host firewall, so `ufw deny 8971` doesn't do what it looks like it does. Bind the port to the interface you want instead, like `127.0.0.1:8971:8971` for a reverse proxy on the same host, or your LAN address for everything else.
 
 ## Known limitations
 
-`telemetry.stats.network_bandwidth` uses nethogs, which needs `CAP_NET_ADMIN` and `CAP_NET_RAW` and therefore root. The stat is turned off automatically when Frigate isn't running as root, with one warning in the log. Use `FRIGATE_ROOT_SERVICES=frigate` (or `FRIGATE_RUN_AS_ROOT=true`) if you need it.
+`telemetry.stats.network_bandwidth` uses nethogs, which needs `CAP_NET_ADMIN` and `CAP_NET_RAW` and therefore root. The stat is turned off automatically when Kestrel isn't running as root, with one warning in the log. Use `FRIGATE_ROOT_SERVICES=frigate` (or `FRIGATE_RUN_AS_ROOT=true`) if you need it.
 
-go2rtc's ffmpeg processes no longer appear in Intel GPU stats. Frigate reads per-process GPU usage from `/proc/<pid>/fdinfo`, which the kernel won't let one user read for another user's processes, so anything go2rtc spawns is invisible to it. Overall GPU utilization is unaffected.
+go2rtc's ffmpeg processes no longer appear in Intel GPU stats. Kestrel reads per-process GPU usage from `/proc/<pid>/fdinfo`, which the kernel won't let one user read for another user's processes, so anything go2rtc spawns is invisible to it. Overall GPU utilization is unaffected.
 
-If you mount your own TLS certificate at `/etc/letsencrypt/live/frigate`, the private key has to be readable by the runtime user, which runs nginx. Frigate hands the key to that user at startup if the mount is writable; on a read-only mount, make the key readable by uid 1000 (or your `PUID`) yourself.
+If you mount your own TLS certificate at `/etc/letsencrypt/live/frigate`, the private key has to be readable by the runtime user, which runs nginx. Kestrel hands the key to that user at startup if the mount is writable; on a read-only mount, make the key readable by uid 1000 (or your `PUID`) yourself.
 
 If you're debugging nginx, run the config check as the runtime user with stdout discarded:
 

@@ -99,7 +99,7 @@ _PROBE_OUTER_TIMEOUT_SECONDS = 15
     "/", response_class=PlainTextResponse, dependencies=[Depends(allow_public())]
 )
 def is_healthy():
-    return "Frigate is running. Alive and healthy!"
+    return "Kestrel is running. Alive and healthy!"
 
 
 @router.get("/config/schema.json", dependencies=[Depends(allow_public())])
@@ -611,7 +611,7 @@ def config_save(save_option: str, body: Any = Body(media_type="text/plain")):
             content=(
                 {
                     "success": False,
-                    "message": "Could not write config file, be sure that Frigate has write permission on the config file.",
+                    "message": "Could not write config file, be sure that Kestrel has write permission on the config file.",
                 }
             ),
             status_code=400,
@@ -621,12 +621,12 @@ def config_save(save_option: str, body: Any = Body(media_type="text/plain")):
         try:
             restart_frigate()
         except Exception as e:
-            logging.error(f"Error restarting Frigate: {e}")
+            logging.error(f"Error restarting Kestrel: {e}")
             return JSONResponse(
                 content=(
                     {
                         "success": True,
-                        "message": "Config successfully saved, unable to restart Frigate",
+                        "message": "Config successfully saved, unable to restart Kestrel",
                     }
                 ),
                 status_code=200,
@@ -1126,12 +1126,12 @@ def restart():
     try:
         restart_frigate()
     except Exception as e:
-        logging.error(f"Error restarting Frigate: {e}")
+        logging.error(f"Error restarting Kestrel: {e}")
         return JSONResponse(
             content=(
                 {
                     "success": False,
-                    "message": "Unable to restart Frigate.",
+                    "message": "Unable to restart Kestrel.",
                 }
             ),
             status_code=500,

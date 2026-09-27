@@ -1,4 +1,4 @@
-"""Tests for embedding cleanup on the main Frigate database.
+"""Tests for embedding cleanup on the main Kestrel database.
 
 Embeddings are deleted whether or not semantic search is currently enabled, so
 the delete path has to tolerate databases where the vec0 tables were never

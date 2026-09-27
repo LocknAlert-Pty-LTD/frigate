@@ -239,7 +239,7 @@ test.describe("UI settings import/export @medium", () => {
     );
   });
 
-  test("rejects a file that is not a Frigate settings export", async ({
+  test("rejects a file that is not a Kestrel settings export", async ({
     frigateApp,
   }) => {
     await frigateApp.goto("/settings?page=uiSettings");
@@ -248,7 +248,7 @@ test.describe("UI settings import/export @medium", () => {
 
     await expect(
       frigateApp.page.getByText(
-        "Failed to import settings: file is not a Frigate settings export",
+        "Failed to import settings: file is not a Kestrel settings export",
       ),
     ).toBeVisible();
     expect(await readIdb(frigateApp.page, OUTDOOR_LAYOUT_KEY)).toBeNull();
@@ -385,7 +385,7 @@ test.describe("UI settings import/export @medium", () => {
   test("drops only the streaming technology when its value is unrecognized", async ({
     frigateApp,
   }) => {
-    // a hand-edited file, or an export from a future Frigate that added a
+    // a hand-edited file, or an export from a future Kestrel that added a
     // technology this build does not know: the camera's other settings still
     // import rather than the whole file failing validation
     await frigateApp.goto("/settings?page=uiSettings");
@@ -465,7 +465,7 @@ test.describe("UI settings import/export @medium", () => {
     expect(await readIdb(frigateApp.page, OUTDOOR_LAYOUT_KEY)).toBeNull();
   });
 
-  test("rejects a file from a newer version of Frigate", async ({
+  test("rejects a file from a newer version of Kestrel", async ({
     frigateApp,
   }) => {
     await frigateApp.goto("/settings?page=uiSettings");
@@ -474,7 +474,7 @@ test.describe("UI settings import/export @medium", () => {
 
     await expect(
       frigateApp.page.getByText(
-        "Failed to import settings: file requires a newer version of Frigate",
+        "Failed to import settings: file requires a newer version of Kestrel",
       ),
     ).toBeVisible();
     expect(await readIdb(frigateApp.page, OUTDOOR_LAYOUT_KEY)).toBeNull();

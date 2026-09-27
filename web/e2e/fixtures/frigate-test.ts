@@ -4,7 +4,7 @@
  *
  * Every test imports `test` and `expect` from this file instead of
  * @playwright/test directly. The `frigateApp` fixture provides a
- * fully mocked Frigate frontend ready for interaction.
+ * fully mocked Kestrel frontend ready for interaction.
  *
  * The fixture also installs the error collector (see error-collector.ts).
  * Any console error, page error, or same-origin failed request that is

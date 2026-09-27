@@ -1,5 +1,5 @@
 # Unified configuration for Docker Compose Generator
-# This file defines all devices, hardware options, and ports for Frigate Docker Compose generation
+# This file defines all devices, hardware options, and ports for Kestrel Docker Compose generation
 
 devices:
   - id: "stable"
@@ -267,7 +267,7 @@ ports:
     protocol: "tcp"
     description: "Authenticated UI and API access (default HTTPS)"
     defaultEnabled: true
-    warningContent: "This is the access port for Frigate. Closing it means you will no longer be able to access the instance."
+    warningContent: "This is the access port for Kestrel. Closing it means you will no longer be able to access the instance."
     warningWhen: "unchecked"
 
   - id: "8554"

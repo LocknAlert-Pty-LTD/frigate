@@ -12,12 +12,12 @@ import objectDetectorsModels from '@site/data/object_detectors_models.yaml';
 
 ### Supported hardware
 
-Object detection is what allows Frigate to identify _what_ is in your camera's view (people, cars, animals, and more) rather than just reacting to pixel changes. When Frigate's motion detection finds activity in a frame, that region is sent to an **object detector**, which returns the objects it recognizes along with their location and a confidence score. These detections are what drive tracked objects, alerts, detections, and notifications.
+Object detection is what allows Kestrel to identify _what_ is in your camera's view (people, cars, animals, and more) rather than just reacting to pixel changes. When Kestrel's motion detection finds activity in a frame, that region is sent to an **object detector**, which returns the objects it recognizes along with their location and a confidence score. These detections are what drive tracked objects, alerts, detections, and notifications.
 
-Object detection is computationally intensive, so Frigate is designed to run it on a dedicated AI accelerator or GPU rather than the CPU. A **detector** is the specific hardware-and-model backend Frigate uses to run inference. Choosing a detector that matches your hardware is one of the most important steps in getting good performance, and the right choice depends on what device Frigate is running on.
+Object detection is computationally intensive, so Kestrel is designed to run it on a dedicated AI accelerator or GPU rather than the CPU. A **detector** is the specific hardware-and-model backend Kestrel uses to run inference. Choosing a detector that matches your hardware is one of the most important steps in getting good performance, and the right choice depends on what device Kestrel is running on.
 
 :::info
-Frigate supports multiple different detectors that work on different types of hardware:
+Kestrel supports multiple different detectors that work on different types of hardware:
 
 **Most Hardware**
 
@@ -29,7 +29,7 @@ Frigate supports multiple different detectors that work on different types of ha
 **AMD**
 
 - [ROCm](#amdrocm-gpu-detector): ROCm can run on AMD Discrete GPUs to provide efficient object detection.
-- [ONNX](#onnx): ROCm will automatically be detected and used as a detector in the `-rocm` Frigate image when a supported ONNX model is configured.
+- [ONNX](#onnx): ROCm will automatically be detected and used as a detector in the `-rocm` Kestrel image when a supported ONNX model is configured.
 
 **Apple Silicon**
 
@@ -38,16 +38,16 @@ Frigate supports multiple different detectors that work on different types of ha
 **Intel**
 
 - [OpenVino](#openvino-detector): OpenVino can run on Intel Arc GPUs, Intel integrated GPUs, and Intel CPUs to provide efficient object detection.
-- [ONNX](#onnx): OpenVINO will automatically be detected and used as a detector in the default Frigate image when a supported ONNX model is configured.
+- [ONNX](#onnx): OpenVINO will automatically be detected and used as a detector in the default Kestrel image when a supported ONNX model is configured.
 
 **Nvidia GPU**
 
-- [ONNX](#onnx): Nvidia GPUs will automatically be detected and used as a detector in the `-tensorrt` Frigate image when a supported ONNX model is configured.
+- [ONNX](#onnx): Nvidia GPUs will automatically be detected and used as a detector in the `-tensorrt` Kestrel image when a supported ONNX model is configured.
 
 **Nvidia Jetson** <CommunityBadge />
 
 - [TensortRT](#nvidia-tensorrt-detector): TensorRT can run on Jetson devices, using one of many default models.
-- [ONNX](#onnx): TensorRT will automatically be detected and used as a detector in the `-tensorrt-jp6` Frigate image when a supported ONNX model is configured.
+- [ONNX](#onnx): TensorRT will automatically be detected and used as a detector in the `-tensorrt-jp6` Kestrel image when a supported ONNX model is configured.
 
 **Rockchip** <CommunityBadge />
 
@@ -133,7 +133,7 @@ Available scenes are `all`, `indoor`, `outdoor`, `indoor_thermal`, and `outdoor_
 
 Along with picking a detector for your hardware, you will choose a model's **input resolution** (such as `320x320` or `640x640`) and, for model families like YOLOv9, a **variant size** (`tiny`, `small`, etc.). Both affect the balance between accuracy and the inference time your hardware can sustain.
 
-**Resolution (320x320 vs 640x640):** Frigate is optimized for `320x320` models, and `320x320` is the best choice for the vast majority of setups. Frigate is specifically designed to compensate for the smaller model by cropping a region of motion from the full frame and zooming into it before running detection, so a `320x320` model is actually _better_ at small and distant objects, not worse. A `640x640` model is slower and uses more resources, and its main benefit is fitting more objects into a single inference when many objects are spread across a large area. Recent versions of Frigate have improved support for `640x640` models, but `320x320` remains the recommended starting point for nearly all setups.
+**Resolution (320x320 vs 640x640):** Kestrel is optimized for `320x320` models, and `320x320` is the best choice for the vast majority of setups. Kestrel is specifically designed to compensate for the smaller model by cropping a region of motion from the full frame and zooming into it before running detection, so a `320x320` model is actually _better_ at small and distant objects, not worse. A `640x640` model is slower and uses more resources, and its main benefit is fitting more objects into a single inference when many objects are spread across a large area. Recent versions of Kestrel have improved support for `640x640` models, but `320x320` remains the recommended starting point for nearly all setups.
 
 **Variant size (tiny/small/medium):** Larger variants are gradually more accurate but slower. Whether the difference is noticeable depends on your specific cameras and scenes. A good rule of thumb is to use the largest model your hardware can run without skipping detections, which you can monitor on the <NavPath path="Health and Metrics > Cameras" /> page in the UI. Better accuracy only helps if your detector keeps up with the detection load across all cameras.
 
@@ -141,13 +141,13 @@ Along with picking a detector for your hardware, you will choose a model's **inp
 
 :::tip
 
-The best detection accuracy comes from a model trained on images that look like what Frigate actually sees: security camera footage cropped to regions of interest. You can train or fine-tune your own model on images like this and run it as a custom model (see the per-detector sections below), but [Frigate+](/plus) makes this much easier by handling the training for you on images submitted from your own cameras. For YOLOv9, the `s` (small) variant at `320x320` resolution is a good place to start.
+The best detection accuracy comes from a model trained on images that look like what Kestrel actually sees: security camera footage cropped to regions of interest. You can train or fine-tune your own model on images like this and run it as a custom model (see the per-detector sections below), but [Frigate+](/plus) makes this much easier by handling the training for you on images submitted from your own cameras. For YOLOv9, the `s` (small) variant at `320x320` resolution is a good place to start.
 
 :::
 
 # Officially Supported Detectors
 
-Frigate provides a number of builtin detector types. By default, Frigate will use a single CPU detector. Other detectors may require additional configuration as described below. Each of a model's devices runs in a dedicated process, and they pull from a common queue of detection requests from the cameras assigned to that model.
+Kestrel provides a number of builtin detector types. By default, Kestrel will use a single CPU detector. Other detectors may require additional configuration as described below. Each of a model's devices runs in a dedicated process, and they pull from a common queue of detection requests from the cameras assigned to that model.
 
 ## Edge TPU Detector
 
@@ -300,7 +300,7 @@ If no custom model is provided, the Hailo detector downloads a default model fro
 
 :::info
 
-The HailoRT runtime is not part of the Frigate image. It is downloaded and installed into `/config/.local` the first time a Hailo detector is configured, verified against pinned checksums, and updated automatically when a Frigate release pins a new version. If the container has no internet access, see [Detector runtimes](/frigate/network_requirements#detector-runtimes) for how to provide the files yourself.
+The HailoRT runtime is not part of the Kestrel image. It is downloaded and installed into `/config/.local` the first time a Hailo detector is configured, verified against pinned checksums, and updated automatically when a Kestrel release pins a new version. If the container has no internet access, see [Detector runtimes](/frigate/network_requirements#detector-runtimes) for how to provide the files yourself.
 
 :::
 
@@ -345,11 +345,11 @@ models:
 
 ### Intel NPU host requirements {#intel-npu-requirements}
 
-The NPU device must be passed into the container by adding `/dev/accel:/dev/accel` to the `devices` section of your compose file. Frigate grants the runtime user access to the device automatically; see [hardware device access](/configuration/non_root#hardware-device-access) if you manage device permissions yourself.
+The NPU device must be passed into the container by adding `/dev/accel:/dev/accel` to the `devices` section of your compose file. Kestrel grants the runtime user access to the device automatically; see [hardware device access](/configuration/non_root#hardware-device-access) if you manage device permissions yourself.
 
-The NPU firmware is loaded by the host kernel and is not part of the Frigate image. Everything else the NPU needs is bundled in the container, so host NPU libraries should never be mounted in.
+The NPU firmware is loaded by the host kernel and is not part of the Kestrel image. Everything else the NPU needs is bundled in the container, so host NPU libraries should never be mounted in.
 
-Frigate bundles a specific version of Intel's [linux-npu-driver](https://github.com/intel/linux-npu-driver/releases), and the host firmware must come from that release or a newer one. Firmware older than the bundled driver may fail with `MAPPED_INFERENCE_VERSION is NOT compatible with the ELF`, where `Expected` is the version the firmware supports and `received` is the version the bundled compiler produced. Distributions often package older firmware than the driver Frigate ships, so check the build date on the host with `sudo dmesg | grep -i vpu` and update it there if needed.
+Kestrel bundles a specific version of Intel's [linux-npu-driver](https://github.com/intel/linux-npu-driver/releases), and the host firmware must come from that release or a newer one. Firmware older than the bundled driver may fail with `MAPPED_INFERENCE_VERSION is NOT compatible with the ELF`, where `Expected` is the version the firmware supports and `received` is the version the bundled compiler produced. Distributions often package older firmware than the driver Kestrel ships, so check the build date on the host with `sudo dmesg | grep -i vpu` and update it there if needed.
 
 Intel NPUs cannot be used under Home Assistant OS, which does not include the NPU firmware.
 
@@ -367,12 +367,12 @@ The Apple Silicon detector client is being reworked. Its extra options no longer
 
 :::
 
-The NPU in Apple Silicon can't be accessed from within a container, so the [Apple Silicon detector client](https://github.com/frigate-nvr/apple-silicon-detector) must first be setup. It is recommended to use the Frigate docker image with `-standard-arm64` suffix, for example `ghcr.io/blakeblackshear/frigate:stable-standard-arm64`.
+The NPU in Apple Silicon can't be accessed from within a container, so the [Apple Silicon detector client](https://github.com/frigate-nvr/apple-silicon-detector) must first be setup. It is recommended to use the Kestrel docker image with `-standard-arm64` suffix, for example `ghcr.io/blakeblackshear/frigate:stable-standard-arm64`.
 
 ### Setup {#setup-apple-silicon}
 
 1. Setup the [Apple Silicon detector client](https://github.com/frigate-nvr/apple-silicon-detector) and run the client
-2. Configure the detector in Frigate and startup Frigate
+2. Configure the detector in Kestrel and startup Kestrel
 
 ### Configuration {#configuration-apple-silicon}
 
@@ -469,7 +469,7 @@ $ docker exec -it frigate /bin/bash -c '(unset HSA_OVERRIDE_GFX_VERSION && /opt/
 The AMD GPU kernel is known problematic especially when converting models to mxr format. The recommended approach is:
 
 1. Disable object detection in the config.
-2. Startup Frigate with the onnx detector configured, the main object detection model will be converted to mxr format and cached in the config directory.
+2. Startup Kestrel with the onnx detector configured, the main object detection model will be converted to mxr format and cached in the config directory.
 3. Once this is finished as indicated by the logs, enable object detection in the UI and confirm that it is working correctly.
 4. Re-enable object detection in the config.
 
@@ -484,21 +484,21 @@ See [ONNX supported models](#onnx) for supported models, there are some caveats:
 
 ## ONNX
 
-ONNX is an open format for building machine learning models, Frigate supports running ONNX models on CPU, OpenVINO, ROCm, and TensorRT. On startup Frigate will automatically try to use a GPU if one is available.
+ONNX is an open format for building machine learning models, Kestrel supports running ONNX models on CPU, OpenVINO, ROCm, and TensorRT. On startup Kestrel will automatically try to use a GPU if one is available.
 
 :::info
 
 If the correct build is used for your GPU then the GPU will be detected and used automatically.
 
 - **AMD**
-  - ROCm will automatically be detected and used with the ONNX detector in the `-rocm` Frigate image.
+  - ROCm will automatically be detected and used with the ONNX detector in the `-rocm` Kestrel image.
 
 - **Intel**
-  - OpenVINO will automatically be detected and used with the ONNX detector in the default Frigate image.
+  - OpenVINO will automatically be detected and used with the ONNX detector in the default Kestrel image.
 
 - **Nvidia**
-  - Nvidia GPUs will automatically be detected and used with the ONNX detector in the `-tensorrt` Frigate image, preferring TensorRT for inference and automatically falling back to plain CUDA for anything TensorRT can't run, with no extra configuration needed.
-  - Jetson devices will automatically be detected and used with the ONNX detector in the `-tensorrt-jp6` Frigate image, the same way.
+  - Nvidia GPUs will automatically be detected and used with the ONNX detector in the `-tensorrt` Kestrel image, preferring TensorRT for inference and automatically falling back to plain CUDA for anything TensorRT can't run, with no extra configuration needed.
+  - Jetson devices will automatically be detected and used with the ONNX detector in the `-tensorrt-jp6` Kestrel image, the same way.
 
 :::
 
@@ -510,7 +510,7 @@ TensorRT gives the fastest GPU inference, but its execution engine is compiled f
 
 #### TensorRT across the image variants
 
-TensorRT is enabled the same way on every `-tensorrt` variant. Frigate registers
+TensorRT is enabled the same way on every `-tensorrt` variant. Kestrel registers
 `TensorrtExecutionProvider` whenever ONNX Runtime reports it as available, ahead of
 `CUDAExecutionProvider`, so no per-architecture configuration or `device:` setting is
 required:
@@ -527,7 +527,7 @@ CUDA instead, so enabling it is a speed improvement rather than an all-or-nothin
 #### Tuning the TensorRT workspace
 
 TensorRT reserves a scratch workspace on the GPU while it compiles and runs engines.
-Frigate defaults to 2048 MB and exposes it as the `TRT_MAX_WORKSPACE_MB` environment
+Kestrel defaults to 2048 MB and exposes it as the `TRT_MAX_WORKSPACE_MB` environment
 variable:
 
 ```yaml
@@ -583,7 +583,7 @@ When using CPU detectors, you can add one CPU detector per camera. Adding more d
 
 ## MemryX MX3
 
-This detector is available for use with the MemryX MX3 accelerator M.2 module. Frigate supports the MX3 on compatible hardware platforms, providing efficient and high-performance object detection.
+This detector is available for use with the MemryX MX3 accelerator M.2 module. Kestrel supports the MX3 on compatible hardware platforms, providing efficient and high-performance object detection.
 
 See the [installation docs](../frigate/installation.md#memryx-mx3) for information on configuring the MemryX hardware.
 
@@ -591,7 +591,7 @@ To configure a MemryX detector, simply set the `type` attribute to `memryx` and 
 
 :::info
 
-The MemryX SDK is not part of the Frigate image. It is downloaded and installed into `/config/.local` the first time a MemryX detector is configured, verified against pinned checksums, and updated automatically when a Frigate release pins a new version. If the container has no internet access, see [Detector runtimes](/frigate/network_requirements#detector-runtimes) for how to provide the files yourself.
+The MemryX SDK is not part of the Kestrel image. It is downloaded and installed into `/config/.local` the first time a MemryX detector is configured, verified against pinned checksums, and updated automatically when a Kestrel release pins a new version. If the container has no internet access, see [Detector runtimes](/frigate/network_requirements#detector-runtimes) for how to provide the files yourself.
 
 :::
 
@@ -610,7 +610,7 @@ Custom models must be compiled using **MemryX SDK 2.1**.
 Before compiling your model, install the MemryX Neural Compiler tools from the
 [Install Tools](https://developer.memryx.com/2p1/get_started/install_tools.html) page on the **host**.
 
-> **Note:** It is recommended to compile the model on the host machine, or on another separate machine, rather than inside the Frigate Docker container. Installing the compiler inside Docker may conflict with container packages. It is recommended to create a Python virtual environment and install the compiler there.
+> **Note:** It is recommended to compile the model on the host machine, or on another separate machine, rather than inside the Kestrel Docker container. Installing the compiler inside Docker may conflict with container packages. It is recommended to create a Python virtual environment and install the compiler there.
 
 Once the SDK 2.1 environment is set up, follow the
 [MemryX Compiler](https://developer.memryx.com/2p1/tools/neural_compiler.html#usage) documentation to compile your model.
@@ -653,7 +653,7 @@ For detailed instructions on compiling models, refer to the [MemryX Compiler](ht
 
 ## DEEPX NPU
 
-This detector is available for use with the DEEPX NPU, both the DX-M1 M.2 module and the DX-M1M on the Sixfab AI HAT+ for the Raspberry Pi 5. The configuration below applies unchanged to either form factor. DEEPX NPU support in Frigate is developed and maintained by [Sixfab](https://sixfab.com).
+This detector is available for use with the DEEPX NPU, both the DX-M1 M.2 module and the DX-M1M on the Sixfab AI HAT+ for the Raspberry Pi 5. The configuration below applies unchanged to either form factor. DEEPX NPU support in Kestrel is developed and maintained by [Sixfab](https://sixfab.com).
 
 See the [installation docs](../frigate/installation.md#deepx-npu) for information on installing the DEEPX kernel driver and runtime on the host and passing the NPU through to the container.
 
@@ -661,7 +661,7 @@ To run a model on a DEEPX NPU, list a `deepx` device on that model.
 
 :::info
 
-The DX-RT Python bindings are not part of the Frigate image. They are downloaded and installed into `/config/.local` the first time a DEEPX device is configured, verified against pinned checksums, and updated automatically when a Frigate release pins a new version. If the container has no internet access, see [Detector runtimes](/frigate/network_requirements#detector-runtimes) for how to provide the files yourself.
+The DX-RT Python bindings are not part of the Kestrel image. They are downloaded and installed into `/config/.local` the first time a DEEPX device is configured, verified against pinned checksums, and updated automatically when a Kestrel release pins a new version. If the container has no internet access, see [Detector runtimes](/frigate/network_requirements#detector-runtimes) for how to provide the files yourself.
 
 :::
 
@@ -669,12 +669,12 @@ The DX-RT Python bindings are not part of the Frigate image. They are downloaded
 
 <ModelConfigDropdown detectorTitle="DEEPX" models={objectDetectorsModels.deepx.models} />
 
-Frigate does not bundle a model for this detector. Models must be compiled to DEEPX's `.dxnn` format. Two model types are supported:
+Kestrel does not bundle a model for this detector. Models must be compiled to DEEPX's `.dxnn` format. Two model types are supported:
 
 - `yolo-generic` for YOLO object detection models, the recommended default. The detector reads the model's output layout from the compiled file, so anchor-based, anchor-free and NMS-in-head models all work with the same configuration, as do models compiled with DEEPX's Post-Processing Unit (PPU) support.
-- `yolox` for YOLOX models compiled without PPU support, whose raw head needs Frigate's YOLOX decoder. A YOLOX model compiled with PPU support works under either `yolox` or `yolo-generic`.
+- `yolox` for YOLOX models compiled without PPU support, whose raw head needs Kestrel's YOLOX decoder. A YOLOX model compiled with PPU support works under either `yolox` or `yolo-generic`.
 
-The quickest way to get one is the [DEEPX ModelZoo](https://developer.deepx.ai/modelzoo), which publishes pre-compiled `.dxnn` files for a range of YOLO object detection models. Download the `.dxnn`, bind-mount it into the container, and point the model's `path` at it. Alternatively, compile your own model with the DX-COM compiler. The recommended starting point is `yolox-s_640x640_ppu.dxnn`, the fastest ModelZoo model measured through Frigate:
+The quickest way to get one is the [DEEPX ModelZoo](https://developer.deepx.ai/modelzoo), which publishes pre-compiled `.dxnn` files for a range of YOLO object detection models. Download the `.dxnn`, bind-mount it into the container, and point the model's `path` at it. Alternatively, compile your own model with the DX-COM compiler. The recommended starting point is `yolox-s_640x640_ppu.dxnn`, the fastest ModelZoo model measured through Kestrel:
 
 ```yaml
 models:
@@ -687,11 +687,11 @@ models:
     height: 640
 ```
 
-For PPU models, use a `.dxnn` compiled with DX-COM 2.4.0 or later. Frigate reads the PPU head layout the compiler writes into the file and refuses to load a PPU model without it.
+For PPU models, use a `.dxnn` compiled with DX-COM 2.4.0 or later. Kestrel reads the PPU head layout the compiler writes into the file and refuses to load a PPU model without it.
 
-`model_type` must be set to `yolo-generic` or `yolox` to match the model; `yolo-generic` is the recommended default unless the model is a raw YOLOX export. Frigate defaults it to `ssd`, which this detector does not support, so the detector refuses to start on a model that leaves it unset.
+`model_type` must be set to `yolo-generic` or `yolox` to match the model; `yolo-generic` is the recommended default unless the model is a raw YOLOX export. Kestrel defaults it to `ssd`, which this detector does not support, so the detector refuses to start on a model that leaves it unset.
 
-`width` and `height` must match the resolution the model was compiled for. Quantization parameters are baked into the `.dxnn` file at compile time, so no normalization is applied on the host and Frigate's default `input_tensor`, `input_pixel_format`, and `input_dtype` values do not need to be overridden.
+`width` and `height` must match the resolution the model was compiled for. Quantization parameters are baked into the `.dxnn` file at compile time, so no normalization is applied on the host and Kestrel's default `input_tensor`, `input_pixel_format`, and `input_dtype` values do not need to be overridden.
 
 A DEEPX device is `PCIe:<index>`, as reported on the detector settings page. The NPU daemon multiplexes across processes, so the same device may be listed more than once to run additional inference processes against it:
 
@@ -704,7 +704,7 @@ models:
 
 #### Label maps
 
-The object detection models in the DEEPX ModelZoo are trained on the standard 80-class COCO label set, so `labelmap_path` must be set to `/labelmap/coco-80.txt`. Frigate's default label map uses an extended 91-class COCO scheme, and leaving it in place will cause detections to be reported as the wrong object type. For `yolo-generic` models the label map is also what the detector uses to tell the output layout, so a label map with the wrong number of classes is reported as an error at startup.
+The object detection models in the DEEPX ModelZoo are trained on the standard 80-class COCO label set, so `labelmap_path` must be set to `/labelmap/coco-80.txt`. Kestrel's default label map uses an extended 91-class COCO scheme, and leaving it in place will cause detections to be reported as the wrong object type. For `yolo-generic` models the label map is also what the detector uses to tell the output layout, so a label map with the wrong number of classes is reported as an error at startup.
 
 ---
 
@@ -716,11 +716,11 @@ Nvidia Jetson devices may be used for object detection using the TensorRT librar
 
 The model used for TensorRT must be preprocessed on the same hardware platform that they will run on. This means that each user must run additional setup to generate a model file for the TensorRT library. A script is included that will build several common models.
 
-The Frigate image will generate model files during startup if the specified model is not found. Processed models are stored in the `/config/model_cache` folder. Typically the `/config` path is mapped to a directory on the host already and the `model_cache` does not need to be mapped separately unless the user wants to store it in a different location on the host.
+The Kestrel image will generate model files during startup if the specified model is not found. Processed models are stored in the `/config/model_cache` folder. Typically the `/config` path is mapped to a directory on the host already and the `model_cache` does not need to be mapped separately unless the user wants to store it in a different location on the host.
 
-By default, no models will be generated, but this can be overridden by specifying the `YOLO_MODELS` environment variable in Docker. One or more models may be listed in a comma-separated format, and each one will be generated. Models will only be generated if the corresponding `{model}.trt` file is not present in the `model_cache` folder, so you can force a model to be regenerated by deleting it from your Frigate data folder.
+By default, no models will be generated, but this can be overridden by specifying the `YOLO_MODELS` environment variable in Docker. One or more models may be listed in a comma-separated format, and each one will be generated. Models will only be generated if the corresponding `{model}.trt` file is not present in the `model_cache` folder, so you can force a model to be regenerated by deleting it from your Kestrel data folder.
 
-If you have a Jetson device with DLAs (Xavier or Orin), you can generate a model that will run on the DLA by appending `-dla` to your model name, e.g. specify `YOLO_MODELS=yolov7-320-dla`. The model will run on DLA0 (Frigate does not currently support DLA1). DLA-incompatible layers will fall back to running on the GPU.
+If you have a Jetson device with DLAs (Xavier or Orin), you can generate a model that will run on the DLA by appending `-dla` to your model name, e.g. specify `YOLO_MODELS=yolov7-320-dla`. The model will run on DLA0 (Kestrel does not currently support DLA1). DLA-incompatible layers will fall back to running on the GPU.
 
 If your GPU does not support FP16 operations, you can pass the environment variable `USE_FP16=False` to disable it.
 
@@ -856,7 +856,7 @@ The inference time was determined on a rk3588 with 3 NPU cores.
 | rock-i8-yolox_nano    | 3          | 14                   |
 | rock-i8_yolox_tiny    | 6          | 18                   |
 
-- All models are automatically downloaded and stored in the folder `config/model_cache/rknn_cache`. After upgrading Frigate, you should remove older models to free up space.
+- All models are automatically downloaded and stored in the folder `config/model_cache/rknn_cache`. After upgrading Kestrel, you should remove older models to free up space.
 - You can also provide your own `.rknn` model. You should not save your own models in the `rknn_cache` folder, store them directly in the `model_cache` folder or another subfolder. To convert a model to `.rknn` format see the `rknn-toolkit2` (requires a x86 machine). Note, that there is only post-processing for the supported models.
 
 <ModelConfigDropdown detectorTitle="RKNN" models={objectDetectorsModels.rknn.models} />
@@ -914,7 +914,7 @@ The AXEngine detector downloads its default model from HuggingFace on first star
 
 :::info
 
-The AXEngine python package is not part of the Frigate image. It is downloaded and installed into `/config/.local` the first time an AXEngine detector is configured, verified against a pinned checksum, and updated automatically when a Frigate release pins a new version. If the container has no internet access, see [Detector runtimes](/frigate/network_requirements#detector-runtimes) for how to provide the file yourself.
+The AXEngine python package is not part of the Kestrel image. It is downloaded and installed into `/config/.local` the first time an AXEngine detector is configured, verified against a pinned checksum, and updated automatically when a Kestrel release pins a new version. If the container has no internet access, see [Detector runtimes](/frigate/network_requirements#detector-runtimes) for how to provide the file yourself.
 
 :::
 

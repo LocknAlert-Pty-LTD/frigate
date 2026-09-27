@@ -114,7 +114,7 @@ class MemryXDetector(DetectionApi):
             from memryx import AsyncAccl
         except ModuleNotFoundError:
             raise ImportError(
-                "MemryX SDK is not installed. Frigate installs it at startup when "
+                "MemryX SDK is not installed. Kestrel installs it at startup when "
                 "a MemryX detector is configured; check the startup log for errors."
             ) from None
 
@@ -496,7 +496,7 @@ class MemryXDetector(DetectionApi):
     def process_yolo(self, class_id, conf, pos):
         """
         Takes in class ID, confidence score, and array of [x, y, w, h] that describes detection position,
-        returns an array that's easily passable back to Frigate.
+        returns an array that's easily passable back to Kestrel.
         """
         return [
             class_id,  # class ID
@@ -869,7 +869,7 @@ class MemryXDetector(DetectionApi):
             # Limit to top 20 detections
             indices = indices[:20]
 
-            # Convert to Frigate format: [class_id, confidence, y_min, x_min, y_max, x_max] (normalized)
+            # Convert to Kestrel format: [class_id, confidence, y_min, x_min, y_max, x_max] (normalized)
             for i, idx in enumerate(indices):
                 class_id = valid_class_ids[idx]
                 confidence = valid_scores[idx]
@@ -884,7 +884,7 @@ class MemryXDetector(DetectionApi):
                 final_detections[i] = [
                     class_id,
                     confidence,
-                    y_min_norm,  # Frigate expects y_min first
+                    y_min_norm,  # Kestrel expects y_min first
                     x_min_norm,
                     y_max_norm,
                     x_max_norm,

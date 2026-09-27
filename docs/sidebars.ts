@@ -4,7 +4,7 @@ import frigateHttpApiSidebar from "./docs/integrations/api/sidebar";
 
 const sidebars: SidebarsConfig = {
   docs: {
-    Frigate: [
+    Kestrel: [
       "frigate/index",
       "frigate/hardware",
       "frigate/planning_setup",
@@ -148,7 +148,7 @@ const sidebars: SidebarsConfig = {
         label: "HTTP API",
         link: {
           type: "generated-index",
-          title: "Frigate HTTP API",
+          title: "Kestrel HTTP API",
           description: "HTTP API",
           slug: "/integrations/api/frigate-http-api",
         },

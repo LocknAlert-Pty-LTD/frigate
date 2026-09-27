@@ -1,4 +1,4 @@
-// Custom RJSF Theme for Frigate
+// Custom RJSF Theme for Kestrel
 // Maps RJSF templates and widgets to shadcn/ui components
 
 import type {

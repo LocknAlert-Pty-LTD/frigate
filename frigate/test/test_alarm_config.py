@@ -1,7 +1,7 @@
 """Tests for the alarm engine config schema and validation.
 
 NOTE: like the rest of the frigate.config.* test suite, this module needs
-Frigate's full runtime dependency set (opencv, etc.) to import
+Kestrel's full runtime dependency set (opencv, etc.) to import
 `frigate.config`, since `frigate/config/__init__.py` eagerly imports the
 whole config tree. It could not be executed in the dev sandbox this was
 written in (see AGENTS.md); run it in a full dev/CI environment.

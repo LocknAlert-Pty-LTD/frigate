@@ -4,7 +4,7 @@ Mirrors the REST contract of a working OpenWA integration the user already
 runs for a different project (send-text endpoint, digits+"@c.us" chat IDs,
 X-API-Key header) -- not copied verbatim, since that project is async
 (httpx) and this one is thread-based like every other file in
-frigate/alarm/, so this uses `requests` (already a Frigate dependency,
+frigate/alarm/, so this uses `requests` (already a Kestrel dependency,
 docker/main/requirements-wheels.txt) synchronously instead.
 
 WhatsAppNotifyConfig is a plain dataclass, not the Pydantic
@@ -45,7 +45,7 @@ def _chat_id(number: str) -> str:
 
 
 def _format_message(event: AlarmEvent) -> str:
-    parts = [f"Frigate alarm: {event.event_type.value}"]
+    parts = [f"Kestrel alarm: {event.event_type.value}"]
     if event.zone_id:
         parts.append(f"in {event.zone_id}")
     parts.append(f"on {event.camera_id}")

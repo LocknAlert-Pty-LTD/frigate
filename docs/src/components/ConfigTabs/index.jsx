@@ -23,7 +23,7 @@ export default function ConfigTabs({ children }) {
         groupId="config-method"
         defaultValue="ui"
         values={[
-          { label: "Frigate UI", value: "ui" },
+          { label: "Kestrel UI", value: "ui" },
           { label: "YAML", value: "yaml" },
         ]}
       >

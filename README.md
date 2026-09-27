@@ -1,8 +1,12 @@
 <p align="center">
-  <img align="center" alt="logo" src="docs/static/img/branding/frigate.png">
+  <img align="center" alt="logo" src="docs/static/img/branding/kestrel.png">
 </p>
 
-# Frigate NVR™ - Realtime Object Detection for IP Cameras
+# Kestrel - Realtime Object Detection and Intrusion Alarm for IP Cameras
+
+> Kestrel is a fork of [Frigate NVR](https://frigate.video), maintained by
+> LocknAlert Pty Ltd. It is not an official Frigate product and is not
+> endorsed by or affiliated with Frigate, Inc. See [NOTICE.md](NOTICE.md).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -14,7 +18,7 @@
 
 A complete and local NVR designed for [Home Assistant](https://www.home-assistant.io) with AI object detection. Uses OpenCV and Tensorflow to perform realtime object detection locally for IP cameras.
 
-Use of a GPU or AI accelerator is highly recommended. AI accelerators will outperform even the best CPUs with very little overhead. See Frigate's supported [object detectors](https://docs.frigate.video/configuration/object_detectors/).
+Use of a GPU or AI accelerator is highly recommended. AI accelerators will outperform even the best CPUs with very little overhead. See Kestrel's supported [object detectors](https://docs.frigate.video/configuration/object_detectors/).
 
 - Tight integration with Home Assistant via a [custom component](https://github.com/blakeblackshear/frigate-hass-integration)
 - Designed to minimize resource use and maximize performance by only looking for objects when and where it is necessary
@@ -40,9 +44,9 @@ If you would like to make a donation to support development, please use [Github 
 This project is licensed under the **MIT License**.
 
 - **Code:** The source code, configuration files, and documentation in this repository are available under the [MIT License](LICENSE). You are free to use, modify, and distribute the code as long as you include the original copyright notice.
-- **Trademarks:** The "Frigate" name, the "Frigate NVR" brand, and the Frigate logo are **trademarks of Frigate, Inc.** and are **not** covered by the MIT License.
+- **Upstream trademarks:** The "Frigate" name, the "Frigate NVR" brand, and the Frigate logo are **trademarks of Frigate, Inc.** and are **not** covered by the MIT License. Kestrel does not use them: it is renamed and ships its own brand assets, and refers to Frigate only to state what this software is derived from.
 
-Please see our [Trademark Policy](TRADEMARK.md) for details on acceptable use of our brand assets.
+See the upstream [Trademark Policy](TRADEMARK.md), and [NOTICE.md](NOTICE.md) for how this fork complies with it.
 
 ## Screenshots
 
@@ -80,4 +84,5 @@ We use [Weblate](https://hosted.weblate.org/projects/frigate-nvr/) to support la
 
 ---
 
-**Copyright © 2026 Frigate, Inc.**
+**Original work Copyright © 2026 Frigate, Inc. (Frigate™), MIT licensed.**
+**Modifications Copyright © 2026 LocknAlert Pty Ltd.**

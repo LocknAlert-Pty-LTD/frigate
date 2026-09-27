@@ -1,4 +1,4 @@
-# Agent Instructions for Frigate NVR
+# Agent Instructions for Kestrel NVR
 
 > **Fork-specific features** (alarm engine, ParkPow LPR integration, TensorRT
 > execution provider): see **[`rebuild.md`](rebuild.md)** for the structural map —
@@ -7,11 +7,11 @@
 > was made and what is still unverified; `rebuild.md` is the condensed index into
 > the sections below.
 
-This document provides coding guidelines and best practices for contributing to Frigate NVR, a complete and local NVR designed for Home Assistant with AI object detection.
+This document provides coding guidelines and best practices for contributing to Kestrel NVR, a complete and local NVR designed for Home Assistant with AI object detection.
 
 ## Project Overview
 
-Frigate NVR is a realtime object detection system for IP cameras that uses:
+Kestrel NVR is a realtime object detection system for IP cameras that uses:
 
 - **Backend**: Python 3.13+ with FastAPI, OpenCV, TensorFlow/ONNX
 - **Frontend**: React with TypeScript, Vite, TailwindCSS
@@ -337,7 +337,7 @@ After adding, changing, or removing an endpoint (or its auth dependency), regene
 ### Configuration Access
 
 ```python
-# Access Frigate configuration
+# Access Kestrel configuration
 config: FrigateConfig = request.app.frigate_config
 camera_config = config.cameras["front_door"]
 ```
@@ -460,7 +460,7 @@ Always conform new and refactored code to the existing coding style in the proje
 
 ## Alarm Engine Project (branch: feature/alarm-engine)
 
-**Goal**: extend Frigate into an AI-based alarm system — camera/zone-driven alarm
+**Goal**: extend Kestrel into an AI-based alarm system — camera/zone-driven alarm
 zones, arm/disarm (away/stay), entry/exit delay, alarm memory, fault/supervision,
 persistence-based AI verification, SIA DC-09 and Contact ID reporting over IP.
 Alarm engine core has zero MQTT dependency; MQTT is one optional output path.
@@ -519,7 +519,7 @@ Alarm engine core has zero MQTT dependency; MQTT is one optional output path.
      `FrigateConfig.post_validation`, mirroring the existing
      `self.notifications.enabled_in_config = self.notifications.enabled`
      line right next to it).
-   - `frigate/config/camera/alarm.py`: `AlarmZoneConfig` (per Frigate zone —
+   - `frigate/config/camera/alarm.py`: `AlarmZoneConfig` (per Kestrel zone —
      `enabled`, `objects`, `event`, `object_event_overrides`,
      `min_confidence`, `verification_seconds`, `delay` [entry delay],
      `arm_modes`) and `CameraAlarmConfig` (`enabled`, `zones: dict[str,
@@ -1020,7 +1020,7 @@ sandbox)**: after writing up phase 12 as done, the user's own devcontainer
 been started in that session — the s6-supervised "frigate" service in dev
 images is a placeholder sleep loop by design (`docker/main/fake_frigate_run`),
 the real process is meant to be started manually (`.vscode/launch.json`'s
-"Python: Launch Frigate", or `python3 -m frigate` in a terminal). Started it
+"Python: Launch Kestrel", or `python3 -m frigate` in a terminal). Started it
 directly (`docker start` + `docker exec`, real `cv2`/`fastapi`/`zmq`/`peewee`
 all present) and ran real end-to-end checks that this sandbox could never do:
 
@@ -1097,7 +1097,7 @@ a place a state could be silently missed.
 
 **A real architecture improvement fell out of the MQTT work, not just the
 MQTT work itself**: wiring inbound `alarm/set` MQTT commands (so a Home
-Assistant alarm card can arm/disarm, not just Frigate's own UI) surfaced
+Assistant alarm card can arm/disarm, not just Kestrel's own UI) surfaced
 that arm/disarm via the HTTP API never actually pushed updated state out
 over MQTT/WS either -- `frigate/api/alarm.py`'s handlers only ever called
 `alarm_system.arm()`/`.disarm()` and returned; nothing published until the
@@ -1121,10 +1121,10 @@ unlike SIA DC-09, this is a stable, well-documented public protocol
 "unverified stub" caveat on the protocol shape itself -- only on whether
 it's actually been observed working against a real HA instance (see live
 verification below, it hasn't).
-- One HA `device` ("Frigate Alarm") groups: an `alarm_control_panel`
+- One HA `device` ("Kestrel Alarm") groups: an `alarm_control_panel`
   (state topic `alarm/ha/state`, command topic `alarm/set`, payloads
   `ARM_AWAY`/`ARM_HOME`/`ARM_NIGHT`/`DISARM`, no code required since access
-  control is Frigate's own auth), a `binary_sensor` per enabled alarm zone
+  control is Kestrel's own auth), a `binary_sensor` per enabled alarm zone
   (device_class `safety`), a fault `binary_sensor` (device_class
   `problem`), and a reporting-health `binary_sensor` (device_class
   `connectivity`).
@@ -1141,8 +1141,8 @@ verification below, it hasn't).
 - **A real, non-obvious technical constraint discovered while building
   this**: `MqttClient.publish()` (`frigate/comms/mqtt.py`) unconditionally
   prefixes every topic with `mqtt.topic_prefix` (default `frigate`) --
-  fine for Frigate's own topics, but HA discovery configs *must* be under
-  the literal `homeassistant/` tree regardless of Frigate's prefix, or HA
+  fine for Kestrel's own topics, but HA discovery configs *must* be under
+  the literal `homeassistant/` tree regardless of Kestrel's prefix, or HA
   never sees them. Fixed with a small additive `publish_absolute()` method
   on both `MqttClient` and `Dispatcher` (mirrors the existing
   `web_push_client`-lookup pattern in `Dispatcher.__init__` --
@@ -1176,8 +1176,8 @@ verification below, it hasn't).
 embedded in `AlarmView.tsx`): replaces reliance on the generic
 schema-driven config form for the one thing it renders awkwardly -- a
 dict of zones, each with object/arm-mode lists and numeric delays. Lists
-every camera's existing Frigate zones (from `config.zones`, not a
-separate alarm-specific zone list -- alarm zones are just Frigate zones
+every camera's existing Kestrel zones (from `config.zones`, not a
+separate alarm-specific zone list -- alarm zones are just Kestrel zones
 with alarm behavior turned on) as a card with a single "Protect this
 zone" switch; enabling one reveals object-type and arm-mode pickers
 (`ToggleGroup type="multiple"`) and two number inputs (entry delay,
@@ -1227,7 +1227,7 @@ outside of anything this session did -- strong signal the user was
 actively working in it themselves (opened it and found a real camera,
 zone, and alarm-zone config already set up, with `arm_modes: [away]`,
 which validates fine against the rename). Confirmed before that started:
-Frigate boots cleanly with all of this session's changes against that real
+Kestrel boots cleanly with all of this session's changes against that real
 config, no new errors (the only errors present -- an ONNX/OpenVINO
 model-format mismatch on the detector, and the camera's RTSP stream being
 unreachable from this sandbox -- are pre-existing and unrelated to any of
@@ -1239,7 +1239,7 @@ discovery / inbound MQTT commands over a real broker -- MQTT is disabled
 (`mqtt.enabled: false`) in the config that's actually in that devcontainer,
 and standing up a broker on the same docker network was judged more
 infrastructure than this warranted without being asked. **Before trusting
-the Home Assistant integration specifically**: point Frigate at a real
+the Home Assistant integration specifically**: point Kestrel at a real
 MQTT broker with `mqtt.enabled: true`, connect a real Home Assistant
 instance to the same broker, and confirm the alarm panel and zone sensors
 actually appear and that arming from the HA card actually works --
@@ -1296,14 +1296,14 @@ process, not just confirmed things worked.
 
 **Environment note, read first if picking this up again**: the
 `frigate-devcontainer` (VS Code dev container, `docker compose --profile`
-target `devcontainer`, s6 placeholder "fake Frigate" service +
+target `devcontainer`, s6 placeholder "fake Kestrel" service +
 `python3 -m frigate` started by hand) turned out to be unusable for
 extended live testing -- not because of anything alarm-related, but because
 of a **pre-existing, unrelated bug**: `config/config.yaml`'s
 `detectors.ov.type` was set to `onnx` while `model.path` pointed at an
 OpenVINO IR file (`ssdlite_mobilenet_v2.xml`). ONNX Runtime can't parse an
 OpenVINO IR XML as a `.onnx` protobuf (`InvalidProtobuf` on every load), so
-the detector subprocess died immediately, every time, and Frigate's own
+the detector subprocess died immediately, every time, and Kestrel's own
 watchdog (`frigate/watchdog.py` -> `frigate/util/services.py:restart_frigate`)
 correctly treats "detector process is dead" as fatal and calls
 `psutil.Process(1).terminate()` -- a deliberate, by-design SIGTERM to the
@@ -1311,13 +1311,13 @@ container's own PID 1 (s6-svscan) to force a clean restart, documented
 in the source as `# if this is running via s6, sigterm pid 1`. In the
 devcontainer this has no `restart:` policy, so the whole container just
 died and stayed dead every ~20-100s (the ONNX load + watchdog timeout
-window) whenever the real Frigate process was started manually. This
+window) whenever the real Kestrel process was started manually. This
 produced about an hour of misleading symptoms this session (nginx cache
 noise, apparent GET/POST state desync, "the container keeps dying for no
 reason") before the actual cause was traced with a 1s-resolution process
 trace showing the s6-supervised placeholder process disappearing in lockstep
 with the container's death. **Fixed** by changing `detectors.ov.type` from
-`onnx` to `openvino` in `config/config.yaml` (Frigate has a dedicated
+`onnx` to `openvino` in `config/config.yaml` (Kestrel has a dedicated
 `frigate/detectors/plugins/openvino.py` plugin for IR-format models) --
 this is a local dev config fix, not a code change, and only applies to this
 one devcontainer's `config/config.yaml`.
@@ -1337,7 +1337,7 @@ one devcontainer's `config/config.yaml`.
   `restart: unless-stopped`), was found squatting near port 1883 on this
   same host; it never actually held the port stably so it didn't conflict,
   but worth knowing about if MQTT setup ever seems flaky on this machine
-  again -- it's unrelated to Frigate.
+  again -- it's unrelated to Kestrel.
 - The apparent "GET /alarm/status doesn't reflect what POST /alarm/arm just
   did" behavior seen early in this session, before the detector fix, was
   **not a bug**: it was nginx's existing, intentional `/api/` location
@@ -1379,7 +1379,7 @@ real connected MQTT client):
    `publish_ha_discovery` call out of `app.py` entirely and into
    `MqttClient._on_connect` (`frigate/comms/mqtt.py`), right after the
    existing `_set_initial_topics()` call -- the exact same "must run after
-   `self.connected = True`" precedent already established for Frigate's
+   `self.connected = True`" precedent already established for Kestrel's
    own default-state publishing, so this now also correctly re-publishes
    on every reconnect, not just first boot. `app.py` still calls
    `self.alarm_mqtt_bridge.publish_status()` once at startup (unchanged --
@@ -1390,7 +1390,7 @@ real connected MQTT client):
    reporting, one per enabled alarm zone) all appear correctly on a real
    mosquitto broker with correct `state_topic`/`command_topic`/`device`
    grouping.
-2. **Home Assistant's alarm card could never actually arm/disarm Frigate.**
+2. **Home Assistant's alarm card could never actually arm/disarm Kestrel.**
    `Dispatcher._on_alarm_command` (the handler for inbound `alarm/set`,
    added in the HA-integration work above) was correctly implemented and
    correctly registered in `_global_settings_handlers`, but `MqttClient`
@@ -1465,7 +1465,7 @@ working live in the previous session), so this needed zero backend work.
 
 **Part 2 -- smarter AI verification (opt-in per zone, backend)**: adds one
 more check after the existing confidence/persistence gates in
-`DetectionAlarmAdapter.evaluate()`, using Frigate's *existing* GenAI
+`DetectionAlarmAdapter.evaluate()`, using Kestrel's *existing* GenAI
 provider abstraction (`frigate/genai/`, already used for object/review
 descriptions) -- not a new AI integration.
 - `ZoneAlarmRule.ai_verification: bool = False` (`frigate/alarm/rules.py`)
@@ -1755,7 +1755,7 @@ a part if priorities may have shifted since this was written.
    manually every time. Confirmed with the user up front that entries
    need per-weekday granularity (weeknight vs. weekend times differ),
    not just one flat daily time.
-   - Researched first, not assumed: Frigate has no existing schedule/
+   - Researched first, not assumed: Kestrel has no existing schedule/
      cron concept anywhere in the codebase (recording, motion,
      notifications, genai all lack one) and no scheduling dependency in
      `pyproject.toml`/requirements. A hand-rolled polling thread was the
@@ -1859,7 +1859,7 @@ a part if priorities may have shifted since this was written.
    when nobody is looking at a screen or connected to the MQTT broker.
    Email/SMS were explicitly descoped this part (see below).
    - Researched first, per this item's own instruction: confirmed
-     Frigate already has a working push-notification system
+     Kestrel already has a working push-notification system
      (`WebPushClient`, `frigate/comms/webpush.py` -- browser Push API +
      VAPID, already wired to review/trigger events via a topic fan-out
      on `Dispatcher.publish()`) and zero existing SMS/email/WhatsApp
@@ -1876,7 +1876,7 @@ a part if priorities may have shifted since this was written.
      Mirrored the REST contract and the rate-limiting instinct from that
      project, not its code verbatim -- it's async (httpx) because that
      whole app is async; this uses synchronous `requests` (already a
-     Frigate dependency) since every file in `frigate/alarm/` is
+     Kestrel dependency) since every file in `frigate/alarm/` is
      thread-based, not async.
    - **Push**: `AlarmMqttBridge.publish_event()` already publishes a
      global `"alarm/event"` topic through `Dispatcher.publish()` on
@@ -1896,7 +1896,7 @@ a part if priorities may have shifted since this was written.
    - **WhatsApp**: new `AlarmWhatsAppConfig` (`frigate/config/alarm.py`,
      global only -- one sending session per instance, same shape as
      `AlarmReportingConfig`) with **no hardcoded default `api_base_url`**
-     -- Frigate is a public repo; the user's OpenWA host/session/API key
+     -- Kestrel is a public repo; the user's OpenWA host/session/API key
      are their own private infrastructure and never get a default value,
      nor do they appear anywhere in this file, tests, or committed code,
      only in the user's own gitignored `config.yaml`.
@@ -2001,7 +2001,7 @@ a part if priorities may have shifted since this was written.
      `AlarmSystem`. False-alarm rate had zero existing infrastructure
      at all: `AlarmEvent`s were never persisted (in-memory
      `deque(maxlen=100)`, lost on restart) and nothing links an
-     `AlarmEvent` back to a Frigate `Event`/`ReviewSegment` row. Asked
+     `AlarmEvent` back to a Kestrel `Event`/`ReviewSegment` row. Asked
      the user explicitly whether to build the full persisted-history +
      marking feature or a reduced version -- confirmed: build it all.
    - **New `AlarmEventLog` table** (`frigate/models.py`, migration
@@ -2090,7 +2090,7 @@ a part if priorities may have shifted since this was written.
      needed.
    - Frontend: new `web/src/views/settings/AlarmHealthDashboard.tsx`
      (camera-uptime cards reusing `ConnectionQualityIndicator` from
-     Frigate's own System page, a false-alarm summary + a modest
+     Kestrel's own System page, a false-alarm summary + a modest
      ApexCharts stacked bar chart of daily real-vs-false counts --
      `react-apexcharts` was already a dependency, no new charting
      library -- and an event-log table with a false-alarm `Switch` per
@@ -2124,7 +2124,7 @@ camera-auto-surface overlay (`AlarmAlertOverlay.tsx`, Part 2 above).
 Planned via EnterPlanMode with two Explore agents first, since it touches
 the alarm pipeline, the DB, the API, and the frontend.
 
-**Entirely glue, no new ML** -- research confirmed Frigate already
+**Entirely glue, no new ML** -- research confirmed Kestrel already
 computes both signals this needs: face recognition (opt-in,
 `FaceRecognitionConfig`) already writes a matched name to `Event.sub_label`,
 and semantic/thumbnail search (opt-in, `semantic_search.enabled`) already
@@ -2140,7 +2140,7 @@ posture used throughout `frigate/api/alarm.py`.
   `object_id: str | None`, set by `DetectionAlarmAdapter.evaluate()`
   (`frigate/alarm/adapter.py`) from the `object_id` parameter it already
   received but only used for internal persistence tracking. This is
-  exactly the Frigate tracked-object id, confirmed to equal `Event.id`
+  exactly the Kestrel tracked-object id, confirmed to equal `Event.id`
   once persisted by reading `frigate/events/maintainer.py:363`
   (`Event.id == event_data["id"]`), not guessed. Threaded through
   `AlarmMqttBridge.publish_event()` (one explicit dict key, since that
@@ -2205,7 +2205,7 @@ posture used throughout `frigate/api/alarm.py`.
 ## Scalability: zone-filter query normalization (separate initiative)
 
 **Not part of the numbered security-command-centre roadmap above** --
-this is core Frigate data-layer work, prompted by "make the app scale to
+this is core Kestrel data-layer work, prompted by "make the app scale to
 plenty of cameras/zones and stay fast," not an alarm feature. **DONE**,
 live-verified in the real `frigate` docker-compose container (not just
 this sandbox), including a rebuild of the image.
@@ -2317,7 +2317,7 @@ GPU build/boot before being trusted.
   comes next in the list. Added `trt_max_workspace_size` (default 2048MB,
   overridable via `TRT_MAX_WORKSPACE_MB`), which resolves the stale
   in-code comment claiming TensorRT had "no options to control" its memory
-  use -- that option existed in ONNX Runtime already, Frigate's code just
+  use -- that option existed in ONNX Runtime already, Kestrel's code just
   never set it.
 - `trt_fp16_enable` wiring was left untouched: the ONNX detector
   (`frigate/detectors/plugins/onnx.py`) never passes `requires_fp16=True`

@@ -182,7 +182,7 @@ export class ApiMocker {
     await this.page.route("**/api/logs/**", (route) =>
       route.fulfill({
         contentType: "text/plain",
-        body: "[2026-04-06 10:00:00] INFO: Frigate started\n[2026-04-06 10:00:01] INFO: Cameras loaded\n",
+        body: "[2026-04-06 10:00:00] INFO: Kestrel started\n[2026-04-06 10:00:01] INFO: Cameras loaded\n",
       }),
     );
 

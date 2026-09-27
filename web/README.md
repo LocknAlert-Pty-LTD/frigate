@@ -1,4 +1,4 @@
-This is the Frigate frontend which connects to and provides a User Interface to the Python backend.
+This is the Kestrel frontend which connects to and provides a User Interface to the Python backend.
 
 # Web Development
 
@@ -18,7 +18,7 @@ Within `/web`, run:
 PROXY_HOST=<ip_address:port> npm run dev
 ```
 
-The Proxy Host can point to your existing Frigate instance. Otherwise defaults to `localhost:5000` if running Frigate on the same machine.
+The Proxy Host can point to your existing Kestrel instance. Otherwise defaults to `localhost:5000` if running Kestrel on the same machine.
 
 ## Extensions
 Install these IDE extensions for an improved development experience:

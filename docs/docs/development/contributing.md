@@ -7,7 +7,7 @@ title: Contributing To The Main Code Base
 
 ### Core, Web, Docker, and Documentation
 
-This repository holds the main Frigate application and all of its dependencies.
+This repository holds the main Kestrel application and all of its dependencies.
 
 Fork [blakeblackshear/frigate](https://github.com/blakeblackshear/frigate.git) to your own GitHub profile, then clone the forked repo to your local machine.
 
@@ -17,15 +17,15 @@ From here, follow the guides for:
 - [Web Interface](#web-interface)
 - [Documentation](#documentation)
 
-### Frigate Home Assistant App
+### Kestrel Home Assistant App
 
-This repository holds the Home Assistant App, for use with Home Assistant OS and compatible installations. It is the piece that allows you to run Frigate from your Home Assistant Supervisor tab.
+This repository holds the Home Assistant App, for use with Home Assistant OS and compatible installations. It is the piece that allows you to run Kestrel from your Home Assistant Supervisor tab.
 
 Fork [blakeblackshear/frigate-hass-addons](https://github.com/blakeblackshear/frigate-hass-addons) to your own Github profile, then clone the forked repo to your local machine.
 
-### Frigate Home Assistant Integration
+### Kestrel Home Assistant Integration
 
-This repository holds the custom integration that allows your Home Assistant installation to automatically create entities for your Frigate instance, whether you are running Frigate as a standalone Docker container or as a [Home Assistant App](#frigate-home-assistant-app).
+This repository holds the custom integration that allows your Home Assistant installation to automatically create entities for your Kestrel instance, whether you are running Kestrel as a standalone Docker container or as a [Home Assistant App](#frigate-home-assistant-app).
 
 Fork [blakeblackshear/frigate-hass-integration](https://github.com/blakeblackshear/frigate-hass-integration) to your own GitHub profile, then clone the forked repo to your local machine.
 
@@ -47,7 +47,7 @@ A Coral device can only be used by a single process at a time, so an extra Coral
 
 #### 1. Open the repo with Visual Studio Code
 
-Upon opening, you should be prompted to open the project in a remote container. This will build a container on top of the base Frigate container with all the development dependencies installed. This ensures everyone uses a consistent development environment without the need to install any dependencies on your host machine.
+Upon opening, you should be prompted to open the project in a remote container. This will build a container on top of the base Kestrel container with all the development dependencies installed. This ensures everyone uses a consistent development environment without the need to install any dependencies on your host machine.
 
 #### 2. Modify your local config file for testing
 
@@ -75,7 +75,7 @@ These input args tell ffmpeg to read the mp4 file in an infinite loop. You can u
 
 Create and place these files in a `debug` folder in the root of the repo. This is also where recordings will be created if you enable them in your test config. Update your config from step 2 above to point at the right file. You can check the `docker-compose.yml` file in the repo to see how the volumes are mapped.
 
-#### 4. Run Frigate from the command line
+#### 4. Run Kestrel from the command line
 
 VS Code will start the Docker Compose file for you and open a terminal window connected to `frigate-dev`.
 
@@ -159,18 +159,18 @@ python3 -u -m mypy --config-file frigate/mypy.ini frigate
 
 ### Prerequisites
 
-- All [core](#core) prerequisites _or_ another running Frigate instance locally available
+- All [core](#core) prerequisites _or_ another running Kestrel instance locally available
 - Node.js 20
 
 ### Making changes
 
-#### 1. Set up a Frigate instance
+#### 1. Set up a Kestrel instance
 
-The Web UI requires an instance of Frigate to interact with for all of its data. You can either run an instance locally (recommended) or attach to a separate instance accessible on your network.
+The Web UI requires an instance of Kestrel to interact with for all of its data. You can either run an instance locally (recommended) or attach to a separate instance accessible on your network.
 
 To run the local instance, follow the [core](#core) development instructions.
 
-If you won't be making any changes to the Frigate HTTP API, you can attach the web development server to any Frigate instance on your network. Skip this step and go to [3a](#3a-run-the-development-server-against-a-non-local-instance).
+If you won't be making any changes to the Kestrel HTTP API, you can attach the web development server to any Kestrel instance on your network. Skip this step and go to [3a](#3a-run-the-development-server-against-a-non-local-instance).
 
 #### 2. Install dependencies
 
@@ -210,7 +210,7 @@ npm run lint
 python3 -u -m unittest
 ```
 
-- Ensure the end-to-end tests pass. They run in Playwright against a production build with mocked API data, so they don't need a running Frigate instance. Add or update tests in `web/e2e/specs/` when you change UI behavior.
+- Ensure the end-to-end tests pass. They run in Playwright against a production build with mocked API data, so they don't need a running Kestrel instance. Add or update tests in `web/e2e/specs/` when you change UI behavior.
 
 ```console
 # First-time setup
@@ -244,7 +244,7 @@ npm run start
 
 This command starts a local development server and open up a browser window. Most changes are reflected live without having to restart the server.
 
-The docs are built using [Docusaurus v3](https://docusaurus.io). Please refer to the Docusaurus docs for more information on how to modify Frigate's documentation.
+The docs are built using [Docusaurus v3](https://docusaurus.io). Please refer to the Docusaurus docs for more information on how to modify Kestrel's documentation.
 
 #### 3. Build (optional)
 
@@ -278,7 +278,7 @@ sudo cp docker/main/rootfs/usr/local/nginx/conf/* /usr/local/nginx/conf/ && sudo
 
 ## Contributing translations of the Web UI
 
-Frigate uses [Weblate](https://weblate.org) to manage translations of the Web UI. To contribute translation, sign up for an account at Weblate and navigate to the Frigate NVR project:
+Kestrel uses [Weblate](https://weblate.org) to manage translations of the Web UI. To contribute translation, sign up for an account at Weblate and navigate to the Kestrel NVR project:
 
 https://hosted.weblate.org/projects/frigate-nvr/
 

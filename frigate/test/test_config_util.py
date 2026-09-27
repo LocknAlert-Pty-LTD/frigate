@@ -54,7 +54,7 @@ class TestSwapRuntimeConfig(unittest.TestCase):
         The factories in FrigateApp are lambdas evaluated when a process is
         restarted, long after a user may have saved. Reading through the
         holder is what keeps a rebuilt process from reverting every change
-        made since Frigate started.
+        made since Kestrel started.
         """
         app = self._make_app()
         holder = app.config_holder

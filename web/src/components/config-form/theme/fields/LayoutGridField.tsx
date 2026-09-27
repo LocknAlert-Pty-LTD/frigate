@@ -73,7 +73,7 @@
  *   default ObjectFieldTemplate is used instead.
  * - This implementation adheres to RJSF patterns (use `ui:options`,
  *   `ui:className`, and `ui:layoutGrid` as documented) while adding a few
- *   Frigate-specific conveniences (defaults and Tailwind-friendly class
+ *   Kestrel-specific conveniences (defaults and Tailwind-friendly class
  *   handling).
  */
 

@@ -52,7 +52,7 @@ class TestHttpLatestFrame(BaseTestHttp):
         with AuthTestClient(self.app) as client:
             response = client.get(f"/{camera}/latest.webp")
             assert response.status_code == 200
-            assert response.headers.get("X-Frigate-Offline") == "true"
+            assert response.headers.get("X-Kestrel-Offline") == "true"
             # Verify we got an image (webp)
             assert response.headers.get("content-type") == "image/webp"
 
@@ -68,7 +68,7 @@ class TestHttpLatestFrame(BaseTestHttp):
         with AuthTestClient(self.app) as client:
             response = client.get(f"/{camera}/latest.webp")
             assert response.status_code == 200
-            assert "X-Frigate-Offline" not in response.headers
+            assert "X-Kestrel-Offline" not in response.headers
 
     def test_latest_frame_stale_falls_back_to_preview(self):
         camera = "front_door"
@@ -87,7 +87,7 @@ class TestHttpLatestFrame(BaseTestHttp):
         with AuthTestClient(self.app) as client:
             response = client.get(f"/{camera}/latest.webp")
             assert response.status_code == 200
-            assert response.headers.get("X-Frigate-Offline") == "true"
+            assert response.headers.get("X-Kestrel-Offline") == "true"
 
     def test_latest_frame_no_preview_found(self):
         camera = "front_door"
@@ -104,4 +104,4 @@ class TestHttpLatestFrame(BaseTestHttp):
 
             # Since we didn't provide camera-error.jpg, it might 500 if glob fails or return 500 if frame is None.
             assert response.status_code in [200, 500]
-            assert "X-Frigate-Offline" not in response.headers
+            assert "X-Kestrel-Offline" not in response.headers

@@ -8,31 +8,31 @@ import DockerComposeGenerator from '@site/src/components/DockerComposeGenerator'
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-Frigate is a Docker container that can be run on any Docker host including as a [Home Assistant App](https://www.home-assistant.io/apps/). Note that the Home Assistant App is **not** the same thing as the integration. The [integration](/integrations/home-assistant) is required to integrate Frigate into Home Assistant, whether you are running Frigate as a standalone Docker container or as a Home Assistant App.
+Kestrel is a Docker container that can be run on any Docker host including as a [Home Assistant App](https://www.home-assistant.io/apps/). Note that the Home Assistant App is **not** the same thing as the integration. The [integration](/integrations/home-assistant) is required to integrate Kestrel into Home Assistant, whether you are running Kestrel as a standalone Docker container or as a Home Assistant App.
 
 :::tip
 
-If you already have Frigate installed as a Home Assistant App, check out the [getting started guide](../guides/getting_started.md#configuring-frigate) to configure Frigate.
+If you already have Kestrel installed as a Home Assistant App, check out the [getting started guide](../guides/getting_started.md#configuring-frigate) to configure Kestrel.
 
 :::
 
 ## Dependencies
 
-**MQTT broker (optional)** - An MQTT broker is optional with Frigate, but is required for the Home Assistant integration. If using Home Assistant, Frigate and Home Assistant must be connected to the same MQTT broker.
+**MQTT broker (optional)** - An MQTT broker is optional with Kestrel, but is required for the Home Assistant integration. If using Home Assistant, Kestrel and Home Assistant must be connected to the same MQTT broker.
 
 ## Preparing your hardware
 
 ### Operating System
 
-Frigate runs best with Docker installed on bare metal Debian-based distributions. For ideal performance, Frigate needs low overhead access to underlying hardware for the Coral and GPU devices. Running Frigate in a VM on top of Proxmox, ESXi, Virtualbox, etc. is not recommended though [some users have had success with Proxmox](#proxmox).
+Kestrel runs best with Docker installed on bare metal Debian-based distributions. For ideal performance, Kestrel needs low overhead access to underlying hardware for the Coral and GPU devices. Running Kestrel in a VM on top of Proxmox, ESXi, Virtualbox, etc. is not recommended though [some users have had success with Proxmox](#proxmox).
 
-Windows is not officially supported, but some users have had success getting it to run under WSL or Virtualbox. Getting the GPU and/or Coral devices properly passed to Frigate may be difficult or impossible. Search previous discussions or issues for help.
+Windows is not officially supported, but some users have had success getting it to run under WSL or Virtualbox. Getting the GPU and/or Coral devices properly passed to Kestrel may be difficult or impossible. Search previous discussions or issues for help.
 
 ### Storage
 
-Frigate uses the following locations for read/write operations in the container. Docker volume mappings can be used to map these to any location on your host machine.
+Kestrel uses the following locations for read/write operations in the container. Docker volume mappings can be used to map these to any location on your host machine.
 
-- `/config`: Used to store the Frigate config file and sqlite database. You will also see a few files alongside the database file while Frigate is running.
+- `/config`: Used to store the Kestrel config file and sqlite database. You will also see a few files alongside the database file while Kestrel is running.
 - `/media/frigate/clips`: Used for snapshot storage. In the future, it will likely be renamed from `clips` to `snapshots`. The file structure here cannot be modified and isn't intended to be browsed or managed manually.
 - `/media/frigate/recordings`: Internal system storage for recording segments. The file structure here cannot be modified and isn't intended to be browsed or managed manually.
 - `/media/frigate/exports`: Storage for clips and timelapses that have been exported via the WebUI or API.
@@ -41,12 +41,12 @@ Frigate uses the following locations for read/write operations in the container.
 
 ### Ports
 
-The following ports are used by Frigate and can be mapped via docker as required.
+The following ports are used by Kestrel and can be mapped via docker as required.
 
 | Port   | Description                                                                                                                                                                |
 | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `8971` | Authenticated UI and API access without TLS. Reverse proxies should use this port.                                                                                         |
-| `5000` | Internal unauthenticated UI and API access. Access to this port should be limited. Intended to be used within the docker network for services that integrate with Frigate. |
+| `5000` | Internal unauthenticated UI and API access. Access to this port should be limited. Intended to be used within the docker network for services that integrate with Kestrel. |
 | `8554` | RTSP restreaming. By default, these streams are unauthenticated. Authentication can be configured in go2rtc section of config.                                             |
 | `8555` | WebRTC connections for cameras with two-way talk support.                                                                                                                  |
 
@@ -76,19 +76,19 @@ Users of the Snapcraft build of Docker cannot use storage locations outside your
 
 ### Calculating required shm-size
 
-Frigate utilizes shared memory to store frames during processing. The default `shm-size` provided by Docker is **64MB**.
+Kestrel utilizes shared memory to store frames during processing. The default `shm-size` provided by Docker is **64MB**.
 
-The default shm size of **128MB** is fine for setups with **2 cameras** detecting at **720p**. If Frigate is exiting with "Bus error" messages, it is likely because you have too many high resolution cameras and you need to specify a higher shm size, using [`--shm-size`](https://docs.docker.com/engine/reference/run/#runtime-constraints-on-resources) (or [`service.shm_size`](https://docs.docker.com/compose/compose-file/compose-file-v2/#shm_size) in Docker Compose). If raising the shm size does not help, check your [process and file limits](#process-and-file-limits) as well.
+The default shm size of **128MB** is fine for setups with **2 cameras** detecting at **720p**. If Kestrel is exiting with "Bus error" messages, it is likely because you have too many high resolution cameras and you need to specify a higher shm size, using [`--shm-size`](https://docs.docker.com/engine/reference/run/#runtime-constraints-on-resources) (or [`service.shm_size`](https://docs.docker.com/compose/compose-file/compose-file-v2/#shm_size) in Docker Compose). If raising the shm size does not help, check your [process and file limits](#process-and-file-limits) as well.
 
-The Frigate container also stores logs in shm, which can take up to **40MB**, so make sure to take this into account in your math as well.
+The Kestrel container also stores logs in shm, which can take up to **40MB**, so make sure to take this into account in your math as well.
 
 <ShmCalculator/>
 
-The shm size cannot be set per container for Home Assistant Apps. However, this is probably not required since by default Home Assistant Supervisor allocates `/dev/shm` with half the size of your total memory. If your machine has 8GB of memory, chances are that Frigate will have access to up to 4GB without any additional configuration.
+The shm size cannot be set per container for Home Assistant Apps. However, this is probably not required since by default Home Assistant Supervisor allocates `/dev/shm` with half the size of your total memory. If your machine has 8GB of memory, chances are that Kestrel will have access to up to 4GB without any additional configuration.
 
 ### Process and file limits
 
-Frigate runs many processes and opens a number of shared memory files. Installs with a large number of cameras can exceed the default limits your container runtime applies.
+Kestrel runs many processes and opens a number of shared memory files. Installs with a large number of cameras can exceed the default limits your container runtime applies.
 
 Hitting the PID limit logs `RuntimeError: can't start new thread`, often followed by a "Bus error" that makes it look like an shm sizing problem. Compare the current count against the max from inside the container:
 
@@ -124,13 +124,13 @@ Additionally, the USB Coral draws a considerable amount of power. If using any o
 
 The Hailo-8, Hailo-8L and Hailo-8R AI accelerators are available in both M.2 and HAT form factors for the Raspberry Pi. The M.2 version typically connects to a carrier board for PCIe, which then interfaces with the Raspberry Pi 5 as part of the AI Kit. The HAT version can be mounted directly onto compatible Raspberry Pi models. Both form factors have been successfully tested on x86 platforms as well, making them versatile options for various computing environments.
 
-The HailoRT runtime is not part of the Frigate image; Frigate downloads and installs it at first start once a Hailo detector is configured. Containers without internet access can provide the files themselves, see [Detector runtimes](/frigate/network_requirements#detector-runtimes).
+The HailoRT runtime is not part of the Kestrel image; Kestrel downloads and installs it at first start once a Hailo detector is configured. Containers without internet access can provide the files themselves, see [Detector runtimes](/frigate/network_requirements#detector-runtimes).
 
 #### Installation
 
 :::warning
 
-On Raspberry Pi OS **Bookworm**, the kernel includes an older version of the Hailo driver that is incompatible with Frigate. You **must** follow the installation steps below to install the correct driver version, and you **must** disable the built-in kernel driver as described in step 1.
+On Raspberry Pi OS **Bookworm**, the kernel includes an older version of the Hailo driver that is incompatible with Kestrel. You **must** follow the installation steps below to install the correct driver version, and you **must** disable the built-in kernel driver as described in step 1.
 
 On Raspberry Pi OS **Trixie**, the Hailo driver is no longer shipped with the kernel. It is installed via DKMS, and the conflict described below does not apply. You can simply run the installation script.
 
@@ -287,7 +287,7 @@ On Raspberry Pi OS **Trixie**, the Hailo driver is no longer shipped with the ke
 
 #### Setup
 
-To set up Frigate, follow the default installation instructions, for example: `ghcr.io/blakeblackshear/frigate:stable`
+To set up Kestrel, follow the default installation instructions, for example: `ghcr.io/blakeblackshear/frigate:stable`
 
 Next, grant Docker permissions to access your hardware by adding the following lines to your `docker-compose.yml` file:
 
@@ -317,7 +317,7 @@ The MemryX MX3 Accelerator is available in the M.2 2280 form factor (like an NVM
 
 To get started with MX3 hardware setup for your system, refer to the [Hardware Setup Guide](https://developer.memryx.com/2p1/get_started/install_hardware.html).
 
-The MemryX SDK used inside the container is not part of the Frigate image; Frigate downloads and installs it at first start once a MemryX detector is configured. Containers without internet access can provide the file themselves, see [Detector runtimes](/frigate/network_requirements#detector-runtimes). The host side driver still has to be installed as described below.
+The MemryX SDK used inside the container is not part of the Kestrel image; Kestrel downloads and installs it at first start once a MemryX detector is configured. Containers without internet access can provide the file themselves, see [Detector runtimes](/frigate/network_requirements#detector-runtimes). The host side driver still has to be installed as described below.
 
 Then follow these steps for installing the correct driver/runtime configuration:
 
@@ -334,7 +334,7 @@ For manual setup, use **MemryX SDK 2.1** only. Other SDK versions are not suppor
 
 #### Setup
 
-To set up Frigate, follow the default installation instructions, for example: `ghcr.io/blakeblackshear/frigate:stable`
+To set up Kestrel, follow the default installation instructions, for example: `ghcr.io/blakeblackshear/frigate:stable`
 
 Next, grant Docker permissions to access your hardware by adding the following lines to your `docker-compose.yml` file:
 
@@ -383,37 +383,37 @@ Finally, configure [hardware object detection](/configuration/object_detectors#m
 
 ### DEEPX NPU
 
-The DEEPX NPU is available in two form factors, and Frigate supports both:
+The DEEPX NPU is available in two form factors, and Kestrel supports both:
 
 - **DX-M1** in the M.2 2280 form factor (like an NVMe SSD), for x86 (Intel/AMD) PCs, the Raspberry Pi 5, and other ARM SBCs with an exposed PCIe M.2 slot.
 - **DX-M1M** on the [Sixfab AI HAT+](https://docs.sixfab.com/docs/ai-hat-plus-raspberry-pi-5-quickstart), a HAT+ board that connects to the Raspberry Pi 5 over PCIe Gen 3 x1.
 
 Both present the NPU through the same PCIe driver and DX-RT runtime, so the setup below and the detector configuration are identical for either one. Nothing needs to change when moving between them.
 
-DEEPX NPU support in Frigate is developed and maintained by [Sixfab](https://sixfab.com).
+DEEPX NPU support in Kestrel is developed and maintained by [Sixfab](https://sixfab.com).
 
 #### Versions
 
-A DEEPX install has several separately versioned pieces, and they all have to agree. The driver, the runtime, and the daemon live on the Docker host; Frigate itself carries only the Python bindings, which it downloads on first start:
+A DEEPX install has several separately versioned pieces, and they all have to agree. The driver, the runtime, and the daemon live on the Docker host; Kestrel itself carries only the Python bindings, which it downloads on first start:
 
 | Component      | Version  | Installed on | Installed by              |
 | -------------- | -------- | ------------ | ------------------------- |
 | Kernel driver  | `v2.6.0` | Host  | `user_installation.sh`    |
 | DX-RT runtime  | `v3.4.0` | Host  | `user_installation.sh`    |
 | NPU firmware   | `v2.7.4` | The module   | Flashed from the host     |
-| DX-RT bindings | `v3.4.0` | Frigate      | Downloaded at first start |
+| DX-RT bindings | `v3.4.0` | Kestrel      | Downloaded at first start |
 
 :::warning
 
-A version mismatch does not produce a startup error. It typically shows up as inference requests that are accepted but never return a result, so detections simply stop appearing while Frigate looks healthy. If that happens after a Frigate upgrade, check every version in the table before anything else.
+A version mismatch does not produce a startup error. It typically shows up as inference requests that are accepted but never return a result, so detections simply stop appearing while Kestrel looks healthy. If that happens after a Kestrel upgrade, check every version in the table before anything else.
 
 :::
 
-The installation script installs the DX-RT runtime on the host and enables `dxrt.service`, so the daemon starts at boot and any other program on the host can share the NPU with Frigate. Check the firmware version with `dxrt-cli --status` and update the module if it does not match the table above.
+The installation script installs the DX-RT runtime on the host and enables `dxrt.service`, so the daemon starts at boot and any other program on the host can share the NPU with Kestrel. Check the firmware version with `dxrt-cli --status` and update the module if it does not match the table above.
 
 #### Installation
 
-The DEEPX kernel driver must be installed on the host rather than in the container, because containers share the host kernel and cannot load kernel modules. Installing it creates the `/dev/dxrt*` device nodes that are passed through to Frigate. The same script installs the DX-RT runtime and enables `dxrt.service`, the daemon that owns the NPU and hands work to it on behalf of Frigate and anything else on the host.
+The DEEPX kernel driver must be installed on the host rather than in the container, because containers share the host kernel and cannot load kernel modules. Installing it creates the `/dev/dxrt*` device nodes that are passed through to Kestrel. The same script installs the DX-RT runtime and enables `dxrt.service`, the daemon that owns the NPU and hands work to it on behalf of Kestrel and anything else on the host.
 
 1. Copy or download [this script](https://github.com/blakeblackshear/frigate/blob/dev/docker/deepx/user_installation.sh).
 2. Ensure it has execution permissions with `sudo chmod +x user_installation.sh`
@@ -435,11 +435,11 @@ ls /run/dxrt/
 
 #### Setup
 
-To set up Frigate, follow the default installation instructions, for example: `ghcr.io/blakeblackshear/frigate:stable`
+To set up Kestrel, follow the default installation instructions, for example: `ghcr.io/blakeblackshear/frigate:stable`
 
 #### Docker configuration
 
-Frigate needs the NPU device node and the directory holding the daemon's socket:
+Kestrel needs the NPU device node and the directory holding the daemon's socket:
 
 ```yaml
 services:
@@ -456,11 +456,11 @@ Add one `--device` per NPU, contiguously from `/dev/dxrt0`, since the client sto
 
 The installation script configures `dxrt.service` to place its socket in `/run/dxrt` through a systemd drop-in. Mounting the directory rather than the socket file means the container sees the new socket after `dxrt.service` is restarted, rather than holding on to a deleted one.
 
-`dxrtd` listens on an abstract socket as well, but that one does not cross into a container, so Frigate names the filesystem socket through `DXRT_DYNAMIC_IPC_ENDPOINT` on your behalf. Set that variable on the container yourself only if the daemon listens somewhere else, which means you also set it for `dxrtd` through its own systemd drop-in. The script writes `/etc/systemd/system/dxrt.service.d/frigate.conf` for exactly that, and has `dxrt.service` link the socket to `/tmp/dxrt_dynamic_ipc.sock` when it starts, so the host's own `dxrt-cli` and `dxtop` keep finding it at the default path they fall back to.
+`dxrtd` listens on an abstract socket as well, but that one does not cross into a container, so Kestrel names the filesystem socket through `DXRT_DYNAMIC_IPC_ENDPOINT` on your behalf. Set that variable on the container yourself only if the daemon listens somewhere else, which means you also set it for `dxrtd` through its own systemd drop-in. The script writes `/etc/systemd/system/dxrt.service.d/frigate.conf` for exactly that, and has `dxrt.service` link the socket to `/tmp/dxrt_dynamic_ipc.sock` when it starts, so the host's own `dxrt-cli` and `dxtop` keep finding it at the default path they fall back to.
 
 :::note
 
-The DX-RT client exits when `dxrt.service` stops, so restart the Frigate container after restarting `dxrt.service`.
+The DX-RT client exits when `dxrt.service` stops, so restart the Kestrel container after restarting `dxrt.service`.
 
 :::
 
@@ -468,7 +468,7 @@ The device node is needed as well as the socket, because the client opens the NP
 
 `/dev/shm` does not need sharing.
 
-The DX-RT python bindings are not shipped in the Frigate image. Frigate downloads them on first start when a DEEPX detector is configured, and caches them under `/config`.
+The DX-RT python bindings are not shipped in the Kestrel image. Kestrel downloads them on first start when a DEEPX detector is configured, and caches them under `/config`.
 
 #### Configuration
 
@@ -491,7 +491,7 @@ I recommend [Armbian](https://www.armbian.com/download/?arch=aarch64), if your b
 
 #### Setup
 
-Follow Frigate's default installation instructions, but use a docker image with `-rk` suffix for example `ghcr.io/blakeblackshear/frigate:stable-rk`.
+Follow Kestrel's default installation instructions, but use a docker image with `-rk` suffix for example `ghcr.io/blakeblackshear/frigate:stable-rk`.
 
 Next, you need to grant docker permissions to access your hardware:
 
@@ -533,7 +533,7 @@ Next, you should configure [hardware object detection](/configuration/object_det
 
 #### Setup
 
-Follow Frigate's default installation instructions, but use a docker image with `-synaptics` suffix for example `ghcr.io/blakeblackshear/frigate:stable-synaptics`.
+Follow Kestrel's default installation instructions, but use a docker image with `-synaptics` suffix for example `ghcr.io/blakeblackshear/frigate:stable-synaptics`.
 
 Next, you need to grant docker permissions to access your hardware:
 
@@ -574,9 +574,9 @@ Follow these steps for installation:
 
 #### Setup
 
-To set up Frigate, follow the default installation instructions, for example: `ghcr.io/blakeblackshear/frigate:stable`
+To set up Kestrel, follow the default installation instructions, for example: `ghcr.io/blakeblackshear/frigate:stable`
 
-The AXEngine python package is not part of the Frigate image; Frigate downloads and installs it at first start once an AXEngine detector is configured. Containers without internet access can provide the file themselves, see [Detector runtimes](/frigate/network_requirements#detector-runtimes).
+The AXEngine python package is not part of the Kestrel image; Kestrel downloads and installs it at first start once an AXEngine detector is configured. Containers without internet access can provide the file themselves, see [Detector runtimes](/frigate/network_requirements#detector-runtimes).
 
 Next, grant Docker permissions to access your hardware by adding the following lines to your `docker-compose.yml` file:
 
@@ -603,7 +603,7 @@ Running through Docker with Docker Compose is the recommended install method.
 <Tabs>
   <TabItem value="domestic" label="Docker Compose Generator" default>
 
-Generate a Frigate Docker Compose configuration based on your hardware and requirements.
+Generate a Kestrel Docker Compose configuration based on your hardware and requirements.
 
 <DockerComposeGenerator/>
 
@@ -647,7 +647,7 @@ services:
 
 ### Recommended security options
 
-Frigate does not need elevated container privileges for most setups. The following hardens the container; add the `devices`/`group_add` entries your hardware requires (see the hardware acceleration docs):
+Kestrel does not need elevated container privileges for most setups. The following hardens the container; add the `devices`/`group_add` entries your hardware requires (see the hardware acceleration docs):
 
 ```yaml
 services:
@@ -667,7 +667,7 @@ Platforms that genuinely require `privileged: true` (MemryX, some QNAP setups) a
 
 :::
 
-Frigate's services run as an unprivileged user inside the container. See [Running as a non-root user](../configuration/non_root.md) for the run modes, the one time volume ownership migration, what each accelerator needs on the host, and the [hardened deployment](../configuration/non_root.md#hardened-deployment) layout with a read-only root filesystem.
+Kestrel's services run as an unprivileged user inside the container. See [Running as a non-root user](../configuration/non_root.md) for the run modes, the one time volume ownership migration, what each accelerator needs on the host, and the [hardened deployment](../configuration/non_root.md#hardened-deployment) layout with a read-only root filesystem.
 
 **Docker CLI**
 
@@ -695,15 +695,15 @@ docker run -d \
 
 The official docker image tags for the current stable version are:
 
-- `stable` - Standard Frigate build for amd64 & RPi Optimized Frigate build for arm64. This build includes support for Hailo devices as well.
-- `stable-standard-arm64` - Standard Frigate build for arm64
-- `stable-tensorrt` - Frigate build specific for amd64 devices running an Nvidia GPU
-- `stable-rocm` - Frigate build for [AMD GPUs](../configuration/object_detectors.md#amdrocm-gpu-detector)
+- `stable` - Standard Kestrel build for amd64 & RPi Optimized Kestrel build for arm64. This build includes support for Hailo devices as well.
+- `stable-standard-arm64` - Standard Kestrel build for arm64
+- `stable-tensorrt` - Kestrel build specific for amd64 devices running an Nvidia GPU
+- `stable-rocm` - Kestrel build for [AMD GPUs](../configuration/object_detectors.md#amdrocm-gpu-detector)
 
 The community supported docker image tags for the current stable version are:
 
-- `stable-tensorrt-jp6` - Frigate build optimized for Nvidia Jetson devices running Jetpack 6
-- `stable-rk` - Frigate build for SBCs with Rockchip SoC
+- `stable-tensorrt-jp6` - Kestrel build optimized for Nvidia Jetson devices running Jetpack 6
+- `stable-rk` - Kestrel build for SBCs with Rockchip SoC
 
 ## Home Assistant App
 
@@ -730,10 +730,10 @@ Home Assistant OS users can install via the App repository.
 
 1. In Home Assistant, navigate to _Settings_ > _Apps_ > _App Store_ > _Repositories_
 2. Add `https://github.com/blakeblackshear/frigate-hass-addons`
-3. Install the desired variant of the Frigate App (see below)
+3. Install the desired variant of the Kestrel App (see below)
 4. Setup your network configuration in the `Configuration` tab
 5. Start the App
-6. Use the _Open Web UI_ button to access the Frigate UI, then click in the _cog icon_ > _Configuration editor_ and configure Frigate to your liking
+6. Use the _Open Web UI_ button to access the Kestrel UI, then click in the _cog icon_ > _Configuration editor_ and configure Kestrel to your liking
 
 App users who can't set container environment variables can put `FRIGATE_` values in a `secrets.yaml` next to `config.yml` in `/addon_configs/<addon_directory>` instead. See [`secrets.yaml`](../configuration/advanced/system.md#secretsyaml).
 
@@ -741,14 +741,14 @@ There are several variants of the App available:
 
 | App Variant                | Description                                                |
 | -------------------------- | ---------------------------------------------------------- |
-| Frigate                    | Current release with protection mode on                    |
-| Frigate (Full Access)      | Current release with the option to disable protection mode |
-| Frigate Beta               | Beta release with protection mode on                       |
-| Frigate Beta (Full Access) | Beta release with the option to disable protection mode    |
+| Kestrel                    | Current release with protection mode on                    |
+| Kestrel (Full Access)      | Current release with the option to disable protection mode |
+| Kestrel Beta               | Beta release with protection mode on                       |
+| Kestrel Beta (Full Access) | Beta release with the option to disable protection mode    |
 
-If you are using hardware acceleration for ffmpeg, you **may** need to use the _Full Access_ variant of the App. This is because the Frigate App runs in a container with limited access to the host system. The _Full Access_ variant allows you to disable _Protection mode_ and give Frigate full access to the host system.
+If you are using hardware acceleration for ffmpeg, you **may** need to use the _Full Access_ variant of the App. This is because the Kestrel App runs in a container with limited access to the host system. The _Full Access_ variant allows you to disable _Protection mode_ and give Kestrel full access to the host system.
 
-You can also edit the Frigate configuration file through the [VS Code App](https://github.com/hassio-addons/addon-vscode) or similar. In that case, the configuration file will be at `/addon_configs/<addon_directory>/config.yml`, where `<addon_directory>` is specific to the variant of the Frigate App you are running. See the list of directories [here](../configuration/config.md#accessing-app-config-dir).
+You can also edit the Kestrel configuration file through the [VS Code App](https://github.com/hassio-addons/addon-vscode) or similar. In that case, the configuration file will be at `/addon_configs/<addon_directory>/config.yml`, where `<addon_directory>` is specific to the variant of the Kestrel App you are running. See the list of directories [here](../configuration/config.md#accessing-app-config-dir).
 
 ## Kubernetes
 
@@ -757,15 +757,15 @@ Use the [helm chart](https://github.com/blakeblackshear/blakeshome-charts/tree/m
 ## Unraid
 
 Many people have powerful enough NAS devices or home servers to also run docker. There is a Unraid Community App.
-To install make sure you have the [community app plugin here](https://forums.unraid.net/topic/38582-plug-in-community-applications/). Then search for "Frigate" in the apps section within Unraid - you can see the online store [here](https://unraid.net/community/apps?q=frigate#r)
+To install make sure you have the [community app plugin here](https://forums.unraid.net/topic/38582-plug-in-community-applications/). Then search for "Kestrel" in the apps section within Unraid - you can see the online store [here](https://unraid.net/community/apps?q=frigate#r)
 
 ## Proxmox
 
-[According to Proxmox documentation](https://pve.proxmox.com/pve-docs/pve-admin-guide.html#chapter_pct) it is recommended that you run application containers like Frigate inside a Proxmox QEMU VM. This will give you all the advantages of application containerization, while also providing the benefits that VMs offer, such as strong isolation from the host and the ability to live-migrate, which otherwise isn’t possible with containers. Ensure that ballooning is **disabled**, especially if you are passing through a GPU to the VM.
+[According to Proxmox documentation](https://pve.proxmox.com/pve-docs/pve-admin-guide.html#chapter_pct) it is recommended that you run application containers like Kestrel inside a Proxmox QEMU VM. This will give you all the advantages of application containerization, while also providing the benefits that VMs offer, such as strong isolation from the host and the ability to live-migrate, which otherwise isn’t possible with containers. Ensure that ballooning is **disabled**, especially if you are passing through a GPU to the VM.
 
 :::warning
 
-If you choose to run Frigate via LXC in Proxmox the setup can be complex so be prepared to read the Proxmox and LXC documentation, Frigate does not officially support running inside of an LXC.
+If you choose to run Kestrel via LXC in Proxmox the setup can be complex so be prepared to read the Proxmox and LXC documentation, Kestrel does not officially support running inside of an LXC.
 
 :::
 
@@ -775,16 +775,16 @@ Suggestions include:
   - `lxc.cgroup2.devices.allow: c 226:128 rwm`
   - `lxc.mount.entry: /dev/dri/renderD128 dev/dri/renderD128 none bind,optional,create=file`
 - The LXC configuration will likely also need `features: fuse=1,nesting=1`. This allows running a Docker container in an LXC container (`nesting`) and prevents duplicated files and wasted storage (`fuse`).
-- Successfully passing hardware devices through multiple levels of containerization (LXC then Docker) can be difficult. Many people make devices like `/dev/dri/renderD128` world-readable in the host or run Frigate in a privileged LXC container.
+- Successfully passing hardware devices through multiple levels of containerization (LXC then Docker) can be difficult. Many people make devices like `/dev/dri/renderD128` world-readable in the host or run Kestrel in a privileged LXC container.
 - The virtualization layer often introduces a sizable amount of overhead for communication with Coral devices, but [not in all circumstances](https://github.com/blakeblackshear/frigate/discussions/1837).
 
 See the [Proxmox LXC discussion](https://github.com/blakeblackshear/frigate/discussions/5773) for more general information.
 
 ## ESXi
 
-For details on running Frigate using ESXi, please see the instructions [here](https://williamlam.com/2023/05/frigate-nvr-with-coral-tpu-igpu-passthrough-using-esxi-on-intel-nuc.html).
+For details on running Kestrel using ESXi, please see the instructions [here](https://williamlam.com/2023/05/frigate-nvr-with-coral-tpu-igpu-passthrough-using-esxi-on-intel-nuc.html).
 
-If you're running Frigate on a rack mounted server and want to passthrough the Google Coral, [read this.](https://github.com/blakeblackshear/frigate/issues/305)
+If you're running Kestrel on a rack mounted server and want to passthrough the Google Coral, [read this.](https://github.com/blakeblackshear/frigate/issues/305)
 
 ## Synology NAS on DSM 7
 
@@ -806,7 +806,7 @@ If you want to use the password template feature, you should add the "FRIGATE_RT
 
 **Port Settings:**
 
-The network mode should be set to `bridge`. You need to map the default frigate container ports to your local Synology NAS ports that you want to use to access Frigate.
+The network mode should be set to `bridge`. You need to map the default frigate container ports to your local Synology NAS ports that you want to use to access Kestrel.
 
 There may be other services running on your NAS that are using the same ports that frigate uses. In that instance you can set the ports to auto or a specific port.
 
@@ -825,10 +825,10 @@ You need to configure 2 paths:
 
 These instructions were tested on a QNAP with an Intel J3455 CPU and 16G RAM, running QTS 4.5.4.2117.
 
-QNAP has a graphic tool named Container Station to install and manage docker containers. However, there are two limitations with Container Station that make it unsuitable to install Frigate:
+QNAP has a graphic tool named Container Station to install and manage docker containers. However, there are two limitations with Container Station that make it unsuitable to install Kestrel:
 
-1. Container Station does not incorporate GitHub Container Registry (ghcr), which hosts Frigate docker image version 0.12.0 and above.
-2. Container Station uses default 64 Mb shared memory size (shm-size), and does not have a mechanism to adjust it. Frigate requires a larger shm-size to be able to work properly with more than two high resolution cameras.
+1. Container Station does not incorporate GitHub Container Registry (ghcr), which hosts Kestrel docker image version 0.12.0 and above.
+2. Container Station uses default 64 Mb shared memory size (shm-size), and does not have a mechanism to adjust it. Kestrel requires a larger shm-size to be able to work properly with more than two high resolution cameras.
 
 Because of above limitations, the installation has to be done from command line. Here are the steps:
 
@@ -836,28 +836,28 @@ Because of above limitations, the installation has to be done from command line.
 
 1. Install Container Station from QNAP App Center if it is not installed.
 2. Enable ssh on your QNAP (please do an Internet search on how to do this).
-3. Prepare Frigate config file, name it `config.yml`.
+3. Prepare Kestrel config file, name it `config.yml`.
 4. Calculate shared memory size according to [documentation](https://docs.frigate.video/frigate/installation).
 5. Find your time zone value from https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 6. ssh to QNAP.
 
 **Installation**
 
-Run the following commands to install Frigate (using `stable` version as example):
+Run the following commands to install Kestrel (using `stable` version as example):
 
 ```shell
-# Download Frigate image
+# Download Kestrel image
 docker pull ghcr.io/blakeblackshear/frigate:stable
-# Create directory to host Frigate config file on QNAP file system.
+# Create directory to host Kestrel config file on QNAP file system.
 # E.g., you can choose to create it under /share/Container.
 mkdir -p /share/Container/frigate/config
 # Copy the config file prepared in step 2 into the newly created config directory.
 cp path/to/your/config/file /share/Container/frigate/config
-# Create directory to host Frigate media files on QNAP file system.
+# Create directory to host Kestrel media files on QNAP file system.
 # (if you have a surveillance disk, create media directory on the surveillance disk.
 # Example command assumes share_vol2 is the surveillance drive
 mkdir -p /share/share_vol2/frigate/media
-# Create Frigate docker container.  Replace shm-size value with the value from preparation step 3.
+# Create Kestrel docker container.  Replace shm-size value with the value from preparation step 3.
 # Also replace the time zone value for 'TZ' in the sample command.
 # Example command will create a docker container that uses at most 2 CPUs and 4G RAM.
 # You may need to add "--env=LIBVA_DRIVER_NAME=i965 \" to the following docker run command if you
@@ -885,13 +885,13 @@ docker run \
   ghcr.io/blakeblackshear/frigate:stable
 ```
 
-Log into QNAP, open Container Station. Frigate docker container should be listed under 'Overview' and running. Visit Frigate Web UI by clicking Frigate docker, and then clicking the URL shown at the top of the detail page.
+Log into QNAP, open Container Station. Kestrel docker container should be listed under 'Overview' and running. Visit Kestrel Web UI by clicking Kestrel docker, and then clicking the URL shown at the top of the detail page.
 
 ## macOS - Apple Silicon
 
 :::warning
 
-macOS uses port 5000 for its Airplay Receiver service. If you want to expose port 5000 in Frigate for local app and API access the port will need to be mapped to another port on the host e.g. 5001
+macOS uses port 5000 for its Airplay Receiver service. If you want to expose port 5000 in Kestrel for local app and API access the port will need to be mapped to another port on the host e.g. 5001
 
 Failure to remap port 5000 on the host will result in the WebUI and all API endpoints on port 5000 being unreachable, even if port 5000 is exposed correctly in Docker.
 
@@ -899,7 +899,7 @@ Failure to remap port 5000 on the host will result in the WebUI and all API endp
 
 Docker containers on macOS can be orchestrated by either [Docker Desktop](https://docs.docker.com/desktop/setup/install/mac-install/) or [OrbStack](https://orbstack.dev) (native Swift app). The difference in inference speeds is negligible, however CPU, power consumption and container start times will be lower on OrbStack because it is a native Swift application.
 
-To allow Frigate to use the Apple Silicon Neural Engine / Processing Unit (NPU) the host must be running [Apple Silicon Detector](../configuration/object_detectors.md#apple-silicon-detector) on the host (outside Docker)
+To allow Kestrel to use the Apple Silicon Neural Engine / Processing Unit (NPU) the host must be running [Apple Silicon Detector](../configuration/object_detectors.md#apple-silicon-detector) on the host (outside Docker)
 
 #### Docker Compose example
 

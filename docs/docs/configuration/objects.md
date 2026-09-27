@@ -8,7 +8,7 @@ import TabItem from "@theme/TabItem";
 import NavPath from "@site/src/components/NavPath";
 import labels from "../../../labelmap.txt";
 
-Frigate includes the object labels listed below from the Google Coral test data.
+Kestrel includes the object labels listed below from the Google Coral test data.
 
 Please note:
 
@@ -23,7 +23,7 @@ Please note:
 
 ## Configuring Tracked Objects
 
-By default, Frigate only tracks `person`. To track additional object types, add them to the tracked objects list.
+By default, Kestrel only tracks `person`. To track additional object types, add them to the tracked objects list.
 
 <ConfigTabs>
 <TabItem value="ui">

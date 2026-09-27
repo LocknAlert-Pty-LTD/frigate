@@ -596,7 +596,7 @@ class TestDeepxConfig(unittest.TestCase):
                 parse_device(raw)
 
     def test_a_device_string_builds_this_detector_config(self):
-        """Frigate turns a `deepx:PCIe:0` entry into the detector config with
+        """Kestrel turns a `deepx:PCIe:0` entry into the detector config with
         the model already attached, which is the path app.py takes; a bare
         constructor call does not exercise it."""
         config = build_detector_config(
@@ -833,7 +833,7 @@ class TestDeepxDetectRaw(DeepxDetectorTestCase):
                 THREE_SCALE_ANCHORS,
                 [build_ppu_record((0.6, 0.4, 0.3, 0.7), grid=(7, 9, 2, 5))],
             ),
-            "a scale count Frigate has no anchor table for": (
+            "a scale count Kestrel has no anchor table for": (
                 FOUR_SCALE_ANCHORS,
                 [build_ppu_record((0.6, 0.4, 0.3, 0.7))],
             ),

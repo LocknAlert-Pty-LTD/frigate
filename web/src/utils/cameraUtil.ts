@@ -5,7 +5,7 @@ import type { StreamConfig } from "@/types/cameraWizard";
 
 /**
  * Processes a user-entered camera name and returns both the final camera name
- * and friendly name for Frigate configuration.
+ * and friendly name for Kestrel configuration.
  *
  * @param userInput - The name entered by the user (could be display name)
  * @returns Object with finalCameraName and friendlyName
@@ -32,7 +32,7 @@ export function processCameraName(userInput: string): {
 /**
  * Detect Reolink camera capabilities and recommend optimal protocol
  *
- * Calls the Frigate backend API which queries the Reolink camera to determine
+ * Calls the Kestrel backend API which queries the Reolink camera to determine
  * its resolution and recommends either http-flv (for 5MP and below) or rtsp
  * (for higher resolutions).
  *

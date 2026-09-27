@@ -1,4 +1,4 @@
-"""Tests for the detector stuck notice raised by the Frigate watchdog."""
+"""Tests for the detector stuck notice raised by the Kestrel watchdog."""
 
 import unittest
 from unittest.mock import MagicMock, patch

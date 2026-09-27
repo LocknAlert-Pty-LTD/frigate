@@ -5,11 +5,11 @@ title: Network Requirements
 
 # Network Requirements
 
-Frigate is designed to run locally and does not require a persistent internet connection for core functionality. However, certain features need internet access for initial setup or ongoing operation. This page describes what connects to the internet, when, and how to control it.
+Kestrel is designed to run locally and does not require a persistent internet connection for core functionality. However, certain features need internet access for initial setup or ongoing operation. This page describes what connects to the internet, when, and how to control it.
 
-## How Frigate Uses the Internet
+## How Kestrel Uses the Internet
 
-Frigate's internet usage falls into three categories:
+Kestrel's internet usage falls into three categories:
 
 1. **One-time model downloads**: ML models are downloaded the first time a feature is enabled, then cached locally. No internet is needed on subsequent startups.
 2. **Optional cloud services**: Features like Frigate+ and Generative AI connect to external APIs only when explicitly configured.
@@ -17,7 +17,7 @@ Frigate's internet usage falls into three categories:
 
 :::tip
 
-After initial setup, Frigate can run fully offline as long as all required models have been downloaded and no cloud-dependent features are enabled.
+After initial setup, Kestrel can run fully offline as long as all required models have been downloaded and no cloud-dependent features are enabled.
 
 :::
 
@@ -36,7 +36,7 @@ The following models are downloaded automatically the first time their associate
 
 :::note
 
-The MobileNetV2 base weights are the one exception to the `/config/model_cache/` rule. They are also the only entry that is not downloaded when the feature is enabled: Frigate fetches them when a training run actually starts.
+The MobileNetV2 base weights are the one exception to the `/config/model_cache/` rule. They are also the only entry that is not downloaded when the feature is enabled: Kestrel fetches them when a training run actually starts.
 
 :::
 
@@ -58,7 +58,7 @@ The default CPU, EdgeTPU, and OpenVINO object detection models are bundled into 
 
 ### Detector Runtimes
 
-The SDKs for a few hardware detectors are not shipped in the Frigate image. They are downloaded the first time that detector is configured, verified against checksums pinned in the Frigate release, and installed into the Frigate user's home directory (`/config/.local` by default). Once installed they are not downloaded again until a Frigate release pins a new version.
+The SDKs for a few hardware detectors are not shipped in the Kestrel image. They are downloaded the first time that detector is configured, verified against checksums pinned in the Kestrel release, and installed into the Kestrel user's home directory (`/config/.local` by default). Once installed they are not downloaded again until a Kestrel release pins a new version.
 
 | Detector                                                   | Version | Files                                                                                                                                                                                 | Source                                                                                   |
 | ---------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
@@ -70,13 +70,13 @@ If the container cannot reach GitHub, provide the files yourself:
 
 1. Download the files for your architecture on a machine with internet access.
 2. Place them, with exactly the file names listed above, in `/config/model_cache/runtimes/<detector>/`, where `<detector>` is the detector named in your config's `devices` (`hailo`, `memryx`, or `axengine`).
-3. Start Frigate. Files whose checksum matches are installed without any download; a file with the wrong checksum is discarded and downloaded again, so a failed startup log names the file to replace.
+3. Start Kestrel. Files whose checksum matches are installed without any download; a file with the wrong checksum is discarded and downloaded again, so a failed startup log names the file to replace.
 
 The `GITHUB_ENDPOINT` mirror variable below applies to these downloads as well.
 
 ### Preventing Model Downloads
 
-If you have already downloaded all required models and want to prevent Frigate from attempting any outbound connections to HuggingFace or the Transformers library, set the following environment variables on your Frigate container:
+If you have already downloaded all required models and want to prevent Kestrel from attempting any outbound connections to HuggingFace or the Transformers library, set the following environment variables on your Kestrel container:
 
 ```yaml
 environment:
@@ -92,7 +92,7 @@ Setting these variables without having the correct model files already cached in
 
 ### Mirror Support
 
-If your Frigate instance has restricted internet access, you can point model downloads at internal mirrors using environment variables:
+If your Kestrel instance has restricted internet access, you can point model downloads at internal mirrors using environment variables:
 
 | Environment Variable                | Default                             | Used By                                       |
 | ----------------------------------- | ----------------------------------- | --------------------------------------------- |
@@ -107,13 +107,13 @@ These features connect to external services during normal operation and require 
 
 ### Frigate+
 
-When a Frigate+ API key is configured, Frigate communicates with `https://api.frigate.video` to download models, upload snapshots for training, submit annotations, and report false positives. Remove the API key to disable all Frigate+ network activity.
+When a Frigate+ API key is configured, Kestrel communicates with `https://api.frigate.video` to download models, upload snapshots for training, submit annotations, and report false positives. Remove the API key to disable all Frigate+ network activity.
 
 See [Frigate+](/integrations/plus) for details.
 
 ### Generative AI
 
-When a Generative AI provider is configured, Frigate sends images and prompts to the configured provider for event descriptions, chat, and camera monitoring. Available providers:
+When a Generative AI provider is configured, Kestrel sends images and prompts to the configured provider for event descriptions, chat, and camera monitoring. Available providers:
 
 | Provider      | Internet Required                                               |
 | ------------- | --------------------------------------------------------------- |
@@ -127,7 +127,7 @@ Disable Generative AI by removing the `genai` configuration from your cameras. S
 
 ### Version Check
 
-Frigate checks GitHub for the latest release version on startup by querying `https://api.github.com`. This can be disabled:
+Kestrel checks GitHub for the latest release version on startup by querying `https://api.github.com`. This can be disabled:
 
 ```yaml
 telemetry:
@@ -136,15 +136,15 @@ telemetry:
 
 ### Push Notifications
 
-When [notifications](/configuration/notifications) are enabled and users have registered for push notifications in the web UI, Frigate sends push messages through the browser vendor's push service (e.g., Google FCM, Mozilla autopush). This requires internet access from the Frigate server to these push endpoints.
+When [notifications](/configuration/notifications) are enabled and users have registered for push notifications in the web UI, Kestrel sends push messages through the browser vendor's push service (e.g., Google FCM, Mozilla autopush). This requires internet access from the Kestrel server to these push endpoints.
 
 ### MQTT
 
-If an [MQTT broker](/integrations/mqtt) is configured, Frigate maintains a connection to the broker's host and port. This is typically a local network connection, but will require internet if you use a cloud-hosted MQTT broker.
+If an [MQTT broker](/integrations/mqtt) is configured, Kestrel maintains a connection to the broker's host and port. This is typically a local network connection, but will require internet if you use a cloud-hosted MQTT broker.
 
 ## WebRTC (STUN)
 
-For [WebRTC live streaming](/configuration/live), Frigate uses STUN for NAT traversal:
+For [WebRTC live streaming](/configuration/live), Kestrel uses STUN for NAT traversal:
 
 - **go2rtc** defaults to a local STUN listener (`stun:8555`), no internet required.
 - **The web UI** uses the servers in `go2rtc.webrtc.ice_servers` for its WebRTC player and for the WebRTC connectivity check it runs when the Live view loads. If none are set, it uses Google's public STUN server (`stun:stun.l.google.com:19302`), which requires internet access from the browser. Set `ice_servers` to a STUN or TURN server on your network to avoid this.
@@ -162,18 +162,18 @@ When running as a Home Assistant App, the go2rtc startup script queries the loca
 - **Custom classification inference**: After training, custom models run entirely locally.
 - **Audio detection**: The YAMNet audio classification model is bundled in the Docker image.
 
-## Running Frigate Offline
+## Running Kestrel Offline
 
-To run Frigate in an air-gapped or offline environment:
+To run Kestrel in an air-gapped or offline environment:
 
-1. **Pre-download models**: Start Frigate with internet access once with all desired features enabled. Models will be cached in `/config/model_cache/`.
+1. **Pre-download models**: Start Kestrel with internet access once with all desired features enabled. Models will be cached in `/config/model_cache/`.
 2. **Pre-download the training base weights**: If you plan to train custom classification models, set `TF_KERAS_MOBILENET_V2_WEIGHTS_URL` before training, then run one training job while online. Without this variable the base weights are cached outside `/config/` and are lost whenever the container is recreated, so a later training run will fail offline. If the machine never has internet access, copy the weights in manually as described below.
 3. **Disable version check**: Set `telemetry.version_check: false` in your configuration.
 4. **Block outbound model requests**: Set the `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1` environment variables to prevent HuggingFace and Transformers from attempting any network requests.
 5. **Avoid cloud features**: Do not configure Frigate+, Generative AI providers that require internet, or cloud MQTT brokers.
 6. **Use local model mirrors**: If limited internet is available, set the `HF_ENDPOINT`, `GITHUB_ENDPOINT`, `GITHUB_RAW_ENDPOINT`, and `TF_KERAS_MOBILENET_V2_WEIGHTS_URL` environment variables to point to local mirrors.
 
-After these steps, Frigate will operate with no outbound internet connections.
+After these steps, Kestrel will operate with no outbound internet connections.
 
 ### Manually Copying the Training Base Weights
 
@@ -184,6 +184,6 @@ curl -L -o mobilenet_v2_weights.h5 \
   "https://storage.googleapis.com/tensorflow/keras-applications/mobilenet_v2/mobilenet_v2_weights_tf_dim_ordering_tf_kernels_0.35_224_no_top.h5"
 ```
 
-Copy the file into your Frigate config volume as `/config/model_cache/MobileNet/mobilenet_v2_weights.h5`, keeping that exact filename, then set the environment variable `TF_KERAS_MOBILENET_V2_WEIGHTS_URL` in your Docker compose file to the URL above and restart Frigate.
+Copy the file into your Kestrel config volume as `/config/model_cache/MobileNet/mobilenet_v2_weights.h5`, keeping that exact filename, then set the environment variable `TF_KERAS_MOBILENET_V2_WEIGHTS_URL` in your Docker compose file to the URL above and restart Kestrel.
 
-The variable must be set even though the URL is never contacted. If it is unset, Frigate ignores the copied file and asks Keras to download the weights instead.
+The variable must be set even though the URL is never contacted. If it is unset, Kestrel ignores the copied file and asks Keras to download the weights instead.

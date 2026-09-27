@@ -3,8 +3,8 @@
 Each provider's ``chat_with_tools_stream`` is driven with a canned "test
 response" so the two conversion layers are exercised without any network:
 
-  1. Frigate (OpenAI-style) messages -> provider-native request format
-  2. provider-native response -> Frigate ``("kind", value)`` stream events
+  1. Kestrel (OpenAI-style) messages -> provider-native request format
+  2. provider-native response -> Kestrel ``("kind", value)`` stream events
 
 These guard against regressions such as tool-call arguments arriving as raw
 strings instead of dicts (which crash the ``ToolCall`` model), and multimodal

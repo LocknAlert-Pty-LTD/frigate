@@ -7,13 +7,13 @@ import ConfigTabs from "@site/src/components/ConfigTabs";
 import TabItem from "@theme/TabItem";
 import NavPath from "@site/src/components/NavPath";
 
-Frigate ships with a set of FFmpeg presets to keep your configuration short and readable. Each preset expands to a longer list of FFmpeg arguments at runtime. You can see exactly what every preset expands to in [this file](https://github.com/blakeblackshear/frigate/blob/master/frigate/ffmpeg_presets.py).
+Kestrel ships with a set of FFmpeg presets to keep your configuration short and readable. Each preset expands to a longer list of FFmpeg arguments at runtime. You can see exactly what every preset expands to in [this file](https://github.com/blakeblackshear/frigate/blob/master/frigate/ffmpeg_presets.py).
 
 In the config file you reference a preset by its name (for example, `preset-vaapi`). In the UI, the same preset is shown with a friendly label (for example, **VAAPI (Intel/AMD GPU)**). Both refer to the same thing: the tables below list the config name alongside the label you'll see in the UI.
 
 ### Hwaccel (Hardware Acceleration) Presets {#hwaccel-presets}
 
-Hardware acceleration arguments tell FFmpeg to decode your camera's video stream on a GPU or integrated graphics chip instead of the CPU, which dramatically lowers CPU usage. Using a preset is highly recommended. Beyond replacing a long list of arguments, each preset also tells Frigate what hardware is available so it can offload additional work to the GPU, for example, encoding the Birdseye restream or scaling a stream whose resolution differs from the camera's native size.
+Hardware acceleration arguments tell FFmpeg to decode your camera's video stream on a GPU or integrated graphics chip instead of the CPU, which dramatically lowers CPU usage. Using a preset is highly recommended. Beyond replacing a long list of arguments, each preset also tells Kestrel what hardware is available so it can offload additional work to the GPU, for example, encoding the Birdseye restream or scaling a stream whose resolution differs from the camera's native size.
 
 See [the hardware acceleration docs](/configuration/hardware_acceleration_video.md) for details on setting up hardware acceleration for your GPU / iGPU, then select the preset that matches your hardware.
 
@@ -53,9 +53,9 @@ cameras:
 
 ### Input Args Presets
 
-Input arguments are passed to FFmpeg before your camera source and control how Frigate connects to and reads the stream: the transport protocol, timeouts, reconnection behavior, and how the stream is probed. The right input args ensure a reliable connection and maximum compatibility for each type of stream.
+Input arguments are passed to FFmpeg before your camera source and control how Kestrel connects to and reads the stream: the transport protocol, timeouts, reconnection behavior, and how the stream is probed. The right input args ensure a reliable connection and maximum compatibility for each type of stream.
 
-See [the camera-specific docs](/configuration/camera_specific.md) for more on non-standard cameras and recommendations for using them in Frigate.
+See [the camera-specific docs](/configuration/camera_specific.md) for more on non-standard cameras and recommendations for using them in Kestrel.
 
 | Preset (config)                  | UI Label                                  | Usage                       | Notes                                                                           |
 | -------------------------------- | ----------------------------------------- | --------------------------- | ------------------------------------------------------------------------------- |
@@ -64,7 +64,7 @@ See [the camera-specific docs](/configuration/camera_specific.md) for more on no
 | preset-http-reolink              | HTTP - Reolink Cameras                    | Reolink HTTP-FLV stream     | Only for Reolink HTTP, not when restreaming as RTSP                             |
 | preset-rtmp-generic              | RTMP (Generic)                            | RTMP stream                 |                                                                                 |
 | preset-rtsp-generic              | RTSP (Generic)                            | RTSP stream                 | The default when no input args are specified                                    |
-| preset-rtsp-restream             | RTSP - Restream from go2rtc               | RTSP stream from a restream | Use when a go2rtc restream is the source for Frigate                            |
+| preset-rtsp-restream             | RTSP - Restream from go2rtc               | RTSP stream from a restream | Use when a go2rtc restream is the source for Kestrel                            |
 | preset-rtsp-restream-low-latency | RTSP - Restream from go2rtc (Low Latency) | RTSP stream from a restream | Lowers latency for a go2rtc restream source; may cause issues with some cameras |
 | preset-rtsp-udp                  | RTSP - UDP                                | RTSP stream over UDP        | Use when the camera only supports UDP                                           |
 | preset-rtsp-blue-iris            | RTSP - Blue Iris                          | Blue Iris RTSP stream       | Use when consuming a stream from Blue Iris                                      |

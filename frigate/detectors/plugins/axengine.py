@@ -60,7 +60,7 @@ class Axengine(DetectionApi):
             import axengine as axe
         except ModuleNotFoundError:
             raise ImportError(
-                "AXEngine is not installed. Frigate installs it at startup when an "
+                "AXEngine is not installed. Kestrel installs it at startup when an "
                 "axengine detector is configured; check the startup log for errors."
             ) from None
 

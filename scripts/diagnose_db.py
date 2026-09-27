@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Reproduce Frigate's startup database work against a copy of a real database.
+"""Reproduce Kestrel's startup database work against a copy of a real database.
 
-When Frigate dies during startup, nginx stays up and every /api/* returns 500
+When Kestrel dies during startup, nginx stays up and every /api/* returns 500
 with nothing in the log but
 
     connect() failed (111: Connection refused) ... upstream:
@@ -16,7 +16,7 @@ sequence FrigateApp.init_database() performs -- and prints the real traceback.
 to make the copy and is never written to, so this is safe to point at a live
 production file.
 
-A clean run here does NOT mean Frigate will start: it only clears migrations.
+A clean run here does NOT mean Kestrel will start: it only clears migrations.
 If this passes, the crash is later in startup and the container log is the
 place to look.
 
@@ -138,7 +138,7 @@ def main() -> int:
         router.run()
     except Exception:
         print()
-        print("  MIGRATION FAILED -- this is very likely why Frigate will not start.")
+        print("  MIGRATION FAILED -- this is very likely why Kestrel will not start.")
         print()
         traceback.print_exc()
         if args.keep:

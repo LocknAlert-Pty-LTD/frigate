@@ -4,7 +4,7 @@
  * Both failures are forced through the mock layer rather than through test
  * hooks in the app. A non-array payload reaches a component that treats it as
  * a list and throws on the first render; aborting a page's asset request
- * reproduces what an open tab sees after Frigate is updated underneath it.
+ * reproduces what an open tab sees after Kestrel is updated underneath it.
  */
 
 import { test, expect, type FrigateApp } from "../fixtures/frigate-test";
@@ -84,7 +84,7 @@ test.describe("Error boundaries - page failure @high", () => {
 
     await expect
       .poll(() => readClipboard(frigateApp.page), { timeout: 5_000 })
-      .toContain("Frigate UI crash report");
+      .toContain("Kestrel UI crash report");
 
     const report = await readClipboard(frigateApp.page);
     expect(report).toContain("Version: 0.15.0-test");

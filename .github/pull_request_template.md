@@ -5,12 +5,12 @@ _Please read the [contributing guidelines](https://github.com/blakeblackshear/fr
 <!--
   Thank you!
 
-  Describe what this pull request does and how it will benefit users of Frigate.
+  Describe what this pull request does and how it will benefit users of Kestrel.
   Please describe in detail any considerations, breaking changes, etc.
 
   If you're introducing a new feature or significantly refactoring existing functionality,
   we encourage you to start a discussion first. This helps ensure your idea aligns with
-  Frigate's development goals.
+  Kestrel's development goals.
 -->
 
 ## Type of change

@@ -284,7 +284,7 @@ async def latest_frame(
         }
 
         if is_offline:
-            headers["X-Frigate-Offline"] = "true"
+            headers["X-Kestrel-Offline"] = "true"
 
         return Response(
             content=img.tobytes(),

@@ -9,9 +9,9 @@ import NavPath from "@site/src/components/NavPath";
 
 # TLS
 
-Frigate's integrated NGINX server supports TLS certificates. By default Frigate will generate a self signed certificate that will be used for port 8971, stored in `/config/tls` so it survives container recreation. Frigate is designed to make it easy to use whatever tool you prefer to manage certificates.
+Kestrel's integrated NGINX server supports TLS certificates. By default Kestrel will generate a self signed certificate that will be used for port 8971, stored in `/config/tls` so it survives container recreation. Kestrel is designed to make it easy to use whatever tool you prefer to manage certificates.
 
-Frigate is often running behind a reverse proxy that manages TLS certificates for multiple services. You will likely need to set your reverse proxy to allow self signed certificates or you can disable TLS in Frigate's config. However, if you are running on a dedicated device that's separate from your proxy or if you expose Frigate directly to the internet, you may want to configure TLS with valid certificates.
+Kestrel is often running behind a reverse proxy that manages TLS certificates for multiple services. You will likely need to set your reverse proxy to allow self signed certificates or you can disable TLS in Kestrel's config. However, if you are running on a dedicated device that's separate from your proxy or if you expose Kestrel directly to the internet, you may want to configure TLS with valid certificates.
 
 In many deployments, TLS will be unnecessary. Disable it as follows:
 
@@ -47,7 +47,7 @@ frigate:
 
 Within the folder, the private key is expected to be named `privkey.pem` and the certificate is expected to be named `fullchain.pem`. Mounted certificates take precedence over the self signed pair in `/config/tls`.
 
-`privkey.pem` must be readable by the runtime user that runs NGINX. Frigate hands it over at startup when the mount is writable; on a `:ro` mount, make it readable by uid 1000 (or your `PUID`) yourself. See [Running as a non-root user](/configuration/non_root).
+`privkey.pem` must be readable by the runtime user that runs NGINX. Kestrel hands it over at startup when the mount is writable; on a `:ro` mount, make it readable by uid 1000 (or your `PUID`) yourself. See [Running as a non-root user](/configuration/non_root).
 
 Note that certbot uses symlinks, and those can't be followed by the container unless it has access to the targets as well, so if using certbot you'll also have to mount the `archive` folder for your domain, e.g.:
 
@@ -61,9 +61,9 @@ frigate:
 
 ```
 
-Frigate automatically compares the fingerprint of the certificate it loaded, from either location, against the fingerprint of the TLS cert in NGINX every minute. If these differ, the NGINX config is reloaded to pick up the updated certificate.
+Kestrel automatically compares the fingerprint of the certificate it loaded, from either location, against the fingerprint of the TLS cert in NGINX every minute. If these differ, the NGINX config is reloaded to pick up the updated certificate.
 
-If you issue Frigate valid certificates you will likely want to configure it to run on port 443 so you can access it without a port number like `https://your-frigate-domain.com` by mapping 8971 to 443.
+If you issue Kestrel valid certificates you will likely want to configure it to run on port 443 so you can access it without a port number like `https://your-frigate-domain.com` by mapping 8971 to 443.
 
 ```yaml {3-4}
 frigate:
@@ -75,4 +75,4 @@ frigate:
 
 ## ACME Challenge
 
-Frigate also supports hosting the acme challenge files for the HTTP challenge method if needed. The challenge files should be mounted at `/etc/letsencrypt/www`. With a read-only root filesystem this has to be a mounted volume, since Frigate cannot create the directory itself.
+Kestrel also supports hosting the acme challenge files for the HTTP challenge method if needed. The challenge files should be mounted at `/etc/letsencrypt/www`. With a read-only root filesystem this has to be a mounted volume, since Kestrel cannot create the directory itself.

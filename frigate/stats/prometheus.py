@@ -406,7 +406,7 @@ class CustomCollector:
                 "version": stats["service"]["version"],
             }
             yield InfoMetricFamily(
-                "frigate_service", "Frigate version info", value=info
+                "frigate_service", "Kestrel version info", value=info
             )
 
         except KeyError:

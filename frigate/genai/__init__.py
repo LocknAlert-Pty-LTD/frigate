@@ -1,4 +1,4 @@
-"""Generative AI module for Frigate."""
+"""Generative AI module for Kestrel."""
 
 import importlib
 import json
@@ -53,7 +53,7 @@ def register_genai_provider(key: GenAIProviderEnum) -> Callable:
 
 
 class GenAIClient:
-    """Generative AI client for Frigate."""
+    """Generative AI client for Kestrel."""
 
     # Minimum seconds between re-initialization attempts when the provider was
     # offline at startup
@@ -427,7 +427,7 @@ class GenAIClient:
         """Generate embeddings for text and/or images.
 
         Returns list of numpy arrays (one per input). Expected dimension is 768
-        for Frigate semantic search compatibility.
+        for Kestrel semantic search compatibility.
 
         Providers that support embeddings should override this method.
         """

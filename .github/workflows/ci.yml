@@ -91,7 +91,7 @@ jobs:
             echo "Server header leaks the nginx version; server_tokens is not off"
             exit 1
           fi
-          # Frigate never ships frame-ancestors: HA's Webpage card and iframe
+          # Kestrel never ships frame-ancestors: HA's Webpage card and iframe
           # panels frame it cross-origin and it would break them silently
           if echo "$headers" | grep -qi "frame-ancestors"; then
             echo "response carries frame-ancestors, which breaks cross-origin iframe embedding"

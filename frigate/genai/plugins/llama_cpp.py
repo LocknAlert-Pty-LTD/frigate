@@ -1,4 +1,4 @@
-"""llama.cpp Provider for Frigate AI."""
+"""llama.cpp Provider for Kestrel AI."""
 
 import base64
 import io
@@ -92,7 +92,7 @@ def _to_jpeg(img_bytes: bytes) -> bytes | None:
 
 @register_genai_provider(GenAIProviderEnum.llamacpp)
 class LlamaCppClient(GenAIClient):
-    """Generative AI client for Frigate using llama.cpp server."""
+    """Generative AI client for Kestrel using llama.cpp server."""
 
     provider: str | None  # base_url
     provider_options: dict[str, Any]

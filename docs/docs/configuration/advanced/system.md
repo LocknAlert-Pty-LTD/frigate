@@ -9,7 +9,7 @@ import NavPath from "@site/src/components/NavPath";
 
 ### Logging
 
-#### Frigate `logger`
+#### Kestrel `logger`
 
 Change the default log level for troubleshooting purposes.
 
@@ -63,7 +63,7 @@ go2rtc:
 
 ### `environment_vars`
 
-This section sets environment variables in the Frigate process for those unable to modify the environment of the container, like within Home Assistant OS. It's meant for process settings such as `LIBVA_DRIVER_NAME` or the TensorFlow thread counts below. Docker users should set environment variables in their `docker run` command (`-e LIBVA_DRIVER_NAME=i965`) or `docker-compose.yml` file (`environment:` section) instead. Values set here are stored in plain text in your config file, so credentials belong in `secrets.yaml`, Docker environment variables, or Docker secrets instead.
+This section sets environment variables in the Kestrel process for those unable to modify the environment of the container, like within Home Assistant OS. It's meant for process settings such as `LIBVA_DRIVER_NAME` or the TensorFlow thread counts below. Docker users should set environment variables in their `docker run` command (`-e LIBVA_DRIVER_NAME=i965`) or `docker-compose.yml` file (`environment:` section) instead. Values set here are stored in plain text in your config file, so credentials belong in `secrets.yaml`, Docker environment variables, or Docker secrets instead.
 
 Names prefixed with `FRIGATE_` set here also take part in `{FRIGATE_VARIABLE_NAME}` substitution (see [below](#substitution-sources-and-precedence)), but `secrets.yaml` is the better home for them.
 
@@ -120,7 +120,7 @@ environment_vars:
 
 ### `secrets.yaml`
 
-A `secrets.yaml` file next to your `config.yml` is an additional source of `FRIGATE_` variables, for installs that can't set container environment variables or mount Docker secrets. It's a flat map of names to values, and it is never read or written by the Frigate UI:
+A `secrets.yaml` file next to your `config.yml` is an additional source of `FRIGATE_` variables, for installs that can't set container environment variables or mount Docker secrets. It's a flat map of names to values, and it is never read or written by the Kestrel UI:
 
 ```yaml
 FRIGATE_CAM_USER: viewer
@@ -130,7 +130,7 @@ FRIGATE_MQTT_HOST: mqtt.internal.example
 
 For Docker this is `/config/secrets.yaml` inside the container, so it lives in whatever host directory you mounted at `/config`. For the Home Assistant App it's `/addon_configs/<addon_directory>/secrets.yaml`, in the same folder as your `config.yml`; see [the App config directory](../config.md#accessing-app-config-dir) for the directory name for your variant.
 
-Names must start with `FRIGATE_`, and nesting is not supported. `secrets.yaml` feeds `{FRIGATE_VARIABLE_NAME}` substitution, so the handful of variables Frigate reads straight from the process environment, such as `FRIGATE_JWT_SECRET`, still need a container environment variable or a Docker secret.
+Names must start with `FRIGATE_`, and nesting is not supported. `secrets.yaml` feeds `{FRIGATE_VARIABLE_NAME}` substitution, so the handful of variables Kestrel reads straight from the process environment, such as `FRIGATE_JWT_SECRET`, still need a container environment variable or a Docker secret.
 
 ### Substitution sources and precedence
 
@@ -176,7 +176,7 @@ This may need to be in a custom location if network storage is used for the medi
 
 Navigate to <NavPath path="Settings > System > Database" />.
 
-- Set **Database path** to the custom path for the Frigate database file (default: `/config/frigate.db`)
+- Set **Database path** to the custom path for the Kestrel database file (default: `/config/frigate.db`)
 
 </TabItem>
 <TabItem value="yaml">
@@ -274,11 +274,11 @@ Some labels have special handling and modifications can disable functionality.
 
 ## Network Configuration
 
-Frigate exposes a few networking options. IPv6 and the listen ports are set in the `networking` configuration (or from the Settings UI); more advanced changes require [customizing the bundled Nginx configuration](#customizing-the-nginx-configuration).
+Kestrel exposes a few networking options. IPv6 and the listen ports are set in the `networking` configuration (or from the Settings UI); more advanced changes require [customizing the bundled Nginx configuration](#customizing-the-nginx-configuration).
 
 ### Enabling IPv6
 
-By default Frigate listens on IPv4 only. To also listen on IPv6 (on port `5000`, and on `8971` when TLS is configured), enable it in the `networking` configuration.
+By default Kestrel listens on IPv4 only. To also listen on IPv6 (on port `5000`, and on `8971` when TLS is configured), enable it in the `networking` configuration.
 
 <ConfigTabs>
 <TabItem value="ui">
@@ -326,17 +326,17 @@ networking:
 
 :::warning
 
-This setting is for advanced users. For the majority of use cases it's recommended to change the `ports` section of your Docker compose file or use the Docker `run` `--publish` option instead, e.g. `-p 443:8971`. Changing Frigate's ports may break some integrations.
+This setting is for advanced users. For the majority of use cases it's recommended to change the `ports` section of your Docker compose file or use the Docker `run` `--publish` option instead, e.g. `-p 443:8971`. Changing Kestrel's ports may break some integrations.
 
-The internal and external ports must be different port numbers, and Frigate will refuse to start otherwise. Requests arriving on the internal port are treated as authenticated admins, so pointing both at the same port would remove authentication from the external one.
+The internal and external ports must be different port numbers, and Kestrel will refuse to start otherwise. Requests arriving on the internal port are treated as authenticated admins, so pointing both at the same port would remove authentication from the external one.
 
-Nginx binds these ports when it starts, so port changes only take effect after Frigate restarts.
+Nginx binds these ports when it starts, so port changes only take effect after Kestrel restarts.
 
 :::
 
 ### Customizing the Nginx configuration
 
-More advanced changes to Frigate's internal network configuration can be made by bind mounting your own `nginx.conf` into the container. For example:
+More advanced changes to Kestrel's internal network configuration can be made by bind mounting your own `nginx.conf` into the container. For example:
 
 ```yaml
 services:
@@ -350,7 +350,7 @@ services:
 
 ## Base path
 
-By default, Frigate runs at the root path (`/`). However some setups require to run Frigate under a custom path prefix (e.g. `/frigate`), especially when Frigate is located behind a reverse proxy that requires path-based routing.
+By default, Kestrel runs at the root path (`/`). However some setups require to run Kestrel under a custom path prefix (e.g. `/frigate`), especially when Kestrel is located behind a reverse proxy that requires path-based routing.
 
 ### Set Base Path via HTTP Header
 
@@ -379,7 +379,7 @@ services:
       - FRIGATE_BASE_PATH=/frigate
 ```
 
-This can be used for example to access Frigate via a Tailscale agent (https), by simply forwarding all requests to the base path (http):
+This can be used for example to access Kestrel via a Tailscale agent (https), by simply forwarding all requests to the base path (http):
 
 ```
 tailscale serve --https=443 --bg --set-path /frigate http://localhost:5000/frigate
@@ -389,28 +389,28 @@ tailscale serve --https=443 --bg --set-path /frigate http://localhost:5000/friga
 
 ### Custom ffmpeg build
 
-Included with Frigate is a build of ffmpeg that works for the vast majority of users. However, there exists some hardware setups which have incompatibilities with the included build. In this case, statically built `ffmpeg` and `ffprobe` binaries can be placed in `/config/custom-ffmpeg/bin` for Frigate to use.
+Included with Kestrel is a build of ffmpeg that works for the vast majority of users. However, there exists some hardware setups which have incompatibilities with the included build. In this case, statically built `ffmpeg` and `ffprobe` binaries can be placed in `/config/custom-ffmpeg/bin` for Kestrel to use.
 
 To do this:
 
 1. Download your ffmpeg build and uncompress it to the `/config/custom-ffmpeg` folder. Verify that both the `ffmpeg` and `ffprobe` binaries are located in `/config/custom-ffmpeg/bin`.
-2. Update the `ffmpeg.path` in your Frigate config to `/config/custom-ffmpeg`.
-3. Restart Frigate and the custom version will be used if the steps above were done correctly.
+2. Update the `ffmpeg.path` in your Kestrel config to `/config/custom-ffmpeg`.
+3. Restart Kestrel and the custom version will be used if the steps above were done correctly.
 
-Both binaries have to be executable by Frigate's unprivileged runtime user, so `chmod 755` them after extracting. The startup ownership sweep runs only once, so anything you add to `/config` later keeps whatever ownership and mode you gave it.
+Both binaries have to be executable by Kestrel's unprivileged runtime user, so `chmod 755` them after extracting. The startup ownership sweep runs only once, so anything you add to `/config` later keeps whatever ownership and mode you gave it.
 
-There is one exception, and it only affects [`FRIGATE_ROOT_SERVICES`](/configuration/non_root#keeping-individual-services-root) listing `frigate`. That mode runs Frigate as root while still handing `/config` to the unprivileged runtime user, so anything running as that user could swap the binary and gain root. A build inside any of Frigate's writable volumes (`/config`, `/media/frigate`, the cache and shm dirs) is ignored there and the bundled one is used, with a warning in the log. Keep the build somewhere root-owned (any absolute `ffmpeg.path` works, so a read-only bind mount such as `/opt/custom-ffmpeg` is enough) if you need both. The default mode and `FRIGATE_RUN_AS_ROOT=true` are unaffected and behave exactly as they always have.
+There is one exception, and it only affects [`FRIGATE_ROOT_SERVICES`](/configuration/non_root#keeping-individual-services-root) listing `frigate`. That mode runs Kestrel as root while still handing `/config` to the unprivileged runtime user, so anything running as that user could swap the binary and gain root. A build inside any of Kestrel's writable volumes (`/config`, `/media/frigate`, the cache and shm dirs) is ignored there and the bundled one is used, with a warning in the log. Keep the build somewhere root-owned (any absolute `ffmpeg.path` works, so a read-only bind mount such as `/opt/custom-ffmpeg` is enough) if you need both. The default mode and `FRIGATE_RUN_AS_ROOT=true` are unaffected and behave exactly as they always have.
 
 ### Custom go2rtc version
 
-Frigate currently includes go2rtc v1.9.14, there may be certain cases where you want to run a different version of go2rtc.
+Kestrel currently includes go2rtc v1.9.14, there may be certain cases where you want to run a different version of go2rtc.
 
 To do this:
 
 1. Download the go2rtc build to the `/config` folder.
 2. Rename the build to `go2rtc`.
 3. Give `go2rtc` execute permission for all users (`chmod 755`). It runs as its own `go2rtc` user, which doesn't own the file, so owner-only execute permission isn't enough.
-4. Restart Frigate and the custom version will be used, you can verify by checking go2rtc logs.
+4. Restart Kestrel and the custom version will be used, you can verify by checking go2rtc logs.
 
 The same exception applies, and again only to [`FRIGATE_ROOT_SERVICES`](/configuration/non_root#keeping-individual-services-root) listing `go2rtc`: the binary is ignored there and the embedded one is used, with a warning in the log. Unlike `ffmpeg.path`, the go2rtc binary location is not configurable, so there is no outside-`/config` alternative. Use `FRIGATE_RUN_AS_ROOT=true` instead if you need both a custom go2rtc build and root. The default mode and the escape hatch both honor `/config/go2rtc` exactly as they always have.
 
@@ -420,7 +420,7 @@ When frigate starts up, it checks whether your config file is valid, and if it i
 
 ### Via API
 
-Frigate can accept a new configuration file as JSON at the `/api/config/save` endpoint. When updating the config this way, Frigate will validate the config before saving it, and return a `400` if the config is not valid.
+Kestrel can accept a new configuration file as JSON at the `/api/config/save` endpoint. When updating the config this way, Kestrel will validate the config before saving it, and return a `400` if the config is not valid.
 
 ```bash
 curl -X POST http://frigate_host:5000/api/config/save -d @config.json
@@ -434,7 +434,7 @@ yq -o=json '.' config.yaml | curl -X POST 'http://frigate_host:5000/api/config/s
 
 ### Via Command Line
 
-You can also validate your config at the command line by using the docker container itself. In CI/CD, you leverage the return code to determine if your config is valid, Frigate will return `1` if the config is invalid, or `0` if it's valid.
+You can also validate your config at the command line by using the docker container itself. In CI/CD, you leverage the return code to determine if your config is valid, Kestrel will return `1` if the config is invalid, or `0` if it's valid.
 
 ```bash
 docker run                                \

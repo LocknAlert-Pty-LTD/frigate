@@ -1,6 +1,6 @@
 """Core alarm panel state machine.
 
-Protocol-agnostic: has no dependency on MQTT, ZMQ, or Frigate detections.
+Protocol-agnostic: has no dependency on MQTT, ZMQ, or Kestrel detections.
 Entry/exit delay countdowns are not timed internally. Callers start a delay
 state (`arm` with exit_delay_seconds > 0, `trigger` with entry_delay_seconds
 > 0) and are responsible for calling `complete_exit_delay` /

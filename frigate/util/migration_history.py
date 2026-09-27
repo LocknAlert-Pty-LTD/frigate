@@ -9,7 +9,7 @@ file back off disk:
 
 So renaming a migration that some database has already applied does not merely
 cause it to re-run -- it makes `Router` raise FileNotFoundError before any SQL
-executes. In Frigate that aborts startup: uvicorn never binds 127.0.0.1:5001,
+executes. In Kestrel that aborts startup: uvicorn never binds 127.0.0.1:5001,
 nginx keeps serving the UI, and every API request returns 500 with nothing in
 the log but "connect() failed (111: Connection refused)".
 

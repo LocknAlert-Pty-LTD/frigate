@@ -10,38 +10,38 @@ import NavPath from "@site/src/components/NavPath";
 
 # Video Decoding
 
-It is highly recommended to use an integrated or discrete GPU for hardware acceleration video decoding in Frigate.
+It is highly recommended to use an integrated or discrete GPU for hardware acceleration video decoding in Kestrel.
 
 Some types of hardware acceleration are detected and used automatically, but you may need to update your configuration to enable hardware accelerated decoding in ffmpeg. To verify that hardware acceleration is working:
 
 - Check the logs: A message will either say that hardware acceleration was automatically detected, or there will be a warning that no hardware acceleration was automatically detected
 - If hardware acceleration is specified in the config, verification can be done by ensuring the logs are free from errors. There is no CPU fallback for hardware acceleration.
 
-Frigate supports presets for optimal hardware accelerated video decoding:
+Kestrel supports presets for optimal hardware accelerated video decoding:
 
 **AMD**
 
-- [AMD](#amd-based-cpus): Frigate can utilize modern AMD integrated GPUs and AMD discrete GPUs to accelerate video decoding.
+- [AMD](#amd-based-cpus): Kestrel can utilize modern AMD integrated GPUs and AMD discrete GPUs to accelerate video decoding.
 
 **Intel**
 
-- [Intel](#intel-based-cpus): Frigate can utilize most Intel integrated GPUs and Arc GPUs to accelerate video decoding.
+- [Intel](#intel-based-cpus): Kestrel can utilize most Intel integrated GPUs and Arc GPUs to accelerate video decoding.
 
 **Nvidia GPU**
 
-- [Nvidia GPU](#nvidia-gpus): Frigate can utilize most modern Nvidia GPUs to accelerate video decoding.
+- [Nvidia GPU](#nvidia-gpus): Kestrel can utilize most modern Nvidia GPUs to accelerate video decoding.
 
 **Raspberry Pi 3/4**
 
-- [Raspberry Pi](#raspberry-pi-34): Frigate can utilize the media engine in the Raspberry Pi 3 and 4 to slightly accelerate video decoding.
+- [Raspberry Pi](#raspberry-pi-34): Kestrel can utilize the media engine in the Raspberry Pi 3 and 4 to slightly accelerate video decoding.
 
 **Nvidia Jetson** <CommunityBadge />
 
-- [Jetson](#nvidia-jetson): Frigate can utilize the media engine in Jetson hardware to accelerate video decoding.
+- [Jetson](#nvidia-jetson): Kestrel can utilize the media engine in Jetson hardware to accelerate video decoding.
 
 **Rockchip** <CommunityBadge />
 
-- [RKNN](#rockchip-platform): Frigate can utilize the media engine in RockChip SOCs to accelerate video decoding.
+- [RKNN](#rockchip-platform): Kestrel can utilize the media engine in RockChip SOCs to accelerate video decoding.
 
 **Other Hardware**
 
@@ -49,7 +49,7 @@ Depending on your system, these presets may not be compatible, and you may need 
 
 ## Intel-based CPUs
 
-Frigate can utilize most Intel integrated GPUs and Arc GPUs to accelerate video decoding.
+Kestrel can utilize most Intel integrated GPUs and Arc GPUs to accelerate video decoding.
 
 **Recommended hwaccel Preset**
 
@@ -130,10 +130,10 @@ ffmpeg:
 
 ### Configuring Intel GPU Stats
 
-Frigate reads Intel GPU utilization directly from the kernel's per-client DRM usage counters exposed at `/proc/<pid>/fdinfo/<fd>`. This requires:
+Kestrel reads Intel GPU utilization directly from the kernel's per-client DRM usage counters exposed at `/proc/<pid>/fdinfo/<fd>`. This requires:
 
 - Linux kernel **5.19 or newer** for the `i915` driver, or any release of the `xe` driver.
-- Frigate running with permission to read other processes' fdinfo. Running as root inside the container (the default) satisfies this; non-root setups may need `CAP_SYS_PTRACE`.
+- Kestrel running with permission to read other processes' fdinfo. Running as root inside the container (the default) satisfies this; non-root setups may need `CAP_SYS_PTRACE`.
 
 No `intel_gpu_top` binary, `CAP_PERFMON`, privileged mode, or `perf_event_paranoid` tuning is required.
 
@@ -157,7 +157,7 @@ When passing a device path, make sure the device is also passed through to the c
 
 ## AMD-based CPUs
 
-Frigate can utilize modern AMD integrated GPUs and AMD GPUs to accelerate video decoding using VAAPI.
+Kestrel can utilize modern AMD integrated GPUs and AMD GPUs to accelerate video decoding using VAAPI.
 
 ### Configuring Radeon Driver
 
@@ -185,7 +185,7 @@ ffmpeg:
 
 ## NVIDIA GPUs
 
-While older GPUs may work, it is recommended to use modern, supported GPUs. NVIDIA provides a [matrix of supported GPUs and features](https://developer.nvidia.com/video-encode-and-decode-gpu-support-matrix-new). If your card is on the list and supports CUVID/NVDEC, it will most likely work with Frigate for decoding. However, you must also use [a driver version that will work with FFmpeg](https://github.com/FFmpeg/nv-codec-headers/blob/master/README). Older driver versions may be missing symbols and fail to work, and older cards are not supported by newer driver versions. The only way around this is to [provide your own FFmpeg](/configuration/advanced/system#custom-ffmpeg-build) that will work with your driver version, but this is unsupported and may not work well if at all.
+While older GPUs may work, it is recommended to use modern, supported GPUs. NVIDIA provides a [matrix of supported GPUs and features](https://developer.nvidia.com/video-encode-and-decode-gpu-support-matrix-new). If your card is on the list and supports CUVID/NVDEC, it will most likely work with Kestrel for decoding. However, you must also use [a driver version that will work with FFmpeg](https://github.com/FFmpeg/nv-codec-headers/blob/master/README). Older driver versions may be missing symbols and fail to work, and older cards are not supported by newer driver versions. The only way around this is to [provide your own FFmpeg](/configuration/advanced/system#custom-ffmpeg-build) that will work with your driver version, but this is unsupported and may not work well if at all.
 
 A more complete list of cards and their compatible drivers is available in the [driver release readme](https://download.nvidia.com/XFree86/Linux-x86_64/525.85.05/README/supportedchips.html).
 
@@ -265,21 +265,21 @@ reference frames, and per-region bitrate shaping — that still emit an ordinary
 standards-compliant H.264 or H.265 bitstream. Any decoder that handles H.264/H.265
 handles the "+" variant, so `preset-nvidia` decodes them on the GPU exactly like the
 plain versions. `ffprobe` also reports them as plain `h264` / `hevc`, which is why
-Frigate's automatic hardware-acceleration detection classifies them correctly.
+Kestrel's automatic hardware-acceleration detection classifies them correctly.
 
 What the "+" modes *do* change is keyframe spacing. Because they stretch the interval
 between I-frames, a stream may take noticeably longer to produce its first decoded
 frame, and recording segments can be less precisely cut. If that matters more to you
 than the bandwidth saving, set a fixed I-frame interval (ideally equal to the frame
 rate, i.e. one keyframe per second) in the camera's own web UI. That is a camera-side
-setting; no Frigate option changes it.
+setting; no Kestrel option changes it.
 
 :::
 
 ### GPU capability
 
 Whether a given codec decodes in hardware depends on the GPU's NVDEC block, not on
-Frigate. Check NVIDIA's [video decode support matrix](https://developer.nvidia.com/video-encode-and-decode-gpu-support-matrix-new)
+Kestrel. Check NVIDIA's [video decode support matrix](https://developer.nvidia.com/video-encode-and-decode-gpu-support-matrix-new)
 for your card. As a reference point, an RTX 3060 (Ampere, GA106) decodes H.264 up to
 4:4:4, HEVC 8/10/12-bit, VP8, VP9 and AV1, which covers every codec a surveillance
 camera is likely to emit.
@@ -357,7 +357,7 @@ ffmpeg:
 
 :::note
 
-If running Frigate through Docker, map the relevant `/dev/video*` devices into
+If running Kestrel through Docker, map the relevant `/dev/video*` devices into
 the container. Running in privileged mode also works but grants far more access
 than needed. With Docker Compose add:
 

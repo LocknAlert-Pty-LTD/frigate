@@ -405,7 +405,7 @@ class TestMqttClientLifecycle(unittest.TestCase):
                 self.assertTrue(self.client._is_supported_command_topic(topic))
 
         for topic in (
-            # Frigate's own publishes echoing back through the wildcard
+            # Kestrel's own publishes echoing back through the wildcard
             "front/detect/state",
             "available",
             "front/notifications/suspended",
@@ -745,7 +745,7 @@ class TestMqttClientLifecycle(unittest.TestCase):
 
     def test_command_handler_exception_does_not_kill_worker(self) -> None:
         """A raise in a dispatcher handler used to end the network thread and
-        take MQTT down until the next Frigate restart."""
+        take MQTT down until the next Kestrel restart."""
         self.client._dispatcher = MagicMock(side_effect=RuntimeError("handler bug"))
         self.client._callback_queue.put(("message", "front/detect/set", "ON"))
         self.client._callback_queue.put(("message", "front/motion/set", "ON"))

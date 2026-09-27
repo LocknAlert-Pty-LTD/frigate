@@ -231,7 +231,7 @@ COPY --from=models /rootfs/ /
 COPY docker/main/rootfs/ /
 
 
-# Frigate deps (ffmpeg, python, nginx, go2rtc, s6-overlay, etc)
+# Kestrel deps (ffmpeg, python, nginx, go2rtc, s6-overlay, etc)
 FROM slim-base AS deps
 ARG TARGETARCH
 ARG BASE_IMAGE
@@ -333,7 +333,7 @@ CMD []
 HEALTHCHECK --start-period=300s --start-interval=5s --interval=15s --timeout=5s --retries=3 \
     CMD test -f /dev/shm/.frigate-is-stopping && exit 0; curl --fail --silent --show-error http://127.0.0.1:5000/api/version || exit 1
 
-# Frigate deps with Node.js and NPM for devcontainer
+# Kestrel deps with Node.js and NPM for devcontainer
 FROM deps AS devcontainer
 
 # /config here is the developer's bind-mounted checkout, not a data volume, so
@@ -341,7 +341,7 @@ FROM deps AS devcontainer
 # the runtime uid and lock out any container user that isn't 1000.
 ENV FRIGATE_RUN_AS_ROOT=true
 
-# Do not start the actual Frigate service on devcontainer as it will be started by VS Code
+# Do not start the actual Kestrel service on devcontainer as it will be started by VS Code
 # But start a fake service for simulating the logs
 COPY docker/main/fake_frigate_run /etc/s6-overlay/s6-rc.d/frigate/run
 
@@ -371,7 +371,7 @@ HEALTHCHECK NONE
 CMD ["sleep", "infinity"]
 
 
-# Frigate web build
+# Kestrel web build
 # This should be architecture agnostic, so speed up the build on multiarch by not using QEMU.
 FROM --platform=$BUILDPLATFORM node:20 AS web-build
 
@@ -392,7 +392,7 @@ COPY frigate frigate/
 COPY migrations migrations/
 COPY --from=web-build /work/dist/ web/
 
-# Frigate final container
+# Kestrel final container
 FROM deps AS frigate
 
 WORKDIR /opt/frigate/
@@ -402,7 +402,7 @@ COPY --from=rootfs / /
 # source tree on every boot (pip-installed packages are already compiled)
 RUN python3 -m compileall -q -j0 /opt/frigate/frigate
 
-# Frigate TensorRT container (amd64 dGPU), buildable without buildx bake.
+# Kestrel TensorRT container (amd64 dGPU), buildable without buildx bake.
 #
 # docker/tensorrt/Dockerfile.amd64 defines these same two stages, but it takes
 # `wheels`, `deps` and `rootfs` in as *named build contexts*, which only

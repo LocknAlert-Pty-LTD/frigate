@@ -7,7 +7,7 @@ import ConfigTabs from "@site/src/components/ConfigTabs";
 import TabItem from "@theme/TabItem";
 import NavPath from "@site/src/components/NavPath";
 
-Recordings can be enabled and are stored at `/media/frigate/recordings`. The folder structure for the recordings is `YYYY-MM-DD/HH/<camera_name>/MM.SS.mp4` in **UTC time**. These recordings are written directly from your camera stream without re-encoding. Each camera supports a configurable retention policy. Frigate chooses the largest matching retention value between the recording retention and the tracked object retention when determining if a recording should be removed.
+Recordings can be enabled and are stored at `/media/frigate/recordings`. The folder structure for the recordings is `YYYY-MM-DD/HH/<camera_name>/MM.SS.mp4` in **UTC time**. These recordings are written directly from your camera stream without re-encoding. Each camera supports a configurable retention policy. Kestrel chooses the largest matching retention value between the recording retention and the tracked object retention when determining if a recording should be removed.
 
 New recording segments are written from the camera stream to cache, they are only moved to disk if they pass a validation check and match the setup recording retention policy.
 
@@ -23,7 +23,7 @@ H265 recordings can be viewed in Chrome 108+, Edge and Safari only. All other br
 
 ### Most conservative: Ensure all video is saved
 
-For users deploying Frigate in environments where it is important to have contiguous video stored even if there was no detectable motion, the following configuration will store all video for 3 days. After 3 days, only video containing motion will be saved for 7 days. After 7 days, only video containing motion and overlapping with alerts or detections will be retained until 30 days have passed.
+For users deploying Kestrel in environments where it is important to have contiguous video stored even if there was no detectable motion, the following configuration will store all video for 3 days. After 3 days, only video containing motion will be saved for 7 days. After 7 days, only video containing motion and overlapping with alerts or detections will be retained until 30 days have passed.
 
 <ConfigTabs>
 <TabItem value="ui">
@@ -201,7 +201,7 @@ Pre and post capture footage is included in the **recording timeline**, visible 
 
 ## Configuring Recording Retention
 
-Frigate supports both continuous and tracked object based recordings with separate retention modes and retention periods.
+Kestrel supports both continuous and tracked object based recordings with separate retention modes and retention periods.
 
 :::tip
 
@@ -277,9 +277,9 @@ This configuration will retain recording segments that overlap with alerts and d
 
 ## Sub Stream Recording
 
-In addition to the main recording stream, Frigate can record a second, lower quality stream for each camera. This serves two purposes:
+In addition to the main recording stream, Kestrel can record a second, lower quality stream for each camera. This serves two purposes:
 
-- **Quality selection during playback**: A quality selector (`Auto`, `Original`, or `Low`) appears in History view for cameras with sub stream recording enabled. `Original` and `Low` play only that stream's recordings. Time ranges where the selected stream has no footage are skipped during playback, and the selector notes when the selected stream has no recordings at all in the viewed time range. With `Auto` (the default), playback prefers the original quality and automatically falls back to the low quality stream when the connection cannot keep up, or for time ranges where the original recordings have expired. The selector shows each stream's video codec and audio details beneath the options; footage recorded by older Frigate versions shows no details.
+- **Quality selection during playback**: A quality selector (`Auto`, `Original`, or `Low`) appears in History view for cameras with sub stream recording enabled. `Original` and `Low` play only that stream's recordings. Time ranges where the selected stream has no footage are skipped during playback, and the selector notes when the selected stream has no recordings at all in the viewed time range. With `Auto` (the default), playback prefers the original quality and automatically falls back to the low quality stream when the connection cannot keep up, or for time ranges where the original recordings have expired. The selector shows each stream's video codec and audio details beneath the options; footage recorded by older Kestrel versions shows no details.
 - **Quality selection when exporting**: A `Quality` selector (`Auto`, `Original`, or `Low`) is available for cameras with sub stream recording enabled. See [exporting](#exporting-a-camera-that-records-two-streams) for details on each option.
 - **Extended retention**: Sub stream recordings have their own retention settings, fully independent of the main recordings. By giving the low quality recordings a longer retention period, you can keep weeks or months of low quality history using a fraction of the storage, and that history remains playable after the main recordings expire. Playback falls back to the low quality recordings automatically, and the timeline shows a muted treatment for time ranges where only low quality footage remains. Timeline previews are kept for as long as either stream still has recordings, so scrubbing works across the whole retained history.
 
@@ -368,7 +368,7 @@ The `record.sub` config supports the same retention structure as the main record
 
 :::note
 
-Recording must be enabled (`record.enabled`) for sub stream recording to run, and Frigate will fail to start if `record.sub.enabled` is set without a `record_sub` role assigned to one of the camera's inputs.
+Recording must be enabled (`record.enabled`) for sub stream recording to run, and Kestrel will fail to start if `record.sub.enabled` is set without a `record_sub` role assigned to one of the camera's inputs.
 
 :::
 
@@ -432,15 +432,15 @@ This table covers only features that read recordings from disk. Tracked object s
 - Recording a second stream increases overall storage use. The increase is typically small relative to the main recordings, since the low quality stream is much smaller. Both streams are cached before being written to disk, so cache use goes up as well. See [the `/tmp/cache` area is separate](#the-tmpcache-area-is-separate) if you start seeing `No space left on device` errors after enabling it.
 - The go2rtc transcode approach continuously encodes the low quality stream, which uses CPU or GPU resources. This cost only applies to the transcode path; recording the camera's native sub stream does not re-encode. See the [go2rtc hardware acceleration documentation](https://github.com/AlexxIT/go2rtc?tab=readme-ov-file#source-ffmpeg) for accelerating the transcode.
 - Many camera sub streams do not include audio. If the source stream has no audio, the low quality recordings will not have audio.
-- **Matching video codecs and audio settings between the two streams gives the smoothest playback.** When playback combines both qualities on one timeline (the default `Auto` behavior: for example original quality during events with low quality in between, or low quality history after the original recordings expire) and the streams use different video codecs or audio settings, for example H.265 on the main stream and H.264 on the sub stream, or 16 kHz audio on one and 8 kHz on the other, playback still works: Frigate inserts a decoder reset at each quality transition, which can cause a barely-perceptible pause there. Configuring both streams in the camera's firmware to use the same video codec, audio codec, and sample rate makes transitions fully seamless, and a mismatched audio sample rate can also be corrected with [sub stream output args](#sub-stream-output-args). If one stream has audio and the other does not, combined time ranges play **without audio**; selecting a single quality with the playback selector always keeps that stream's audio.
+- **Matching video codecs and audio settings between the two streams gives the smoothest playback.** When playback combines both qualities on one timeline (the default `Auto` behavior: for example original quality during events with low quality in between, or low quality history after the original recordings expire) and the streams use different video codecs or audio settings, for example H.265 on the main stream and H.264 on the sub stream, or 16 kHz audio on one and 8 kHz on the other, playback still works: Kestrel inserts a decoder reset at each quality transition, which can cause a barely-perceptible pause there. Configuring both streams in the camera's firmware to use the same video codec, audio codec, and sample rate makes transitions fully seamless, and a mismatched audio sample rate can also be corrected with [sub stream output args](#sub-stream-output-args). If one stream has audio and the other does not, combined time ranges play **without audio**; selecting a single quality with the playback selector always keeps that stream's audio.
 
 ## Can I have "continuous" recordings, but only at certain times?
 
-Using Frigate UI, Home Assistant, or MQTT, cameras can be automated to only record in certain situations or at certain times.
+Using Kestrel UI, Home Assistant, or MQTT, cameras can be automated to only record in certain situations or at certain times.
 
 ## How do I export recordings?
 
-Footage can be exported from Frigate by right-clicking (desktop) or long pressing (mobile) on a review item in the Review pane or by clicking the Export button in the History view. Exported footage is then organized and searchable through the Export view, accessible from the main navigation bar.
+Footage can be exported from Kestrel by right-clicking (desktop) or long pressing (mobile) on a review item in the Review pane or by clicking the Export button in the History view. Exported footage is then organized and searchable through the Export view, accessible from the main navigation bar.
 
 ### Custom export with FFmpeg arguments
 
@@ -450,7 +450,7 @@ For advanced use cases, the [custom export HTTP API](../integrations/api/export-
 POST /export/custom/{camera_name}/start/{start_time}/end/{end_time}
 ```
 
-The request body accepts `ffmpeg_input_args` and `ffmpeg_output_args` to control encoding, frame rate, filters, and other FFmpeg options. If neither is provided, Frigate defaults to time-lapse output settings (25x speed, 30 FPS) with audio removed (`-an`). When providing your own `ffmpeg_input_args`, include `-an` if you want audio stripped from the export.
+The request body accepts `ffmpeg_input_args` and `ffmpeg_output_args` to control encoding, frame rate, filters, and other FFmpeg options. If neither is provided, Kestrel defaults to time-lapse output settings (25x speed, 30 FPS) with audio removed (`-an`). When providing your own `ffmpeg_input_args`, include `-an` if you want audio stripped from the export.
 
 The following example exports a time-lapse at 60x speed with 25 FPS:
 
@@ -499,9 +499,9 @@ Apple devices running the Safari browser may fail to playback h.265 recordings. 
 
 Media files (event snapshots, event thumbnails, review thumbnails, previews, exports, and recordings) can become orphaned when database entries are deleted but the corresponding files remain on disk.
 
-Normal operation may leave small numbers of orphaned files until Frigate's scheduled cleanup, but crashes, configuration changes, or upgrades may cause more orphaned files that Frigate does not clean up. This feature checks the file system for media files and removes any that are not referenced in the database.
+Normal operation may leave small numbers of orphaned files until Kestrel's scheduled cleanup, but crashes, configuration changes, or upgrades may cause more orphaned files that Kestrel does not clean up. This feature checks the file system for media files and removes any that are not referenced in the database.
 
-The Maintenance pane in the Frigate UI or an API endpoint `POST /api/media/sync` can be used to trigger a media sync. When using the API, a job ID is returned and the operation continues on the server. Status can be checked with the `/api/media/sync/status/{job_id}` endpoint. Results include the disk space reclaimed, or with `dry_run: true`, the space that would be reclaimed.
+The Maintenance pane in the Kestrel UI or an API endpoint `POST /api/media/sync` can be used to trigger a media sync. When using the API, a job ID is returned and the operation continues on the server. Status can be checked with the `/api/media/sync/status/{job_id}` endpoint. Results include the disk space reclaimed, or with `dry_run: true`, the space that would be reclaimed.
 
 Setting `verbose: true` writes a detailed report of every orphaned file and database entry to `/config/media_sync/<job_id>.txt`. For recordings, the report separates orphaned database entries (DB records whose files are missing from disk) from orphaned files (files on disk with no corresponding database record).
 
@@ -513,13 +513,13 @@ This operation uses considerable CPU resources and includes a safety threshold t
 
 ## Understanding storage usage
 
-The storage usage Frigate reports will not exactly match what the operating system reports with `df` or `du`. This is expected, not a bug. The sections below explain how Frigate derives its storage figures and why they differ from the disk's own accounting.
+The storage usage Kestrel reports will not exactly match what the operating system reports with `df` or `du`. This is expected, not a bug. The sections below explain how Kestrel derives its storage figures and why they differ from the disk's own accounting.
 
-### How Frigate measures recording usage
+### How Kestrel measures recording usage
 
-The **Recordings** value on the Storage Metrics page (<NavPath path="Health and Metrics > Storage" />), and the per-camera **Camera Storage** breakdown, is the sum of the recording segment sizes Frigate has written, taken from Frigate's database. It is **not** computed by a scan of the disk. Frigate tracks usage this way by design: repeatedly walking the entire drive to total its size would keep hard drives spun up and add unnecessary I/O.
+The **Recordings** value on the Storage Metrics page (<NavPath path="Health and Metrics > Storage" />), and the per-camera **Camera Storage** breakdown, is the sum of the recording segment sizes Kestrel has written, taken from Kestrel's database. It is **not** computed by a scan of the disk. Kestrel tracks usage this way by design: repeatedly walking the entire drive to total its size would keep hard drives spun up and add unnecessary I/O.
 
-The disk **total** shown beside it, and the free-space figure Frigate uses to decide when to delete recordings, instead come from the operating system's report for the whole filesystem mounted at `/media/frigate`. As a result, the **Unused** value on the page is _total disk capacity minus Frigate's recordings_, not the drive's real free space, which will be lower whenever anything else is stored on the disk.
+The disk **total** shown beside it, and the free-space figure Kestrel uses to decide when to delete recordings, instead come from the operating system's report for the whole filesystem mounted at `/media/frigate`. As a result, the **Unused** value on the page is _total disk capacity minus Kestrel's recordings_, not the drive's real free space, which will be lower whenever anything else is stored on the disk.
 
 ### What counts toward usage, and why it won't match `df`
 
@@ -531,7 +531,7 @@ Only **recording segments** (`/media/frigate/recordings`) are included in the re
 - **The database, downloaded detection models, and face / license plate training images** (stored under `/config`).
 - **Debug images from enrichments** (`/media/frigate/clips`): when enabled, License Plate Recognition's `debug_save_plates` and GenAI's `debug_save_thumbnails` save plate crops and request images for troubleshooting.
 
-These files are the usual explanation for an "other" or seemingly unaccounted bucket of space: it is real, it is Frigate's, and it simply isn't part of the _recordings_ total. They are also why comparing the **Recordings** figure to `df -h` always shows a gap: `df` additionally counts any non-Frigate data on the disk, filesystem overhead and reserved blocks (ext4 reserves ~5% for root by default, so a disk can read "full" before recordings approach the total), and recently deleted recordings whose space has not yet been reclaimed.
+These files are the usual explanation for an "other" or seemingly unaccounted bucket of space: it is real, it is Kestrel's, and it simply isn't part of the _recordings_ total. They are also why comparing the **Recordings** figure to `df -h` always shows a gap: `df` additionally counts any non-Kestrel data on the disk, filesystem overhead and reserved blocks (ext4 reserves ~5% for root by default, so a disk can read "full" before recordings approach the total), and recently deleted recordings whose space has not yet been reclaimed.
 
 :::tip
 
@@ -541,9 +541,9 @@ The Storage page is not intended to be a system-wide disk monitor: it shows how 
 
 ### Free space and the `/media/frigate` mount
 
-Frigate reports the capacity and free space of whatever filesystem is actually mounted at `/media/frigate` **inside the container**. If an external drive or network share isn't truly mounted there (a missing `/etc/fstab` entry, a share that was offline when the container started, or a host that doesn't pass the path through), the container falls back to the host's OS disk, and Frigate will correctly report that smaller disk instead of the drive you intended.
+Kestrel reports the capacity and free space of whatever filesystem is actually mounted at `/media/frigate` **inside the container**. If an external drive or network share isn't truly mounted there (a missing `/etc/fstab` entry, a share that was offline when the container started, or a host that doesn't pass the path through), the container falls back to the host's OS disk, and Kestrel will correctly report that smaller disk instead of the drive you intended.
 
-If the reported capacity doesn't match your drive, the mount is the place to look, not Frigate. Verify what is actually mounted from inside the container:
+If the reported capacity doesn't match your drive, the mount is the place to look, not Kestrel. Verify what is actually mounted from inside the container:
 
 ```bash
 docker exec -it frigate df -h /media/frigate
@@ -558,15 +558,15 @@ Recording segments are first written to `/tmp/cache`, a small, in-memory (`tmpfs
 
 ### When the metrics don't match what's on disk
 
-Because usage is tracked in the database, deleting recording files directly on disk, or files left behind after an upgrade, will not update the reported usage, and can even push it above 100%. Frigate is unaware of files it didn't record and won't count or remove them automatically. Use [Syncing Media Files With Disk](#syncing-media-files-with-disk) to reconcile the database with what is actually on disk.
+Because usage is tracked in the database, deleting recording files directly on disk, or files left behind after an upgrade, will not update the reported usage, and can even push it above 100%. Kestrel is unaware of files it didn't record and won't count or remove them automatically. Use [Syncing Media Files With Disk](#syncing-media-files-with-disk) to reconcile the database with what is actually on disk.
 
-## Will Frigate delete old recordings if my storage runs out?
+## Will Kestrel delete old recordings if my storage runs out?
 
-Yes. Frigate continuously checks the **free space of the disk** holding `/media/frigate/recordings`. This is different from adding up the size of every recording: free space is a single number the operating system already tracks, so Frigate can ask for it instantly without reading through your files or spinning up the disk, which is exactly why it relies on this check rather than scanning the drive. When less than roughly one hour of recording space remains (estimated from the current recording bitrate, **not** a fixed percentage), Frigate deletes the oldest recordings to reclaim space and logs a message. This emergency cleanup removes the oldest recordings first **regardless of retention settings**.
+Yes. Kestrel continuously checks the **free space of the disk** holding `/media/frigate/recordings`. This is different from adding up the size of every recording: free space is a single number the operating system already tracks, so Kestrel can ask for it instantly without reading through your files or spinning up the disk, which is exactly why it relies on this check rather than scanning the drive. When less than roughly one hour of recording space remains (estimated from the current recording bitrate, **not** a fixed percentage), Kestrel deletes the oldest recordings to reclaim space and logs a message. This emergency cleanup removes the oldest recordings first **regardless of retention settings**.
 
 Two consequences follow from this being based on whole-disk free space:
 
-- Because the check uses the disk's real free space, **anything** filling the drive, including non-Frigate files, can trigger deletion of your oldest recordings.
+- Because the check uses the disk's real free space, **anything** filling the drive, including non-Kestrel files, can trigger deletion of your oldest recordings.
 - Cleanup can run while a meaningful percentage of the disk is still free (for example, with high bitrates or many cameras), because the threshold is "less than ~1 hour of recording headroom," not "X% full."
 
 Frequent emergency cleanups usually mean your configured retention exceeds what the disk can hold. Reduce your retention days so the normal retention cleanup keeps up and the emergency path rarely triggers.

@@ -1,4 +1,4 @@
-# Frigate is built and run exclusively on Linux, including every Docker build,
+# Kestrel is built and run exclusively on Linux, including every Docker build,
 # so everything in the working tree should use LF regardless of the host OS.
 #
 # Without this, a Windows checkout with core.autocrlf=true rewrites shell

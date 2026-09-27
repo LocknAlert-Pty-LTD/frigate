@@ -5,7 +5,7 @@ threading.Thread polling a shared stop_event, with the actual decision
 logic split into a pure, directly-testable method (_check_and_fire) rather
 than living inline in run().
 
-No new dependency for "arm at 23:00" -- Frigate has no existing cron/
+No new dependency for "arm at 23:00" -- Kestrel has no existing cron/
 scheduling library, and a plain wall-clock comparison on a ~30s poll is
 simple enough that adding one isn't justified.
 """

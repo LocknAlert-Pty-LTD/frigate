@@ -76,7 +76,7 @@ def migrate(migrator, database, fake=False, **kwargs):
     # every JSONField path query) rather than a Python batch loop --
     # sqlite processes this as a single scan either way, and this avoids
     # hand-rolled chunking entirely. Verified json_each() is available in
-    # the actual sqlite build Frigate ships before relying on it here.
+    # the actual sqlite build Kestrel ships before relying on it here.
     migrator.sql(
         """
         INSERT OR IGNORE INTO "eventzone" ("event_id", "zone")

@@ -1,7 +1,7 @@
 /**
  * WebSocket mock using Playwright's native page.routeWebSocket().
  *
- * Intercepts the app's WebSocket connection and simulates the Frigate
+ * Intercepts the app's WebSocket connection and simulates the Kestrel
  * WS protocol: onConnect handshake, camera_activity expansion, and
  * topic-based state updates.
  */

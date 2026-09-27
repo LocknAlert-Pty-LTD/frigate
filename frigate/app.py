@@ -144,7 +144,7 @@ class FrigateApp:
 
     @property
     def config(self) -> FrigateConfig:
-        """The current config, not the one Frigate booted with.
+        """The current config, not the one Kestrel booted with.
 
         Read through the holder so the deferred watchdog factories below build
         a replacement process from the config as it is now. There is no setter
@@ -740,7 +740,7 @@ class FrigateApp:
                 logger.info("********************************************************")
 
     def start(self) -> None:
-        logger.info(f"Starting Frigate ({VERSION})")
+        logger.info(f"Starting Kestrel ({VERSION})")
 
         # Ensure global state.
         self.ensure_dirs()

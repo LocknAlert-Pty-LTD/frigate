@@ -21,23 +21,23 @@ Free accounts can be created at [https://plus.frigate.video](https://plus.frigat
 
 ### Generate an API key
 
-Once logged in, you can generate an API key for Frigate in Settings.
+Once logged in, you can generate an API key for Kestrel in Settings.
 
 ![API key](/img/plus-api-key-min.png)
 
 ### Set your API key
 
-In Frigate, you can use an environment variable or a docker secret named `PLUS_API_KEY` to enable the `Frigate+` buttons on the Explore page. Home Assistant App users can set it under Settings > Apps > Frigate > Configuration > Options (be sure to toggle the "Show unused optional configuration options" switch).
+In Kestrel, you can use an environment variable or a docker secret named `PLUS_API_KEY` to enable the `Frigate+` buttons on the Explore page. Home Assistant App users can set it under Settings > Apps > Kestrel > Configuration > Options (be sure to toggle the "Show unused optional configuration options" switch).
 
 :::warning
 
-You cannot use the `environment_vars` section of your Frigate configuration file to set this environment variable. It must be defined as an environment variable in the docker config or Home Assistant App config.
+You cannot use the `environment_vars` section of your Kestrel configuration file to set this environment variable. It must be defined as an environment variable in the docker config or Home Assistant App config.
 
 :::
 
 ## Submit examples
 
-Once your API key is configured, you can submit examples directly from the Explore page in Frigate. From the More Filters menu, select "Has a Snapshot - Yes" and "Submitted to Frigate+ - No", and press Apply at the bottom of the pane. Then, click on a thumbnail and select the Snapshot tab.
+Once your API key is configured, you can submit examples directly from the Explore page in Kestrel. From the More Filters menu, select "Has a Snapshot - Yes" and "Submitted to Frigate+ - No", and press Apply at the bottom of the pane. Then, click on a thumbnail and select the Snapshot tab.
 
 You can use your keyboard's left and right arrow keys to quickly navigate between the tracked object snapshots.
 
@@ -59,7 +59,7 @@ You can view all of your submitted images at [https://plus.frigate.video](https:
 
 Once you have [requested your first model](../plus/first_model.md) and gotten your own model ID, it can be used with a special model path. No other information needs to be configured for Frigate+ models because it fetches the remaining config from Frigate+ automatically.
 
-You can either choose the new model from the <NavPath path="Settings > System > Detection models" /> pane in the Frigate UI (on the **Frigate+** tab of the model you want to change), or set it on that model in your config:
+You can either choose the new model from the <NavPath path="Settings > System > Detection models" /> pane in the Kestrel UI (on the **Frigate+** tab of the model you want to change), or set it on that model in your config:
 
 ```yaml
 models:

@@ -152,7 +152,7 @@ class HailoAsyncInference:
             )
         except ModuleNotFoundError:
             raise ImportError(
-                "HailoRT is not installed. Frigate installs it at startup when a "
+                "HailoRT is not installed. Kestrel installs it at startup when a "
                 "Hailo detector is configured; check the startup log for errors."
             ) from None
 

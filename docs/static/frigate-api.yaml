@@ -1254,7 +1254,7 @@ paths:
       description: |-
         **Access:** Admin role required.
 
-        Send a chat message to the configured GenAI provider with tool calling support. The LLM can call Frigate tools to answer questions about your cameras and events.
+        Send a chat message to the configured GenAI provider with tool calling support. The LLM can call Kestrel tools to answer questions about your cameras and events.
       operationId: chat_completion_chat_completion_post
       requestBody:
         required: true
@@ -10114,7 +10114,7 @@ components:
       name: frigate_token
       description: Authenticated session whose resolved role is 'admin'. The 
         session is established via the JWT cookie issued by POST /login, or via 
-        proxy auth headers (remote-user / remote-role) when Frigate runs behind 
+        proxy auth headers (remote-user / remote-role) when Kestrel runs behind 
         an authenticating reverse proxy.
     frigateUserAuth:
       type: apiKey
@@ -10122,4 +10122,4 @@ components:
       name: frigate_token
       description: Any authenticated session (role 'viewer' or higher), 
         established via the JWT cookie issued by POST /login, or via proxy auth 
-        headers when Frigate runs behind an authenticating reverse proxy.
+        headers when Kestrel runs behind an authenticating reverse proxy.

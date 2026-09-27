@@ -32,7 +32,7 @@ def main() -> None:
 
     # Parse the cli arguments.
     parser = argparse.ArgumentParser(
-        prog="Frigate",
+        prog="Kestrel",
         description="An NVR with realtime local object detection for IP cameras.",
     )
     parser.add_argument("--validate-config", action="store_true")
@@ -103,12 +103,12 @@ def main() -> None:
         if args.validate_config:
             sys.exit(1)
 
-        # attempt to start Frigate in recovery mode
+        # attempt to start Kestrel in recovery mode
         try:
             config = FrigateConfig.load(install=True, safe_load=True)
-            print("Starting Frigate in safe mode.")
+            print("Starting Kestrel in safe mode.")
         except ValidationError:
-            print("Unable to start Frigate in safe mode.")
+            print("Unable to start Kestrel in safe mode.")
             sys.exit(1)
     if args.validate_config:
         print("*************************************************************")
@@ -125,13 +125,13 @@ if __name__ == "__main__":
         [
             # Standard library and core dependencies
             "sqlite3",
-            # Third-party libraries commonly used in Frigate
+            # Third-party libraries commonly used in Kestrel
             "numpy",
             "cv2",
             "peewee",
             "zmq",
             "ruamel.yaml",
-            # Frigate core modules
+            # Kestrel core modules
             "frigate.camera.maintainer",
         ]
     )

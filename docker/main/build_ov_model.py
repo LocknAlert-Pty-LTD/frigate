@@ -6,7 +6,7 @@ producing per-class NonMaxSuppression, NonZero ops and map loops with data
 dependent shapes that the GPU plugin handles very badly. Both are cut out the
 way ssd_v2_support.json used to do it: the preprocessor is an identity at the
 native 300x300 input, and the postprocessor becomes a single fused
-DetectionOutput. The result is the [1, 1, 100, 7] tensor that Frigate's
+DetectionOutput. The result is the [1, 1, 100, 7] tensor that Kestrel's
 OpenVINO detector expects, with the input flipped to BGR to match the legacy
 reverse_input_channels behavior.
 """

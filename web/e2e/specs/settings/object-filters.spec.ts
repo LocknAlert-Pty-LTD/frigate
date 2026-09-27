@@ -4,7 +4,7 @@
  * `objects.filters` is an additionalProperties map, so each label's filter is
  * an entry RJSF adds at runtime. RJSF has changed how a cleared field nested
  * inside such an entry is stored (`""` before 6.9, omitted after). These tests
- * pin what Frigate does with it: the save payload deletes only the cleared
+ * pin what Kestrel does with it: the save payload deletes only the cleared
  * key, and restoring the value leaves the section clean.
  */
 

@@ -881,7 +881,7 @@ def _migrate_transcription_language(config: dict[str, Any]) -> None:
 
 
 def migrate_019_0(config: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
-    """Handle migrating Frigate config to 0.19-0."""
+    """Handle migrating Kestrel config to 0.19-0."""
     new_config = rename_hailo_detector(config)
 
     _migrate_birdseye_mode(new_config.get("birdseye"))

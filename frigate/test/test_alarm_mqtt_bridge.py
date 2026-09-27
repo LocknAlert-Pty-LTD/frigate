@@ -160,7 +160,7 @@ class TestPublishEvent(unittest.TestCase):
 
     def test_publishes_object_id_for_trail_lookup(self) -> None:
         """object_id is what lets a frontend/API consumer correlate this
-        published event back to the real Frigate Event row (see
+        published event back to the real Kestrel Event row (see
         frigate/alarm/trail.py) -- must survive the explicit field-by-field
         publish dict, not just live on the dataclass."""
         publisher = _RecordingPublisher()

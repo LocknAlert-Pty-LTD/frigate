@@ -12,7 +12,7 @@ engine itself still has zero MQTT dependency (see
 test_alarm_no_mqtt_dependency.py).
 
 Discovery config topics must be under the literal "homeassistant/" tree
-regardless of Frigate's own mqtt.topic_prefix, so this publishes them via
+regardless of Kestrel's own mqtt.topic_prefix, so this publishes them via
 Dispatcher.publish_absolute (bypassing MqttClient's normal prefixing), not
 the regular Dispatcher.publish every other alarm topic uses.
 """
@@ -43,15 +43,15 @@ def _device_info() -> dict:
     # device in Home Assistant's UI instead of listing them separately.
     return {
         "identifiers": [NODE_ID],
-        "name": "Frigate Alarm",
-        "manufacturer": "Frigate",
+        "name": "Kestrel Alarm",
+        "manufacturer": "Kestrel",
         "model": "Alarm Engine",
         "sw_version": VERSION,
     }
 
 
 def _availability(topic_prefix: str) -> list[dict]:
-    # Frigate's MqttClient already publishes this exact topic (LWT +
+    # Kestrel's MqttClient already publishes this exact topic (LWT +
     # on-connect), so this reuses it rather than inventing a new one.
     return [
         {
@@ -68,7 +68,7 @@ def _config_topic(component: str, object_id: str) -> str:
 
 def _panel_config(topic_prefix: str) -> dict:
     return {
-        "name": "Frigate Alarm",
+        "name": "Kestrel Alarm",
         "unique_id": f"{NODE_ID}_panel",
         "state_topic": f"{topic_prefix}/{HA_STATE_TOPIC}",
         "command_topic": f"{topic_prefix}/alarm/set",
@@ -76,7 +76,7 @@ def _panel_config(topic_prefix: str) -> dict:
         "payload_arm_home": "ARM_HOME",
         "payload_arm_night": "ARM_NIGHT",
         "payload_disarm": "DISARM",
-        # No PIN concept here -- access control is Frigate's own auth, not
+        # No PIN concept here -- access control is Kestrel's own auth, not
         # a code the panel entity itself would prompt for.
         "code_arm_required": False,
         "code_disarm_required": False,
@@ -125,7 +125,7 @@ def publish_ha_discovery(
             _binary_sensor_config(
                 topic_prefix,
                 object_id="fault",
-                name="Frigate Alarm Fault",
+                name="Kestrel Alarm Fault",
                 state_topic=HA_FAULT_TOPIC,
                 device_class="problem",
             )
@@ -138,7 +138,7 @@ def publish_ha_discovery(
             _binary_sensor_config(
                 topic_prefix,
                 object_id="reporting",
-                name="Frigate Alarm Reporting",
+                name="Kestrel Alarm Reporting",
                 state_topic=HA_REPORTING_TOPIC,
                 device_class="connectivity",
             )
@@ -153,7 +153,7 @@ def publish_ha_discovery(
                 _binary_sensor_config(
                     topic_prefix,
                     object_id=f"zone_{camera}_{zone}",
-                    name=f"Frigate Alarm {camera} {zone}",
+                    name=f"Kestrel Alarm {camera} {zone}",
                     state_topic=ha_zone_topic(camera, zone),
                     device_class="safety",
                 )

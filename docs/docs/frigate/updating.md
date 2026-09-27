@@ -3,21 +3,21 @@ id: updating
 title: Updating
 ---
 
-# Updating Frigate
+# Updating Kestrel
 
-The current stable version of Frigate is **0.18.0**. The release notes and any breaking changes for this version can be found on the [Frigate GitHub releases page](https://github.com/blakeblackshear/frigate/releases/tag/v0.18.0).
+The current stable version of Kestrel is **0.18.0**. The release notes and any breaking changes for this version can be found on the [Kestrel GitHub releases page](https://github.com/blakeblackshear/frigate/releases/tag/v0.18.0).
 
-Keeping Frigate up to date ensures you benefit from the latest features, performance improvements, and bug fixes. The update process varies slightly depending on your installation method (Docker, Home Assistant App, etc.). Below are instructions for the most common setups.
+Keeping Kestrel up to date ensures you benefit from the latest features, performance improvements, and bug fixes. The update process varies slightly depending on your installation method (Docker, Home Assistant App, etc.). Below are instructions for the most common setups.
 
 ## Before You Begin
 
-- **Stop Frigate**: For most methods, you’ll need to stop the running Frigate instance before backing up and updating.
+- **Stop Kestrel**: For most methods, you’ll need to stop the running Kestrel instance before backing up and updating.
 - **Backup Your Configuration**: Always back up your `/config` directory (e.g., `config.yml` and `frigate.db`, the SQLite database) before updating. This ensures you can roll back if something goes wrong.
-- **Check Release Notes**: Carefully review the [Frigate GitHub releases page](https://github.com/blakeblackshear/frigate/releases) for breaking changes or configuration updates that might affect your setup.
+- **Check Release Notes**: Carefully review the [Kestrel GitHub releases page](https://github.com/blakeblackshear/frigate/releases) for breaking changes or configuration updates that might affect your setup.
 
 ## Updating with Docker
 
-If you’re running Frigate via Docker (recommended method), follow these steps:
+If you’re running Kestrel via Docker (recommended method), follow these steps:
 
 1. **Stop the Container**:
    - If using Docker Compose:
@@ -56,11 +56,11 @@ If you’re running Frigate via Docker (recommended method), follow these steps:
    - If using `docker run`, re-run your original command (e.g., from the [Installation](./installation.md#docker) section) with the updated image tag.
 
 4. **Verify the Update**:
-   - Check the container logs to ensure Frigate starts successfully:
+   - Check the container logs to ensure Kestrel starts successfully:
      ```bash
      docker logs frigate
      ```
-   - Visit the Frigate Web UI (default: `http://<your-ip>:5000`) to confirm the new version is running. The version number is displayed at the top of the Health and Metrics page.
+   - Visit the Kestrel Web UI (default: `http://<your-ip>:5000`) to confirm the new version is running. The version number is displayed at the top of the Health and Metrics page.
 
 ### Notes
 
@@ -69,24 +69,24 @@ If you’re running Frigate via Docker (recommended method), follow these steps:
 
 ## Updating the Home Assistant App (formerly Addon)
 
-For users running Frigate as a Home Assistant App:
+For users running Kestrel as a Home Assistant App:
 
 1. **Check for Updates**:
    - Navigate to **Settings > Apps** in Home Assistant.
-   - Find your installed Frigate app (e.g., "Frigate NVR" or "Frigate NVR (Full Access)").
+   - Find your installed Kestrel app (e.g., "Kestrel NVR" or "Kestrel NVR (Full Access)").
    - If an update is available, you’ll see an "Update" button.
 
 2. **Update the App**:
    - Make a backup of the current version of the app.
-   - Click the "Update" button next to the Frigate app.
+   - Click the "Update" button next to the Kestrel app.
    - Wait for the process to complete. Home Assistant will handle downloading and installing the new version.
 
 3. **Restart the App**:
    - After updating, go to the app’s page and click "Restart" to apply the changes.
 
 4. **Verify the Update**:
-   - Check the app logs (under the "Log" tab) to ensure Frigate starts without errors.
-   - Access the Frigate Web UI to confirm the new version is running.
+   - Check the app logs (under the "Log" tab) to ensure Kestrel starts without errors.
+   - Access the Kestrel Web UI to confirm the new version is running.
 
 ### Notes
 
@@ -97,7 +97,7 @@ For users running Frigate as a Home Assistant App:
 
 If an update causes issues:
 
-1. Stop Frigate.
+1. Stop Kestrel.
 2. Restore your backed-up config file and database.
 3. Revert to the previous image version:
    - For Docker: Specify an older tag (e.g., `ghcr.io/blakeblackshear/frigate:0.17.1`) in your `docker run` command.

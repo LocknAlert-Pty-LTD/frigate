@@ -30,7 +30,7 @@ DXRT_VERSION = "3.4.0"
 DXRT_IPC_ENDPOINT_ENV = "DXRT_DYNAMIC_IPC_ENDPOINT"
 DXRT_IPC_SOCKET = "/run/dxrt/dxrt_dynamic_ipc.sock"
 
-# Pre-NMS filter; Frigate applies per-object min_score and threshold afterwards.
+# Pre-NMS filter; Kestrel applies per-object min_score and threshold afterwards.
 SCORE_THRESHOLD = 0.4
 NMS_THRESHOLD = 0.4
 
@@ -96,7 +96,7 @@ PPU_TABLE_ENTRY = struct.Struct("<HHfBBBBBBBB")
 NMS_IN_HEAD_COLUMNS = 6
 NMS_IN_HEAD_MAX_ROWS = 1000
 
-# Frigate's shared multipart decoder reads exactly three NCHW feature maps
+# Kestrel's shared multipart decoder reads exactly three NCHW feature maps
 # with 3 anchors x (5 + 80) channels each.
 MULTIPART_OUTPUTS = 3
 MULTIPART_CLASSES = 80
@@ -164,7 +164,7 @@ def fill_detections(
     height: int,
     order: np.ndarray,
 ) -> np.ndarray:
-    """Normalize the surviving boxes into Frigate's (20, 6) detection array."""
+    """Normalize the surviving boxes into Kestrel's (20, 6) detection array."""
     detections = np.zeros((20, 6), np.float32)
 
     for i, idx in enumerate(order[:20]):
@@ -930,7 +930,7 @@ class DeepxDetector(DetectionApi):
             from dx_engine import Configuration, InferenceEngine, InferenceOption
         except ModuleNotFoundError:
             raise ImportError(
-                "The DX-RT python bindings are not installed. Frigate installs "
+                "The DX-RT python bindings are not installed. Kestrel installs "
                 "them at startup when a DEEPX detector is configured; check the "
                 "startup log for errors."
             ) from None
@@ -986,7 +986,7 @@ class DeepxDetector(DetectionApi):
 
         if layout.anchor_based is None:
             raise ValueError(
-                f"The PPU head in {model_path} names no kind Frigate can decode "
+                f"The PPU head in {model_path} names no kind Kestrel can decode "
                 "(anchor-based or anchor-free YOLO); face and pose PPU models are "
                 "not supported, and PPU models must be compiled with DX-COM 2.4.0 "
                 "or later."
@@ -1002,7 +1002,7 @@ class DeepxDetector(DetectionApi):
                 f"Could not tell from {model_path} whether its PPU head writes "
                 "boxes as a centre and size or as two corners. The compiled "
                 "graph that says so is missing from the file or builds its "
-                "boxes in a way Frigate does not recognise. Compile PPU models "
+                "boxes in a way Kestrel does not recognise. Compile PPU models "
                 "with DX-COM 2.4.0 or later."
             )
 
@@ -1084,7 +1084,7 @@ class DeepxDetector(DetectionApi):
                 return post_process_yolo(outputs, self.width, self.height)
 
     def decode_yolox(self, outputs: list[np.ndarray]) -> np.ndarray:
-        """Decode YOLOX's raw head with Frigate's shared decoder."""
+        """Decode YOLOX's raw head with Kestrel's shared decoder."""
         rows = rows_with_columns(outputs[0], self.output.columns)
         predictions = np.array(rows, dtype=np.float32).reshape(1, -1, rows.shape[-1])
 
@@ -1107,7 +1107,7 @@ class DeepxDetector(DetectionApi):
             self.ppu_unsupported_scale_reported = True
             logger.error(
                 "This PPU model's anchor-based head reports %d detection "
-                "scales, which Frigate has no anchor table for (supported: "
+                "scales, which Kestrel has no anchor table for (supported: "
                 "%s); its detections cannot be decoded",
                 layout.scale_count,
                 ", ".join(str(n) for n in sorted(PPU_ANCHORS_BY_SCALES)),

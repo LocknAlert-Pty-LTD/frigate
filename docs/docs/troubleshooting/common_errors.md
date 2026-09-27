@@ -5,12 +5,12 @@ title: Common Error Messages
 
 import FaqItem from "@site/src/components/FaqItem";
 
-This page is an index of error messages you might see in Frigate's logs, what each one means, and where to go next. It is organized by the kind of problem, not by which component logged the message.
+This page is an index of error messages you might see in Kestrel's logs, what each one means, and where to go next. It is organized by the kind of problem, not by which component logged the message.
 
 Two things to know before you start:
 
-- **Many of these messages come from FFmpeg, go2rtc, GPU drivers, or the operating system, not from Frigate itself.** Frigate captures and re-logs their output, so the log level shown in the Frigate UI does not always reflect the original severity.
-- **Wrapped errors put the real cause on the next line.** When Frigate logs a generic message like `Error occurred when attempting to maintain recording cache`, the actual exception is logged immediately after it. When a camera's FFmpeg process exits, Frigate logs `The following ffmpeg logs include the last 100 lines prior to exit` and dumps that camera's FFmpeg output. Always read those lines, they are where the answer usually is.
+- **Many of these messages come from FFmpeg, go2rtc, GPU drivers, or the operating system, not from Kestrel itself.** Kestrel captures and re-logs their output, so the log level shown in the Kestrel UI does not always reflect the original severity.
+- **Wrapped errors put the real cause on the next line.** When Kestrel logs a generic message like `Error occurred when attempting to maintain recording cache`, the actual exception is logged immediately after it. When a camera's FFmpeg process exits, Kestrel logs `The following ffmpeg logs include the last 100 lines prior to exit` and dumps that camera's FFmpeg output. Always read those lines, they are where the answer usually is.
 
 ## Camera connection and streams
 
@@ -24,13 +24,13 @@ See [go2rtc troubleshooting](/troubleshooting/go2rtc#1-read-the-go2rtc-logs) for
 
 <FaqItem id="no-frames-received-in-20-seconds" question="No frames received from <camera> in 20 seconds. Exiting ffmpeg...">
 
-FFmpeg is running but has stopped delivering video for 20 seconds, so Frigate's camera watchdog restarts it. The stream connected at least once, then went quiet: a camera reboot, a network drop, the camera evicting the connection, or a stalled decoder. If it repeats on a loop, the stream is unstable.
+FFmpeg is running but has stopped delivering video for 20 seconds, so Kestrel's camera watchdog restarts it. The stream connected at least once, then went quiet: a camera reboot, a network drop, the camera evicting the connection, or a stalled decoder. If it repeats on a loop, the stream is unstable.
 
 </FaqItem>
 
 <FaqItem id="ffmpeg-process-crashed-unexpectedly" question="Ffmpeg process crashed unexpectedly for <camera>">
 
-The detect FFmpeg process exited on its own. This message is only the notification; the cause is in the 100 FFmpeg log lines Frigate dumps right after it (look for a `Failed to sync surface`, `Connection refused`, codec, or audio error in that block). Related watchdog messages include `<camera> exceeded fps limit`, which means the camera is delivering frames faster than `detect.fps` (usually a camera whose real frame rate differs from what is configured).
+The detect FFmpeg process exited on its own. This message is only the notification; the cause is in the 100 FFmpeg log lines Kestrel dumps right after it (look for a `Failed to sync surface`, `Connection refused`, codec, or audio error in that block). Related watchdog messages include `<camera> exceeded fps limit`, which means the camera is delivering frames faster than `detect.fps` (usually a camera whose real frame rate differs from what is configured).
 
 </FaqItem>
 
@@ -48,13 +48,13 @@ On the audio stream, the messages can come from the output's audio encoding. If 
 
 <FaqItem id="bad-cseq" question="RTP: PT=xx: bad cseq (packet loss / reordering)">
 
-An FFmpeg message meaning RTP packets arrived out of sequence, which almost always means the stream is using UDP transport. Frigate's RTSP presets force TCP, so seeing this points at a custom `input_args`, `preset-rtsp-udp`, or a go2rtc source that is not using TCP. Switch to TCP unless your camera is [UDP-only](/configuration/camera_specific#udp-only-cameras).
+An FFmpeg message meaning RTP packets arrived out of sequence, which almost always means the stream is using UDP transport. Kestrel's RTSP presets force TCP, so seeing this points at a custom `input_args`, `preset-rtsp-udp`, or a go2rtc source that is not using TCP. Switch to TCP unless your camera is [UDP-only](/configuration/camera_specific#udp-only-cameras).
 
 </FaqItem>
 
 <FaqItem id="error-while-decoding-mb-non-existing-pps" question="error while decoding MB / non-existing PPS referenced (corrupt frames)">
 
-FFmpeg decoder messages meaning the received video bitstream was incomplete or damaged. A few of these at every stream start are normal (the decoder connected before the first keyframe) and Frigate discards them. A continuous stream of them means real packet loss, from Wi-Fi or a saturated link, an overloaded camera, or an FFmpeg restart loop caused by another problem. Fix the underlying instability rather than the message.
+FFmpeg decoder messages meaning the received video bitstream was incomplete or damaged. A few of these at every stream start are normal (the decoder connected before the first keyframe) and Kestrel discards them. A continuous stream of them means real packet loss, from Wi-Fi or a saturated link, an overloaded camera, or an FFmpeg restart loop caused by another problem. Fix the underlying instability rather than the message.
 
 </FaqItem>
 
@@ -68,7 +68,7 @@ An FFmpeg message meaning it probed the stream but never saw enough decodable vi
 
 <FaqItem id="no-new-recording-segments" question="No new recording segments were created (or: No new valid recording segments were created / No valid segments created since last invalid segment) for <camera> in the last 120s">
 
-Frigate's record watchdog is restarting the record FFmpeg process because the camera stopped producing usable recordings. The wording distinguishes the cases: `No new recording segments` means no new segment file reached the cache, so ffmpeg isn't getting video out of the record stream; the two `valid` variants mean recordings are arriving but keep failing validation. Either way the fault is on the camera or network side, and the restart is Frigate trying to recover.
+Kestrel's record watchdog is restarting the record FFmpeg process because the camera stopped producing usable recordings. The wording distinguishes the cases: `No new recording segments` means no new segment file reached the cache, so ffmpeg isn't getting video out of the record stream; the two `valid` variants mean recordings are arriving but keep failing validation. Either way the fault is on the camera or network side, and the restart is Kestrel trying to recover.
 
 See [Recordings: no new recording segments were created](/troubleshooting/recordings#no-new-recording-segments-were-created).
 
@@ -102,7 +102,7 @@ See [Recordings cache warnings and errors](/troubleshooting/recordings#i-see-the
 
 <FaqItem id="failed-to-sync-surface" question="Failed to sync surface / Failed to download frame: -5 / Error while filtering">
 
-A VAAPI/QSV hardware frame-sync failure between FFmpeg and the GPU driver, not a Frigate bug. It usually appears when the detect stream is being scaled or decoded on the GPU.
+A VAAPI/QSV hardware frame-sync failure between FFmpeg and the GPU driver, not a Kestrel bug. It usually appears when the detect stream is being scaled or decoded on the GPU.
 
 See [GPU: Failed to download frame: -5](/troubleshooting/gpu#failed-to-download-frame--5), which lists the fixes in order (switch VAAPI/QSV preset, change `LIBVA_DRIVER_NAME`, use an H.264 substream, match detect resolution and fps to the stream).
 
@@ -116,7 +116,7 @@ Both mean the GPU ran out of decode surfaces: `No decoder surfaces left` is NVID
 
 <FaqItem id="nvidia-container-cli-nvml-error" question="nvidia-container-cli: nvml error: driver not loaded">
 
-This comes from the NVIDIA container runtime while starting the container, not from Frigate, and the container never starts. The NVIDIA driver is not loaded on the host. Confirm `nvidia-smi` works on the host itself (not inside the container) before troubleshooting Frigate. In a VM or LXC, the driver must be available inside the guest. See [Hardware: Nvidia GPU](/configuration/hardware_acceleration_video).
+This comes from the NVIDIA container runtime while starting the container, not from Kestrel, and the container never starts. The NVIDIA driver is not loaded on the host. Confirm `nvidia-smi` works on the host itself (not inside the container) before troubleshooting Kestrel. In a VM or LXC, the driver must be available inside the guest. See [Hardware: Nvidia GPU](/configuration/hardware_acceleration_video).
 
 </FaqItem>
 
@@ -124,7 +124,7 @@ This comes from the NVIDIA container runtime while starting the container, not f
 
 <FaqItem id="illegal-instruction" question="Illegal instruction (core dumped)">
 
-The process was killed by the CPU for executing an unsupported instruction. There are two distinct causes in Frigate:
+The process was killed by the CPU for executing an unsupported instruction. There are two distinct causes in Kestrel:
 
 - **A Coral EdgeTPU** on a newer kernel with an outdated gasket driver. See [EdgeTPU: Illegal instruction](/troubleshooting/edgetpu#attempting-to-load-tpu-as-pci--fatal-python-error-illegal-instruction).
 - **A CPU without AVX/AVX2**, when enabling semantic search, face recognition, license plate recognition, classification, or audio transcription. These features use libraries compiled with AVX and crash immediately on CPUs that lack it (commonly Intel Celeron/Pentium before the 2020 Tiger Lake generation). See the [CPU requirements](/frigate/planning_setup#cpu).
@@ -133,7 +133,7 @@ The process was killed by the CPU for executing an unsupported instruction. Ther
 
 <FaqItem id="onnx-invalidprotobuf" question="ONNX Runtime InvalidProtobuf / failed to load model">
 
-ONNX Runtime could not parse the model file. The file exists but its contents are not a valid ONNX model, usually a corrupted or interrupted download in `model_cache`, or the wrong file pointed at by a model's `path`. Delete the cached model file so Frigate re-downloads it, and confirm the model's `path` points at an actual `.onnx` model. See [ONNX detector configuration](/configuration/object_detectors#onnx).
+ONNX Runtime could not parse the model file. The file exists but its contents are not a valid ONNX model, usually a corrupted or interrupted download in `model_cache`, or the wrong file pointed at by a model's `path`. Delete the cached model file so Kestrel re-downloads it, and confirm the model's `path` points at an actual `.onnx` model. See [ONNX detector configuration](/configuration/object_detectors#onnx).
 
 </FaqItem>
 
@@ -155,9 +155,9 @@ See [GPU: no supported devices found](/troubleshooting/gpu#cant-get-optimization
 
 <FaqItem id="fatal-python-error-bus-error" question="Fatal Python error: Bus error">
 
-Frigate ran out of shared memory (`/dev/shm`). The container's `shm_size` is too small for the number and resolution of your detect streams, or you added cameras after startup without increasing it.
+Kestrel ran out of shared memory (`/dev/shm`). The container's `shm_size` is too small for the number and resolution of your detect streams, or you added cameras after startup without increasing it.
 
-See [Calculating required shm-size](/frigate/installation#calculating-required-shm-size). If you cannot increase `shm_size`, lowering the `SHM_MAX_FRAMES` environment variable reduces how many frames Frigate buffers per camera.
+See [Calculating required shm-size](/frigate/installation#calculating-required-shm-size). If you cannot increase `shm_size`, lowering the `SHM_MAX_FRAMES` environment variable reduces how many frames Kestrel buffers per camera.
 
 </FaqItem>
 
@@ -179,7 +179,7 @@ A silent exit is usually the host or container out-of-memory killer. Because `/d
 
 <FaqItem id="database-is-locked" question="database is locked">
 
-SQLite could not acquire the write lock. Frigate's timeout already scales with camera count, so under normal local-disk operation this essentially only happens when the database is on a network share (SMB/NFS), where file locking is unreliable, or when two instances point at the same file.
+SQLite could not acquire the write lock. Kestrel's timeout already scales with camera count, so under normal local-disk operation this essentially only happens when the database is on a network share (SMB/NFS), where file locking is unreliable, or when two instances point at the same file.
 
 See [Database is locked](/troubleshooting/faqs#error-database-is-locked).
 
@@ -187,9 +187,9 @@ See [Database is locked](/troubleshooting/faqs#error-database-is-locked).
 
 <FaqItem id="database-disk-image-is-malformed" question="database disk image is malformed">
 
-The SQLite database file is corrupted, typically after hard power loss, a network-share database, or a filesystem with unsafe write semantics. Frigate does not repair it automatically, but the database can usually be recovered by hand.
+The SQLite database file is corrupted, typically after hard power loss, a network-share database, or a filesystem with unsafe write semantics. Kestrel does not repair it automatically, but the database can usually be recovered by hand.
 
-**Stop Frigate first**, then work on the database file directly (by default `/config/frigate.db`). Start by checking what is actually wrong:
+**Stop Kestrel first**, then work on the database file directly (by default `/config/frigate.db`). Start by checking what is actually wrong:
 
 ```bash
 sqlite3 frigate.db "PRAGMA integrity_check;"
@@ -217,7 +217,7 @@ sqlite3 frigate.db "PRAGMA integrity_check;"
 
 Rows stored in the corrupted pages cannot be recovered, so expect to lose some tracked objects, review items, or thumbnails. Recordings themselves are files on disk and are not affected.
 
-As a last resort, stop Frigate, delete `frigate.db`, and restart. Frigate recreates it, but existing recordings lose all of their metadata. If a `backup.db` exists next to your database, Frigate wrote it before the last schema migration and restoring it recovers everything up to that point.
+As a last resort, stop Kestrel, delete `frigate.db`, and restart. Kestrel recreates it, but existing recordings lose all of their metadata. If a `backup.db` exists next to your database, Kestrel wrote it before the last schema migration and restoring it recovers everything up to that point.
 
 Repeat corruption usually points at the underlying storage: move the database off a network share, and on Raspberry Pi check power delivery and the SD card or SSD.
 
@@ -225,16 +225,16 @@ Repeat corruption usually points at the underlying storage: move the database of
 
 ## Startup and web access
 
-<FaqItem id="unable-to-start-frigate-in-safe-mode" question="Unable to start Frigate in safe mode / Starting Frigate in safe mode">
+<FaqItem id="unable-to-start-frigate-in-safe-mode" question="Unable to start Kestrel in safe mode / Starting Kestrel in safe mode">
 
-When your config fails validation at startup, Frigate prints the validation errors (with line numbers), then starts in **safe mode**: a minimal configuration with no cameras and MQTT disabled, so the UI stays reachable. In safe mode the only available page is the Config Editor, which shows the validation errors so you can fix them, then save and restart. Note that recording retention and storage cleanup do **not** run while in safe mode, so do not leave a low-disk system sitting in it.
+When your config fails validation at startup, Kestrel prints the validation errors (with line numbers), then starts in **safe mode**: a minimal configuration with no cameras and MQTT disabled, so the UI stays reachable. In safe mode the only available page is the Config Editor, which shows the validation errors so you can fix them, then save and restart. Note that recording retention and storage cleanup do **not** run while in safe mode, so do not leave a low-disk system sitting in it.
 
-`Unable to start Frigate in safe mode` means even the minimal config failed, which points at an error in your `auth`, `proxy`, or `database` section, or a config file that is not valid YAML at all. Safe mode is not sticky; fix the config and restart and Frigate returns to normal.
+`Unable to start Kestrel in safe mode` means even the minimal config failed, which points at an error in your `auth`, `proxy`, or `database` section, or a config file that is not valid YAML at all. Safe mode is not sticky; fix the config and restart and Kestrel returns to normal.
 
 </FaqItem>
 
 <FaqItem id="502-bad-gateway" question="502 Bad Gateway / connection refused to 127.0.0.1:5001">
 
-The web server is up but the Frigate backend (port 5001) is not answering yet. By far the most common reason is that the page was loaded during startup: the API binds last, after database migrations (which can take minutes on a large database), model downloads, and process startup, while the web server is already serving. Wait for startup to finish. If it persists, the backend has failed to start, and the reason is earlier in the logs. This also explains a `connection refused to 127.0.0.1:5001` seen while loading `/ws`, because every authenticated request first makes an auth subrequest to that port.
+The web server is up but the Kestrel backend (port 5001) is not answering yet. By far the most common reason is that the page was loaded during startup: the API binds last, after database migrations (which can take minutes on a large database), model downloads, and process startup, while the web server is already serving. Wait for startup to finish. If it persists, the backend has failed to start, and the reason is earlier in the logs. This also explains a `connection refused to 127.0.0.1:5001` seen while loading `/ws`, because every authenticated request first makes an auth subrequest to that port.
 
 </FaqItem>

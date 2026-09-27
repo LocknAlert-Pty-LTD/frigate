@@ -640,7 +640,7 @@ class PtzAutoTracker:
 
             if not coefficients_valid:
                 logger.warning(
-                    f"{camera}: Autotracking calibration failed. See the Frigate documentation."
+                    f"{camera}: Autotracking calibration failed. See the Kestrel documentation."
                 )
                 return False
 

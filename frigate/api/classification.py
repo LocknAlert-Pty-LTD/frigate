@@ -315,7 +315,7 @@ def register_face(request: Request, name: str, file: UploadFile):
             status_code=500,
             content={
                 "success": False,
-                "message": "Could not process request. Try restarting Frigate.",
+                "message": "Could not process request. Try restarting Kestrel.",
             },
         )
 
@@ -348,7 +348,7 @@ def recognize_face(request: Request, file: UploadFile):
             status_code=500,
             content={
                 "success": False,
-                "message": "Could not process request. Try restarting Frigate.",
+                "message": "Could not process request. Try restarting Kestrel.",
             },
         )
 
@@ -503,7 +503,7 @@ def rename_face(request: Request, old_name: str, body: RenameFaceBody):
         return JSONResponse(
             status_code=400,
             content={
-                "message": "Error renaming face. Check Frigate logs.",
+                "message": "Error renaming face. Check Kestrel logs.",
                 "success": False,
             },
         )

@@ -1,5 +1,5 @@
 // Config Schema Utilities
-// This module provides utilities for working with Frigate's JSON Schema
+// This module provides utilities for working with Kestrel's JSON Schema
 
 export {
   transformSchema,

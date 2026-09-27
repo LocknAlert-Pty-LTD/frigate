@@ -3,7 +3,7 @@ id: memory
 title: Memory Usage
 ---
 
-Frigate includes built-in memory profiling using [memray](https://bloomberg.github.io/memray/) to help diagnose memory issues. This feature allows you to profile specific Frigate modules to identify memory leaks, excessive allocations, or other memory-related problems.
+Kestrel includes built-in memory profiling using [memray](https://bloomberg.github.io/memray/) to help diagnose memory issues. This feature allows you to profile specific Kestrel modules to identify memory leaks, excessive allocations, or other memory-related problems.
 
 ## Enabling Memory Profiling
 
@@ -27,7 +27,7 @@ docker run -e FRIGATE_MEMRAY_MODULES="frigate.embeddings" \
 
 ### Module Names
 
-Frigate processes are named using a module-based naming scheme. Common module names include:
+Kestrel processes are named using a module-based naming scheme. Common module names include:
 
 - `frigate.review_segment_manager` - Review segment processing
 - `frigate.recording_manager` - Recording management
@@ -49,7 +49,7 @@ When you specify a module name (e.g., `frigate.capture`), all processes with tha
 
 1. **Binary File Creation**: When profiling is enabled, memray creates a binary file (`.bin`) in `/config/memray_reports/` that is updated continuously in real-time as the process runs.
 
-2. **Automatic HTML Generation**: On normal process exit, Frigate automatically:
+2. **Automatic HTML Generation**: On normal process exit, Kestrel automatically:
 
    - Stops memray tracking
    - Generates an HTML flamegraph report
@@ -67,7 +67,7 @@ After a process exits normally, you'll find HTML reports in `/config/memray_repo
 
 If a process crashes or you want to generate a report from an existing binary file, you can manually create the HTML report:
 
-- Run `memray` inside the Frigate container:
+- Run `memray` inside the Kestrel container:
 
 ```bash
 docker-compose exec frigate memray flamegraph /config/memray_reports/<module_name>.bin
@@ -128,7 +128,7 @@ The interactive HTML reports allow you to:
 ### Reports Show No Data
 
 - Ensure the process ran long enough to generate meaningful data
-- Check that memray is properly installed (included by default in Frigate)
+- Check that memray is properly installed (included by default in Kestrel)
 - Verify the process actually started and ran (check process logs)
 
 For more information about memray and interpreting reports, see the [official memray documentation](https://bloomberg.github.io/memray/).

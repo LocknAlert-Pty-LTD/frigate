@@ -10,7 +10,7 @@ asserting none of them reference mqtt or the Dispatcher.
 frigate/alarm/factory.py and frigate/alarm/ha_discovery.py (both need
 frigate.config to build rules/discovery configs from the validated config)
 are exempt -- those are explicitly the wiring/integration glue that
-connects the alarm engine to the rest of Frigate, and are expected to
+connects the alarm engine to the rest of Kestrel, and are expected to
 depend on it.
 
 frigate/alarm/detection_thread.py needs frigate.comms.events_updater (the

@@ -443,7 +443,7 @@ class TestConfigSetWildcardPropagation(BaseTestHttp):
 
         FrigateApp reads the holder when the watchdog rebuilds a crashed
         process; if the save leaves it on the boot config, that process comes
-        back having lost every change made since Frigate started.
+        back having lost every change made since Kestrel started.
         """
         from fastapi import Request
 

@@ -10,7 +10,7 @@ if [[ -f ~/.ssh/known_hosts ]]; then
     sed -e 's/^/github.com /' >> ~/.ssh/known_hosts
 fi
 
-# Frigate normal container runs as root, so it have permission to create
+# Kestrel normal container runs as root, so it have permission to create
 # the folders. But the devcontainer runs as the host user, so we need to
 # create the folders and give the host user permission to write to them.
 sudo mkdir -p /media/frigate

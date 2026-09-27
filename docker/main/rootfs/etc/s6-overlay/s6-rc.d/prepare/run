@@ -108,7 +108,7 @@ function migrate_db_from_media_to_config() {
     elif [[ -f "${config_file_yaml}" ]]; then
         config_file="${config_file_yaml}"
     else
-        # Frigate will create the config file on startup
+        # Kestrel will create the config file on startup
         return 0
     fi
     unset config_file_yaml

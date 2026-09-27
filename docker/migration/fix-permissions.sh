@@ -1,5 +1,5 @@
 #!/bin/bash
-# Ahead-of-time volume ownership migration for switching Frigate to non-root.
+# Ahead-of-time volume ownership migration for switching Kestrel to non-root.
 # Run from the host BEFORE enabling PUID/PGID or --user:
 #
 #   ./fix-permissions.sh [--dry-run] <config_dir> <media_dir> [PUID] [PGID]
@@ -52,4 +52,4 @@ docker run --rm \
     -v "${media_dir}:/media/frigate" \
     --entrypoint bash \
     "${IMAGE}" \
-    -c "command -v fix-ownership >/dev/null || { echo '[ERROR] this Frigate image predates non-root support; set FRIGATE_IMAGE to a release that includes it' >&2; exit 1; }; exec fix-ownership ${dry_run_flag} ${puid} ${pgid} /config /media/frigate"
+    -c "command -v fix-ownership >/dev/null || { echo '[ERROR] this Kestrel image predates non-root support; set FRIGATE_IMAGE to a release that includes it' >&2; exit 1; }; exec fix-ownership ${dry_run_flag} ${puid} ${pgid} /config /media/frigate"

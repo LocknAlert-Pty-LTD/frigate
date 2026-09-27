@@ -475,9 +475,9 @@ def set_jwt_cookie(response: Response, cookie_name, encoded_jwt, max_age, secure
     # TODO: ideally this would set secure as well, but that requires TLS
     # SameSite is intentionally left unset (browsers default to Lax). Setting
     # SameSite=Lax/Strict would stop the cookie from being sent in cross-origin
-    # iframes, breaking embedded views such as the Home Assistant Frigate card.
+    # iframes, breaking embedded views such as the Home Assistant Kestrel card.
     # CSRF is instead mitigated by requiring a custom X-CSRF-TOKEN header, which
-    # cross-origin pages cannot set without a CORS preflight that Frigate never
+    # cross-origin pages cannot set without a CORS preflight that Kestrel never
     # grants (see check_csrf in api/fastapi_app.py).
     response.set_cookie(
         key=cookie_name,
@@ -691,7 +691,7 @@ def auth(request: Request):
     success_response = Response("", status_code=202)
 
     # dont require auth if the request is on the internal port
-    # this header is set by Frigate's nginx proxy, so it cant be spoofed.
+    # this header is set by Kestrel's nginx proxy, so it cant be spoofed.
     # the port is the boot-time snapshot rather than the live config value:
     # nginx's listeners are fixed at container start, so an in-memory config
     # change must never move the port that is trusted here

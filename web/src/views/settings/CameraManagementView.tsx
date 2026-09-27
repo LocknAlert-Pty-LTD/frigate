@@ -1057,7 +1057,7 @@ function CameraTypeSection({
   const { getLocaleDocUrl } = useDocDomain();
   const [savingCamera, setSavingCamera] = useState<string | null>(null);
   // Optimistic local state: the parsed config API doesn't reflect type
-  // changes until Frigate restarts, so we track saved values locally.
+  // changes until Kestrel restarts, so we track saved values locally.
   const [localOverrides, setLocalOverrides] = useState<Record<string, string>>(
     {},
   );
@@ -1245,7 +1245,7 @@ function ProfileCameraEnableSection({
   );
   const [savingCamera, setSavingCamera] = useState<string | null>(null);
   // Optimistic local state: the parsed config API doesn't reflect profile
-  // enabled changes until Frigate restarts, so we track saved values locally.
+  // enabled changes until Kestrel restarts, so we track saved values locally.
   const [localOverrides, setLocalOverrides] = useState<
     Record<string, Record<string, string>>
   >({});

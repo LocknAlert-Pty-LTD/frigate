@@ -12,9 +12,9 @@ import NavPath from "@site/src/components/NavPath";
 
 :::tip
 
-If you already have an environment with Linux and Docker installed, you can continue to [Installing Frigate](#installing-frigate) below.
+If you already have an environment with Linux and Docker installed, you can continue to [Installing Kestrel](#installing-frigate) below.
 
-If you already have Frigate installed through Docker or through a Home Assistant App, you can continue to [Configuring Frigate](#configuring-frigate) below.
+If you already have Kestrel installed through Docker or through a Home Assistant App, you can continue to [Configuring Kestrel](#configuring-frigate) below.
 
 :::
 
@@ -84,13 +84,13 @@ Now you have a minimal Debian server that requires very little maintenance.
    1. Specifically, follow the steps in the [Install using the apt repository](https://docs.docker.com/engine/install/debian/#install-using-the-repository) section
 2. Add your user to the docker group as described in the [Linux postinstall steps](https://docs.docker.com/engine/install/linux-postinstall/)
 
-## Installing Frigate
+## Installing Kestrel
 
-This section shows how to create a minimal directory structure for a Docker installation on Debian. If you have installed Frigate as a Home Assistant App or another way, you can continue to [Configuring Frigate](#configuring-frigate).
+This section shows how to create a minimal directory structure for a Docker installation on Debian. If you have installed Kestrel as a Home Assistant App or another way, you can continue to [Configuring Kestrel](#configuring-frigate).
 
 ### Setup directories
 
-Frigate will create a config file if one does not exist on the initial startup. The following directory structure is the bare minimum to get started.
+Kestrel will create a config file if one does not exist on the initial startup. The following directory structure is the bare minimum to get started.
 
 ```
 .
@@ -105,7 +105,7 @@ This will create the above structure:
 mkdir storage config && touch docker-compose.yml
 ```
 
-If you are setting up Frigate on a Linux device via SSH, you can use [nano](https://itsfoss.com/nano-editor-guide/) to edit the following files. If you prefer to edit remote files with a full editor instead of a terminal, I recommend using [Visual Studio Code](https://code.visualstudio.com/) with the [Remote SSH extension](https://code.visualstudio.com/docs/remote/ssh-tutorial).
+If you are setting up Kestrel on a Linux device via SSH, you can use [nano](https://itsfoss.com/nano-editor-guide/) to edit the following files. If you prefer to edit remote files with a full editor instead of a terminal, I recommend using [Visual Studio Code](https://code.visualstudio.com/) with the [Remote SSH extension](https://code.visualstudio.com/docs/remote/ssh-tutorial).
 
 :::note
 
@@ -133,9 +133,9 @@ services:
       - "8554:8554" # RTSP feeds
 ```
 
-Now you should be able to start Frigate by running `docker compose up -d` from within the folder containing `docker-compose.yml`. On startup, an admin user and password will be created and outputted in the logs. You can see this by running `docker logs frigate`. Frigate should now be accessible at `https://server_ip:8971` where you can login with the `admin` user. With no cameras configured yet, the setup wizard runs on first login and walks you through the rest.
+Now you should be able to start Kestrel by running `docker compose up -d` from within the folder containing `docker-compose.yml`. On startup, an admin user and password will be created and outputted in the logs. You can see this by running `docker logs frigate`. Kestrel should now be accessible at `https://server_ip:8971` where you can login with the `admin` user. With no cameras configured yet, the setup wizard runs on first login and walks you through the rest.
 
-## Configuring Frigate
+## Configuring Kestrel
 
 This section assumes that you already have an environment setup as described in [Installation](../frigate/installation.md). You should also configure your cameras according to the [camera setup guide](/frigate/camera_setup). Pay particular attention to the section on choosing a detect resolution.
 
@@ -149,11 +149,11 @@ values={[
 
 > <TabItem value="wizard">
 
-The first time you open Frigate with no cameras configured, the setup wizard walks you through the basics. Every step can be skipped, everything it sets can be changed later in Settings, and once you finish or dismiss it, it doesn't come back.
+The first time you open Kestrel with no cameras configured, the setup wizard walks you through the basics. Every step can be skipped, everything it sets can be changed later in Settings, and once you finish or dismiss it, it doesn't come back.
 
 :::note
 
-Frigate only sees hardware that has been passed into the container. If you plan to use a GPU, a Coral, or another accelerator, add the device to your `docker-compose.yml` and restart before running the wizard, otherwise it won't appear in the detection or hardware acceleration steps. The Manual tab shows the device entries for an Intel or AMD GPU and for a Coral, and the [hardware acceleration](../configuration/hardware_acceleration_video.md) and [object detectors](../configuration/object_detectors.md) docs cover the rest.
+Kestrel only sees hardware that has been passed into the container. If you plan to use a GPU, a Coral, or another accelerator, add the device to your `docker-compose.yml` and restart before running the wizard, otherwise it won't appear in the detection or hardware acceleration steps. The Manual tab shows the device entries for an Intel or AMD GPU and for a Coral, and the [hardware acceleration](../configuration/hardware_acceleration_video.md) and [object detectors](../configuration/object_detectors.md) docs cover the rest.
 
 :::
 
@@ -167,7 +167,7 @@ Opens the [Add Camera Wizard](../configuration/cameras.md#adding-a-camera-with-t
 
 **Object detection**
 
-Lists the detection hardware Frigate found on your system, such as a Coral, an Intel GPU or NPU, or a discrete GPU, and configures the one you pick. NVIDIA and AMD GPUs need a model before detection can start, so the wizard offers your Frigate+ models if you have them, or lets you finish setup and add one later under <NavPath path="Settings > System > Detection models" />.
+Lists the detection hardware Kestrel found on your system, such as a Coral, an Intel GPU or NPU, or a discrete GPU, and configures the one you pick. NVIDIA and AMD GPUs need a model before detection can start, so the wizard offers your Frigate+ models if you have them, or lets you finish setup and add one later under <NavPath path="Settings > System > Detection models" />.
 
 **Hardware acceleration**
 
@@ -177,7 +177,7 @@ Offers only the decoding methods your hardware supports. Auto picks one based on
 
 Choose whether to record only when something is detected or around the clock, and how long to keep it.
 
-The last screen summarizes what was set up. If a step changed something that needs a restart, the button restarts Frigate and returns you to the Live view once it is back.
+The last screen summarizes what was set up. If a step changed something that needs a restart, the button restarts Kestrel and returns you to the Live view once it is back.
 
 The wizard configures the essentials only. Motion masks are not included and should be set up afterward, once you can identify the areas of the frame that trigger unwanted motion. See the [masks documentation](../configuration/masks.md). Zones, tracked object types, notifications, and MQTT are also configured in Settings.
 
@@ -186,13 +186,13 @@ The wizard configures the essentials only. Motion masks are not included and sho
 
 On a new install the setup wizard opens first. Click **Skip setup and configure manually** on its welcome screen to dismiss it, and the steps below apply. The wizard won't come back once dismissed.
 
-**Step 1: Start Frigate**
+**Step 1: Start Kestrel**
 
-At this point you should be able to start Frigate and a basic config will be created automatically.
+At this point you should be able to start Kestrel and a basic config will be created automatically.
 
 **Step 2: Add a camera**
 
-Click the **Add Camera** button in <NavPath path="Settings > Global configuration > Camera management" /> to use the camera setup wizard to get your first camera added into Frigate. See [Adding a camera with the Add Camera Wizard](../configuration/cameras.md#adding-a-camera-with-the-add-camera-wizard) for a walkthrough of each step.
+Click the **Add Camera** button in <NavPath path="Settings > Global configuration > Camera management" /> to use the camera setup wizard to get your first camera added into Kestrel. See [Adding a camera with the Add Camera Wizard](../configuration/cameras.md#adding-a-camera-with-the-add-camera-wizard) for a walkthrough of each step.
 
 **Step 3: Configure hardware acceleration (recommended)**
 
@@ -240,9 +240,9 @@ cameras:
 
 **Step 4: Configure detectors**
 
-By default, Frigate will use a single OpenVINO detector running on the CPU.
+By default, Kestrel will use a single OpenVINO detector running on the CPU.
 
-In many cases, the integrated graphics on Intel CPUs provides sufficient performance for typical Frigate setups. If you have an Intel processor, you can follow the configuration below.
+In many cases, the integrated graphics on Intel CPUs provides sufficient performance for typical Kestrel setups. If you have an Intel processor, you can follow the configuration below.
 
 <details>
   <summary>Use Intel OpenVINO detector</summary>
@@ -345,7 +345,7 @@ cameras:
 
 More details on available detectors can be found [here](../configuration/object_detectors.md).
 
-Restart Frigate and you should start seeing detections for `person`. If you want to track other objects, they can be configured in <NavPath path="Settings > Global configuration > Objects" /> or via the [configuration file reference](../configuration/advanced/reference.md).
+Restart Kestrel and you should start seeing detections for `person`. If you want to track other objects, they can be configured in <NavPath path="Settings > Global configuration > Objects" /> or via the [configuration file reference](../configuration/advanced/reference.md).
 
 **Step 5: Setup motion masks**
 
@@ -359,7 +359,7 @@ Note that motion masks should not be used to mark out areas where you do not wan
 
 :::
 
-If you are using YAML to configure Frigate instead of the UI, your configuration should look similar to this now:
+If you are using YAML to configure Kestrel instead of the UI, your configuration should look similar to this now:
 
 ```yaml {16-18}
 mqtt:
@@ -386,7 +386,7 @@ cameras:
 
 **Step 6: Enable recordings**
 
-In order to review activity in the Frigate UI, recordings need to be enabled.
+In order to review activity in the Kestrel UI, recordings need to be enabled.
 
 <ConfigTabs>
 <TabItem value="ui">
@@ -425,13 +425,13 @@ If you don't have separate streams for detect and record, you would just add the
 
 :::note
 
-If you only define one stream in your `inputs` and do not assign a `detect` role to it, Frigate will automatically assign it the `detect` role. Frigate will always decode a stream to support motion detection, Birdseye, the API image endpoints, and other features, even if you have disabled object detection with `enabled: False` in your config's `detect` section.
+If you only define one stream in your `inputs` and do not assign a `detect` role to it, Kestrel will automatically assign it the `detect` role. Kestrel will always decode a stream to support motion detection, Birdseye, the API image endpoints, and other features, even if you have disabled object detection with `enabled: False` in your config's `detect` section.
 
-If you only plan to use Frigate for recording, it is still recommended to define a `detect` role for a low resolution stream to minimize resource usage from the required stream decoding.
+If you only plan to use Kestrel for recording, it is still recommended to define a `detect` role for a low resolution stream to minimize resource usage from the required stream decoding.
 
 :::
 
-By default, Frigate will retain video of all tracked objects for 10 days. The full set of options for recording can be found [here](../configuration/advanced/reference.md).
+By default, Kestrel will retain video of all tracked objects for 10 days. The full set of options for recording can be found [here](../configuration/advanced/reference.md).
 
 </TabItem>
 </Tabs>

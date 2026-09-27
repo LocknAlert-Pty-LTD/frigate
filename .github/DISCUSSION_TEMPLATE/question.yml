@@ -4,9 +4,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        Use this form for questions you have about Frigate.
+        Use this form for questions you have about Kestrel.
 
-        Before submitting your question, please [search the discussions][discussions], read the [official Frigate documentation][docs], and read the [Frigate FAQ][faq] pinned at the Discussion page to see if your question has already been answered by the community.
+        Before submitting your question, please [search the discussions][discussions], read the [official Kestrel documentation][docs], and read the [Kestrel FAQ][faq] pinned at the Discussion page to see if your question has already been answered by the community.
 
         **If you are looking for support, start a new discussion and use a support category.**
 

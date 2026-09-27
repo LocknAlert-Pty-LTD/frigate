@@ -47,7 +47,7 @@ export interface AlarmEvent {
   confidence: number | null;
   source: string;
   message: string | null;
-  // The underlying Frigate tracked-object/Event id, used to look up the
+  // The underlying Kestrel tracked-object/Event id, used to look up the
   // cross-camera trail (see useAlarmTrail). Null for non-detection events
   // (arm/disarm/fault/etc).
   object_id: string | null;
