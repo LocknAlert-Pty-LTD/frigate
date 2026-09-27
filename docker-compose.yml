@@ -17,7 +17,7 @@ services:
     #
     # then on the Ubuntu server, with the same FRIGATE_IMAGE set:
     #   docker compose pull && docker compose up -d
-    image: ${FRIGATE_IMAGE:-frigate:latest-tensorrt}
+    #image: ${FRIGATE_IMAGE:-frigate:latest-tensorrt}
     build:
       context: .
       # The TensorRT target lives in the main Dockerfile so that compose can
