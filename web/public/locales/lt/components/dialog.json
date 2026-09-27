@@ -1,13 +1,13 @@
 {
   "restart": {
-    "title": "Esate įsitikinę, kad norite perkrauti Frigate?",
+    "title": "Esate įsitikinę, kad norite perkrauti Kestrel?",
     "button": "Perkrauti",
     "restarting": {
-      "title": "Frigate Persikrauna",
+      "title": "Kestrel Persikrauna",
       "content": "Šis puslapis persikraus už {{countdown}} sekundžių.",
       "button": "Priverstinai Perkrauti Dabar"
     },
-    "description": "Frigate laikinai sustabdoma, iki kol programa persikraus."
+    "description": "Kestrel laikinai sustabdoma, iki kol programa persikraus."
   },
   "explore": {
     "plus": {
@@ -15,7 +15,7 @@
         "question": {
           "ask_a": "Ar šis objektas yra <code>{{label}}</code>?",
           "ask_an": "Ar šis objektas yra <code>{{label}}</code>?",
-          "label": "Patvirtinti šią etiketę į Frigate Plus",
+          "label": "Patvirtinti šią etiketę į Kestrel Plus",
           "ask_full": "Ar šis objektas yra <code>{{untranslatedLabel}}</code> ({{translatedLabel}})?"
         },
         "state": {
@@ -173,10 +173,10 @@
     "shareTimestamp": {
       "label": "Pasidalinti Laiko tarpsniu",
       "title": "Pasidalinti Laiko tarpsniu",
-      "description": "Pasidalinti URL su grotuvo dabartinės pozicijos laiko žyma arba pasirinkti laiko tarpsni. Pastaba, tai nėra vieša nuoroda ir bus pasiekiama tik tiems vartotojams kuri turi prieigą prie Frigate ir šios kameros.",
+      "description": "Pasidalinti URL su grotuvo dabartinės pozicijos laiko žyma arba pasirinkti laiko tarpsni. Pastaba, tai nėra vieša nuoroda ir bus pasiekiama tik tiems vartotojams kuri turi prieigą prie Kestrel ir šios kameros.",
       "custom": "Pasirinktas Laiko tarpsnis",
       "button": "Dalintis Laiko Tarpsnio URL",
-      "shareTitle": "Frigate Peržiūros Laiko Juosta: {{camera}}"
+      "shareTitle": "Kestrel Peržiūros Laiko Juosta: {{camera}}"
     }
   },
   "search": {

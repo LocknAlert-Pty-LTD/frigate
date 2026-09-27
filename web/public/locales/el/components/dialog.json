@@ -2,10 +2,10 @@
   "restart": {
     "restarting": {
       "content": "Αυτή η σελίδα θα φορτώσει ξανά σε {{countdown}} δευτερόλεπτα.",
-      "title": "Το Frigate κάνει επανεκκίνηση",
+      "title": "Το Kestrel κάνει επανεκκίνηση",
       "button": "Αναγκαστική επαναφόρτωση τώρα"
     },
-    "title": "Είστε σίγουροι ότι θέλετε να επανεκκινήσετε το Frigate;",
+    "title": "Είστε σίγουροι ότι θέλετε να επανεκκινήσετε το Kestrel;",
     "button": "Επανεκκίνηση"
   },
   "explore": {
@@ -16,7 +16,7 @@
       },
       "review": {
         "question": {
-          "label": "Επιβεβαιώστε αυτήν την ετικέτα για το Frigate Plus",
+          "label": "Επιβεβαιώστε αυτήν την ετικέτα για το Kestrel Plus",
           "ask_a": "Είναι αυτό το αντικείμενο <code>{{label}}</code>;",
           "ask_an": "Είναι αυτό το αντικείμενο <code>{{label}}</code>;",
           "ask_full": "Είναι αυτό το αντικείμενο <code>{{untranslatedLabel}}</code> ({{translatedLabel}});"

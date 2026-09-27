@@ -1,8 +1,8 @@
 {
   "documentTitle": {
-    "default": "Ao vivo - Frigate"
+    "default": "Ao vivo - Kestrel"
   },
-  "documentTitle.withCamera": "{{camera}} - Ao vivo - Frigate",
+  "documentTitle.withCamera": "{{camera}} - Ao vivo - Kestrel",
   "lowBandwidthMode": "Modo de baixa largura de banda",
   "twoWayTalk": {
     "enable": "Habilitar Fala em Dois Sentidos",
@@ -174,7 +174,7 @@
   },
   "noCameras": {
     "title": "Nenhuma Câmera Configurada",
-    "description": "Inicie conectando uma câmera ao Frigate.",
+    "description": "Inicie conectando uma câmera ao Kestrel.",
     "buttonText": "Adicionar Câmera",
     "restricted": {
       "title": "Nenhuma Câmera Disponível",
@@ -182,7 +182,7 @@
     },
     "default": {
       "title": "Nenhuma Câmera Configurada",
-      "description": "Comece conectando uma câmera ao Frigate.",
+      "description": "Comece conectando uma câmera ao Kestrel.",
       "buttonText": "Adicionar Câmera"
     },
     "group": {

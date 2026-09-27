@@ -1,21 +1,21 @@
 {
   "documentTitle": {
-    "default": "Settings - Frigate",
-    "authentication": "Authentication Settings - Frigate",
-    "cameraManagement": "Manage Cameras - Frigate",
-    "cameraReview": "Camera Review Settings - Frigate",
-    "enrichments": "Enrichments Settings - Frigate",
-    "masksAndZones": "Mask and Zone Editor - Frigate",
-    "motionTuner": "Motion Tuner - Frigate",
-    "object": "Debug - Frigate",
-    "general": "UI Settings - Frigate",
-    "globalConfig": "Global Configuration - Frigate",
-    "cameraConfig": "Camera Configuration - Frigate",
-    "frigatePlus": "Frigate+ Settings - Frigate",
-    "detectorsAndModel": "Detectors and model - Frigate",
-    "notifications": "Notification Settings - Frigate",
-    "maintenance": "Maintenance - Frigate",
-    "profiles": "Profiles - Frigate"
+    "default": "Settings - Kestrel",
+    "authentication": "Authentication Settings - Kestrel",
+    "cameraManagement": "Manage Cameras - Kestrel",
+    "cameraReview": "Camera Review Settings - Kestrel",
+    "enrichments": "Enrichments Settings - Kestrel",
+    "masksAndZones": "Mask and Zone Editor - Kestrel",
+    "motionTuner": "Motion Tuner - Kestrel",
+    "object": "Debug - Kestrel",
+    "general": "UI Settings - Kestrel",
+    "globalConfig": "Global Configuration - Kestrel",
+    "cameraConfig": "Camera Configuration - Kestrel",
+    "frigatePlus": "Frigate+ Settings - Kestrel",
+    "detectorsAndModel": "Detectors and model - Kestrel",
+    "notifications": "Notification Settings - Kestrel",
+    "maintenance": "Maintenance - Kestrel",
+    "profiles": "Profiles - Kestrel"
   },
   "button": {
     "overriddenGlobal": "Overridden (Global)",
@@ -24,7 +24,7 @@
     "overriddenGlobalHeading_other": "This camera overrides {{count}} fields from the global config:",
     "overriddenGlobalNoDeltas": "This camera overrides the global config, but no field values differ.",
     "overriddenLive": "Overridden (Live)",
-    "overriddenLiveTooltip": "This camera is running with a different value than the one saved in your config, which is shown here. The live view, MQTT, or an active profile can change it while Frigate is running.",
+    "overriddenLiveTooltip": "This camera is running with a different value than the one saved in your config, which is shown here. The live view, MQTT, or an active profile can change it while Kestrel is running.",
     "overriddenLiveValue": "Running value: {{value}}",
     "overriddenBaseConfig": "Overridden (Base Config)",
     "overriddenBaseConfigTooltip": "The {{profile}} profile overrides configuration settings in this section",
@@ -196,8 +196,8 @@
       },
       "importDialog": {
         "title": "Import Settings",
-        "desc": "Choose what to apply from this file. Frigate will reload when the import finishes.",
-        "exportedFrom": "Exported {{date}} from Frigate config version {{version}}",
+        "desc": "Choose what to apply from this file. Kestrel will reload when the import finishes.",
+        "exportedFrom": "Exported {{date}} from Kestrel config version {{version}}",
         "layouts_one": "Camera group layouts ({{count}} group)",
         "layouts_other": "Camera group layouts ({{count}} groups)",
         "streaming_one": "Streaming settings ({{count}} camera)",
@@ -240,8 +240,8 @@
         "exportUiSettingsFailed": "Failed to export settings",
         "importNothingToApply": "Failed to import settings: file contains no settings",
         "importInvalidJson": "Failed to import settings: file is not valid JSON",
-        "importWrongType": "Failed to import settings: file is not a Frigate settings export",
-        "importUnsupportedVersion": "Failed to import settings: file requires a newer version of Frigate",
+        "importWrongType": "Failed to import settings: file is not a Kestrel settings export",
+        "importUnsupportedVersion": "Failed to import settings: file requires a newer version of Kestrel",
         "importInvalidSchema": "Failed to import settings: file is malformed",
         "importUiSettingsFailed": "Failed to import settings"
       }
@@ -256,7 +256,7 @@
     },
     "semanticSearch": {
       "title": "Semantic Search",
-      "desc": "Semantic Search in Frigate allows you to find tracked objects within your review items using either the image itself, a user-defined text description, or an automatically generated one.",
+      "desc": "Semantic Search in Kestrel allows you to find tracked objects within your review items using either the image itself, a user-defined text description, or an automatically generated one.",
       "reindexNow": {
         "label": "Reindex Now",
         "desc": "Reindexing will regenerate embeddings for all tracked objects. This process runs in the background and may max out your CPU and take a fair amount of time depending on the number of tracked objects you have.",
@@ -282,7 +282,7 @@
     },
     "faceRecognition": {
       "title": "Face Recognition",
-      "desc": "Face recognition allows people to be assigned names and when their face is recognized Frigate will assign the person's name as a sub label. This information is included in the UI, filters, as well as in notifications.",
+      "desc": "Face recognition allows people to be assigned names and when their face is recognized Kestrel will assign the person's name as a sub label. This information is included in the UI, filters, as well as in notifications.",
       "modelSize": {
         "label": "Model Size",
         "desc": "The size of the model used for face recognition.",
@@ -298,17 +298,17 @@
     },
     "licensePlateRecognition": {
       "title": "License Plate Recognition",
-      "desc": "Frigate can recognize license plates on vehicles and automatically add the detected characters to the recognized_license_plate field or a known name as a sub_label to objects that are of type car. A common use case may be to read the license plates of cars pulling into a driveway or cars passing by on a street."
+      "desc": "Kestrel can recognize license plates on vehicles and automatically add the detected characters to the recognized_license_plate field or a known name as a sub_label to objects that are of type car. A common use case may be to read the license plates of cars pulling into a driveway or cars passing by on a street."
     },
     "restart_required": "Restart required (Enrichments settings changed)",
     "toast": {
-      "success": "Enrichments settings have been saved. Restart Frigate to apply your changes.",
+      "success": "Enrichments settings have been saved. Restart Kestrel to apply your changes.",
       "error": "Failed to save config changes: {{errorMessage}}"
     }
   },
   "cameraWizard": {
     "title": "Add Camera",
-    "description": "Follow the steps below to add a new camera to your Frigate installation.",
+    "description": "Follow the steps below to add a new camera to your Kestrel installation.",
     "steps": {
       "nameAndConnection": "Name & Connection",
       "probeOrSnapshot": "Probe or Snapshot",
@@ -480,7 +480,7 @@
       "estimatedBandwidth": "Estimated Bandwidth",
       "roles": "Roles",
       "ffmpegModule": "Use stream compatibility mode",
-      "ffmpegModuleDescription": "If the stream does not load after several attempts, try enabling this. When enabled, Frigate will use the ffmpeg module with go2rtc. This may provide better compatibility with some camera streams.",
+      "ffmpegModuleDescription": "If the stream does not load after several attempts, try enabling this. When enabled, Kestrel will use the ffmpeg module with go2rtc. This may provide better compatibility with some camera streams.",
       "none": "None",
       "error": "Error",
       "streamValidated": "Stream {{number}} validated successfully",
@@ -533,14 +533,14 @@
     "streams": {
       "title": "Camera State and Details",
       "label": "Camera state",
-      "description": "Set the operating state for each camera.<br /><br /><strong>On</strong>: streams are processed normally.<br /><strong>Off</strong>: temporarily pauses processing. Does not persist across Frigate restarts.<br /><strong>Disabled</strong>: stops processing and saves the change to your configuration. A restart is required to re-enable a disabled camera.<br /><br /><em>Note: Disabling does not affect go2rtc restreams.</em><br /><br />Drag the handle to reorder active cameras as they appear throughout the UI, including the Live dashboard and camera selection dropdowns.",
+      "description": "Set the operating state for each camera.<br /><br /><strong>On</strong>: streams are processed normally.<br /><strong>Off</strong>: temporarily pauses processing. Does not persist across Kestrel restarts.<br /><strong>Disabled</strong>: stops processing and saves the change to your configuration. A restart is required to re-enable a disabled camera.<br /><br /><em>Note: Disabling does not affect go2rtc restreams.</em><br /><br />Drag the handle to reorder active cameras as they appear throughout the UI, including the Live dashboard and camera selection dropdowns.",
       "disabledSubheading": "Disabled in configuration",
       "status": {
         "on": "On",
         "off": "Off",
         "disabled": "Disabled"
       },
-      "enableSuccess": "Enabled {{cameraName}}. Restart Frigate to apply.",
+      "enableSuccess": "Enabled {{cameraName}}. Restart Kestrel to apply.",
       "disableSuccess": "Disabled {{cameraName}} and saved to configuration.",
       "reorderHandle": "Drag to reorder",
       "saving": "Saving…",
@@ -548,9 +548,9 @@
       "details": {
         "edit": "Edit camera details",
         "title": "Edit Camera Details",
-        "description": "Update the display name, external URL, and visibility used for this camera throughout the Frigate UI.",
+        "description": "Update the display name, external URL, and visibility used for this camera throughout the Kestrel UI.",
         "friendlyNameLabel": "Display Name",
-        "friendlyNameHelp": "Friendly name shown for this camera throughout the Frigate UI. Leave blank to use the camera ID.",
+        "friendlyNameHelp": "Friendly name shown for this camera throughout the Kestrel UI. Leave blank to use the camera ID.",
         "webuiUrlLabel": "Camera Web UI URL",
         "webuiUrlHelp": "URL to visit the camera's web UI directly from the Debug view. Leave blank to disable the link.",
         "webuiUrlInvalid": "Must be a valid URL (e.g., https://example.com).",
@@ -603,7 +603,7 @@
       "description": "Set the type for each camera. Dedicated LPR cameras are single-purpose cameras with powerful optical zoom to capture license plates on distant vehicles. Most cameras should use the normal camera type unless the camera is specifically for LPR and has a tightly focused view on license plates.",
       "normal": "Normal",
       "dedicatedLpr": "Dedicated LPR",
-      "saveSuccess": "Updated camera type for {{cameraName}}. Restart Frigate to apply the changes."
+      "saveSuccess": "Updated camera type for {{cameraName}}. Restart Kestrel to apply the changes."
     },
     "clone": {
       "sectionTitle": "Clone settings",
@@ -678,11 +678,11 @@
       },
       "toast": {
         "success": "Settings copied to {{cameraName}}",
-        "successWithRestart": "Settings copied to {{cameraName}}. Restart Frigate to apply all changes.",
+        "successWithRestart": "Settings copied to {{cameraName}}. Restart Kestrel to apply all changes.",
         "successMulti_one": "Settings copied to {{count}} camera",
         "successMulti_other": "Settings copied to {{count}} cameras",
-        "successMultiWithRestart_one": "Settings copied to {{count}} camera. Restart Frigate to apply all changes.",
-        "successMultiWithRestart_other": "Settings copied to {{count}} cameras. Restart Frigate to apply all changes.",
+        "successMultiWithRestart_one": "Settings copied to {{count}} camera. Restart Kestrel to apply all changes.",
+        "successMultiWithRestart_other": "Settings copied to {{count}} cameras. Restart Kestrel to apply all changes.",
         "partialFailure": "{{successCount}} sections applied; '{{failedSection}}' failed: {{errorMessage}}",
         "partialFailureMulti": "Copied to {{successCount}} camera(s); failed for {{failed}}: {{errorMessage}}",
         "newCameraPartialFailure": "Camera {{cameraName}} was created but some settings failed to copy: {{errorMessage}}",
@@ -695,21 +695,21 @@
     "title": "Camera Review Settings",
     "object_descriptions": {
       "title": "Generative AI Object Descriptions",
-      "desc": "Temporarily enable/disable Generative AI object descriptions for this camera until Frigate restarts. When disabled, AI generated descriptions will not be requested for tracked objects on this camera."
+      "desc": "Temporarily enable/disable Generative AI object descriptions for this camera until Kestrel restarts. When disabled, AI generated descriptions will not be requested for tracked objects on this camera."
     },
     "review_descriptions": {
       "title": "Generative AI Review Descriptions",
-      "desc": "Temporarily enable/disable Generative AI review descriptions for this camera until Frigate restarts. When disabled, AI generated descriptions will not be requested for review items on this camera."
+      "desc": "Temporarily enable/disable Generative AI review descriptions for this camera until Kestrel restarts. When disabled, AI generated descriptions will not be requested for review items on this camera."
     },
     "review": {
       "title": "Review",
-      "desc": "Temporarily enable/disable alerts and detections for this camera until Frigate restarts. When disabled, no new review items will be generated. ",
+      "desc": "Temporarily enable/disable alerts and detections for this camera until Kestrel restarts. When disabled, no new review items will be generated. ",
       "alerts": "Alerts ",
       "detections": "Detections "
     },
     "reviewClassification": {
       "title": "Review Classification",
-      "desc": "Frigate categorizes review items as Alerts and Detections. By default, all <em>person</em> and <em>car</em> objects are considered Alerts. You can refine categorization of your review items by configuring required zones for them.",
+      "desc": "Kestrel categorizes review items as Alerts and Detections. By default, all <em>person</em> and <em>car</em> objects are considered Alerts. You can refine categorization of your review items by configuring required zones for them.",
       "noDefinedZones": "No zones are defined for this camera.",
       "objectAlertsTips": "All {{alertsLabels}} objects on {{cameraName}} will be shown as Alerts.",
       "zoneObjectAlertsTips": "All {{alertsLabels}} objects detected in {{zone}} on {{cameraName}} will be shown as Alerts.",
@@ -724,7 +724,7 @@
       "selectDetectionsZones": "Select zones for Detections",
       "limitDetections": "Limit detections to specific zones",
       "toast": {
-        "success": "Review Classification configuration has been saved. Restart Frigate to apply changes."
+        "success": "Review Classification configuration has been saved. Restart Kestrel to apply changes."
       }
     }
   },
@@ -820,7 +820,7 @@
     },
     "zones": {
       "label": "Zones",
-      "documentTitle": "Edit Zone - Frigate",
+      "documentTitle": "Edit Zone - Kestrel",
       "desc": {
         "title": "Zones allow you to define a specific area of the frame so you can determine whether or not an object is within a particular area.",
         "documentation": "Documentation"
@@ -876,7 +876,7 @@
     },
     "motionMasks": {
       "label": "Motion Mask",
-      "documentTitle": "Edit Motion Mask - Frigate",
+      "documentTitle": "Edit Motion Mask - Kestrel",
       "desc": {
         "title": "Motion masks are used to prevent unwanted types of motion from triggering detection. Over masking will make it more difficult for objects to be tracked.",
         "documentation": "Documentation"
@@ -908,7 +908,7 @@
     },
     "objectMasks": {
       "label": "Object Masks",
-      "documentTitle": "Edit Object Mask - Frigate",
+      "documentTitle": "Edit Object Mask - Kestrel",
       "desc": {
         "title": "Object filter masks are used to filter out false positives for a given object type based on location.",
         "documentation": "Documentation"
@@ -947,7 +947,7 @@
     "title": "Motion Detection Tuner",
     "unsavedChanges": "Unsaved Motion Tuner changes ({{camera}})",
     "desc": {
-      "title": "Frigate uses motion detection as a first line check to see if there is anything happening in the frame worth checking with object detection.",
+      "title": "Kestrel uses motion detection as a first line check to see if there is anything happening in the frame worth checking with object detection.",
       "documentation": "Read the Motion Tuning Guide"
     },
     "Threshold": {
@@ -968,7 +968,7 @@
   },
   "debug": {
     "title": "Debug",
-    "detectorDesc": "Frigate uses your detectors ({{detectors}}) to detect objects in your camera's video stream.",
+    "detectorDesc": "Kestrel uses your detectors ({{detectors}}) to detect objects in your camera's video stream.",
     "desc": "Debugging view shows a real-time view of tracked objects and their statistics. The object list shows a time-delayed summary of detected objects.",
     "openCameraWebUI": "Open {{camera}}'s Web UI",
     "debugging": "Debugging",
@@ -1035,7 +1035,7 @@
     "title": "Users",
     "management": {
       "title": "User Management",
-      "desc": "Manage this Frigate instance's user accounts."
+      "desc": "Manage this Kestrel instance's user accounts."
     },
     "addUser": "Add User",
     "updatePassword": "Reset Password",
@@ -1108,7 +1108,7 @@
       },
       "createUser": {
         "title": "Create New User",
-        "desc": "Add a new user account and specify a role for access to areas of the Frigate UI.",
+        "desc": "Add a new user account and specify a role for access to areas of the Kestrel UI.",
         "usernameOnlyInclude": "Username may only include letters, numbers, . or _",
         "confirmPassword": "Please confirm your password"
       },
@@ -1147,7 +1147,7 @@
   "roles": {
     "management": {
       "title": "Viewer Role Management",
-      "desc": "Manage custom viewer roles and their camera access permissions for this Frigate instance."
+      "desc": "Manage custom viewer roles and their camera access permissions for this Kestrel instance."
     },
     "addRole": "Add Role",
     "table": {
@@ -1209,11 +1209,11 @@
     "title": "Notifications",
     "notificationSettings": {
       "title": "Notification Settings",
-      "desc": "Frigate can natively send push notifications to your device when it is running in the browser or installed as a PWA."
+      "desc": "Kestrel can natively send push notifications to your device when it is running in the browser or installed as a PWA."
     },
     "notificationUnavailable": {
-      "desc": "Web push notifications require a secure context (https://…). This is a browser limitation. Access Frigate securely to use notifications.",
-      "descPwa": "On iOS, web push notifications are only available when Frigate is installed to your Home Screen. Open the Share menu, choose Add to Home Screen, then open Frigate from the new icon to register this device for notifications."
+      "desc": "Web push notifications require a secure context (https://…). This is a browser limitation. Access Kestrel securely to use notifications.",
+      "descPwa": "On iOS, web push notifications are only available when Kestrel is installed to your Home Screen. Open the Share menu, choose Add to Home Screen, then open Kestrel from the new icon to register this device for notifications."
     },
     "globalSettings": {
       "title": "Global Settings",
@@ -1250,7 +1250,7 @@
     "cancelSuspension": "Cancel Suspension",
     "toast": {
       "success": {
-        "registered": "Successfully registered for notifications. Restarting Frigate is required before any notifications (including a test notification) can be sent.",
+        "registered": "Successfully registered for notifications. Restarting Kestrel is required before any notifications (including a test notification) can be sent.",
         "settingSaved": "Notification settings have been saved."
       },
       "error": {
@@ -1260,7 +1260,7 @@
   },
   "frigatePlus": {
     "title": "Frigate+ Settings",
-    "description": "Frigate+ is a subscription service that provides access to additional features and capabilities for your Frigate instance, including the ability to use custom object detection models trained on your own data. You can manage your Frigate+ model settings here.",
+    "description": "Frigate+ is a subscription service that provides access to additional features and capabilities for your Kestrel instance, including the ability to use custom object detection models trained on your own data. You can manage your Frigate+ model settings here.",
     "cardTitles": {
       "api": "API",
       "currentModel": "Current Model",
@@ -1312,7 +1312,7 @@
     "unsavedChanges": "Unsaved Frigate+ settings changes",
     "restart_required": "Restart required (Frigate+ model changed)",
     "toast": {
-      "success": "Frigate+ settings have been saved. Restart Frigate to apply changes.",
+      "success": "Frigate+ settings have been saved. Restart Kestrel to apply changes.",
       "error": "Failed to save config changes: {{errorMessage}}"
     }
   },
@@ -1399,7 +1399,7 @@
         },
         "actions": {
           "title": "Actions",
-          "desc": "By default, Frigate fires an MQTT message for all triggers. Sub labels add the trigger name to the object label. Attributes are searchable metadata stored separately in the tracked object metadata.",
+          "desc": "By default, Kestrel fires an MQTT message for all triggers. Sub labels add the trigger name to the object label. Attributes are searchable metadata stored separately in the tracked object metadata.",
           "error": {
             "min": "At least one action must be selected."
           }
@@ -1440,7 +1440,7 @@
     "title": "Maintenance",
     "sync": {
       "title": "Media Sync",
-      "desc": "Frigate will periodically clean up media on a regular schedule according to your retention configuration. It is normal to see a few orphaned files as Frigate runs. Use this feature to remove orphaned media files from disk that are no longer referenced in the database.",
+      "desc": "Kestrel will periodically clean up media on a regular schedule according to your retention configuration. It is normal to see a few orphaned files as Kestrel runs. Use this feature to remove orphaned media files from disk that are no longer referenced in the database.",
       "started": "Media sync started.",
       "alreadyRunning": "A sync job is already running",
       "error": "Failed to start sync",
@@ -1489,10 +1489,10 @@
     },
     "regionGrid": {
       "title": "Region Grid",
-      "desc": "The region grid is an optimization that learns where objects of different sizes typically appear in each camera's field of view. Frigate uses this data to efficiently size detection regions. The grid is automatically built over time from tracked object data.",
+      "desc": "The region grid is an optimization that learns where objects of different sizes typically appear in each camera's field of view. Kestrel uses this data to efficiently size detection regions. The grid is automatically built over time from tracked object data.",
       "clear": "Clear region grid",
       "clearConfirmTitle": "Clear Region Grid",
-      "clearConfirmDesc": "Clearing the region grid is not recommended unless you have recently changed your detector model size or have changed your camera's physical position and are having object tracking issues. The grid will be automatically rebuilt over time as objects are tracked. A Frigate restart is required for changes to take effect.",
+      "clearConfirmDesc": "Clearing the region grid is not recommended unless you have recently changed your detector model size or have changed your camera's physical position and are having object tracking issues. The grid will be automatically rebuilt over time as objects are tracked. A Kestrel restart is required for changes to take effect.",
       "clearSuccess": "Region grid cleared successfully",
       "clearError": "Failed to clear region grid",
       "restartRequired": "Restart required for region grid changes to take effect"
@@ -1780,15 +1780,15 @@
   "toast": {
     "success": "Settings saved successfully",
     "applied": "Settings applied successfully",
-    "successRestartRequired": "Settings saved successfully. Restart Frigate to apply your changes.",
+    "successRestartRequired": "Settings saved successfully. Restart Kestrel to apply your changes.",
     "error": "Failed to save settings",
     "validationError": "Validation failed: {{message}}",
     "resetSuccess": "Reset to global defaults",
     "resetError": "Failed to reset settings",
     "saveAllSuccess_one": "Saved {{count}} section successfully.",
     "saveAllSuccess_other": "All {{count}} sections saved successfully.",
-    "saveAllSuccessRestartRequired_one": "Saved {{count}} section successfully. Restart Frigate to apply your changes.",
-    "saveAllSuccessRestartRequired_other": "All {{count}} sections saved successfully. Restart Frigate to apply your changes.",
+    "saveAllSuccessRestartRequired_one": "Saved {{count}} section successfully. Restart Kestrel to apply your changes.",
+    "saveAllSuccessRestartRequired_other": "All {{count}} sections saved successfully. Restart Kestrel to apply your changes.",
     "saveAllPartial_one": "{{successCount}} of {{totalCount}} section saved. {{failCount}} failed.",
     "saveAllPartial_other": "{{successCount}} of {{totalCount}} sections saved. {{failCount}} failed.",
     "saveAllFailure": "Failed to save all sections."
@@ -1963,8 +1963,8 @@
       "detectDisabled": "Object detection is disabled. Review items require detected objects to categorize alerts and detections.",
       "detectRuntimeDisabled": "Object detection is enabled in your config, but it is currently turned off for this camera. Review items require detected objects to categorize alerts and detections. Turn it back on from the camera's live view, or check whether an active profile is disabling it.",
       "allNonAlertDetections": "All non-alert activity will be included as detections.",
-      "genaiImageSourceRecordingsRecordDisabled": "Image source is set to 'recordings', but recording is disabled. Frigate will fall back to preview images.",
-      "genaiImageSourceRecordingsRecordRuntimeDisabled": "Image source is set to 'recordings', but recording is currently turned off for this camera even though your config enables it. Frigate will fall back to preview images."
+      "genaiImageSourceRecordingsRecordDisabled": "Image source is set to 'recordings', but recording is disabled. Kestrel will fall back to preview images.",
+      "genaiImageSourceRecordingsRecordRuntimeDisabled": "Image source is set to 'recordings', but recording is currently turned off for this camera even though your config enables it. Kestrel will fall back to preview images."
     },
     "audio": {
       "noAudioRole": "No streams have the audio role defined. You must enable the audio role for audio detection to function."
@@ -1987,7 +1987,7 @@
       "globalResolutionMultipleCameras": "A global detect resolution is set while multiple cameras are configured. Unless all cameras share the same resolution and aspect ratio, the detect width and height should be defined per camera to match each camera's native aspect ratio."
     },
     "model": {
-      "optimizedFor320": "Frigate is optimized for a 320x320 model, which is the best choice for most setups. A 640x640 model is slower and only helps in specific scenarios.",
+      "optimizedFor320": "Kestrel is optimized for a 320x320 model, which is the best choice for most setups. A 640x640 model is slower and only helps in specific scenarios.",
       "inputDimensionsNotDetectResolution": "Model input width and height are the input dimensions of the object detection model, not your camera's detect resolution. They should match the dimensions of the model you're using — typically a square size like 320x320 or 640x640."
     },
     "ffmpeg": {

@@ -1,15 +1,15 @@
 {
   "documentTitle": {
-    "cameras": "Statistika kamer - Frigate",
-    "storage": "Statistika shrambe - Frigate",
-    "general": "Splošna statistika - Frigate",
+    "cameras": "Statistika kamer - Kestrel",
+    "storage": "Statistika shrambe - Kestrel",
+    "general": "Splošna statistika - Kestrel",
     "logs": {
-      "frigate": "Frigate dnevniki - Frigate",
-      "go2rtc": "Go2RTC dnevniki - Frigate",
-      "nginx": "Nginx dnevniki - Frigate",
-      "websocket": "Dnevniki sporočil - Frigate"
+      "frigate": "Kestrel dnevniki - Kestrel",
+      "go2rtc": "Go2RTC dnevniki - Kestrel",
+      "nginx": "Nginx dnevniki - Kestrel",
+      "websocket": "Dnevniki sporočil - Kestrel"
     },
-    "enrichments": "Statistika obogatenih podatkov - Frigate"
+    "enrichments": "Statistika obogatenih podatkov - Kestrel"
   },
   "logs": {
     "download": {
@@ -62,7 +62,7 @@
   "storage": {
     "recordings": {
       "title": "Posnetki",
-      "tips": "Ta vrednost predstavlja skupno shrambo, ki jo zasedajo posnetki v podatkovni bazi Frigate. Frigate ne spremlja porabe shrambe za vse datoteke na tvojem disku.",
+      "tips": "Ta vrednost predstavlja skupno shrambo, ki jo zasedajo posnetki v podatkovni bazi Kestrel. Kestrel ne spremlja porabe shrambe za vse datoteke na tvojem disku.",
       "earliestRecording": "Najstarejši razpoložljiv posnetek:"
     },
     "title": "Shramba",
@@ -76,7 +76,7 @@
       "bandwidth": "Pasovna širina",
       "unused": {
         "title": "Neporabljeno",
-        "tips": "Ta vrednost morda ne predstavlja natančno prostega prostora, ki je na voljo programu Frigate, če imaš na disku poleg posnetkov Frigate shranjene še druge datoteke. Frigate ne spremlja porabe shrambe izven svojih posnetkov."
+        "tips": "Ta vrednost morda ne predstavlja natančno prostega prostora, ki je na voljo programu Kestrel, če imaš na disku poleg posnetkov Kestrel shranjene še druge datoteke. Kestrel ne spremlja porabe shrambe izven svojih posnetkov."
       }
     },
     "shm": {

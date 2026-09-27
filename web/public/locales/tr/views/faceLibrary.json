@@ -10,7 +10,7 @@
     "scoreInfo": "Alt etiket skoru, tanınan tüm yüzlerin güvenilirlik değerlerinin ağırlıklı ortalamasından elde edilir, dolayısıyla fotoğraf üzerinde gösterilen skordan farklı olabilir.",
     "unknown": "Bilinmiyor"
   },
-  "documentTitle": "Yüz Kütüphanesi - Frigate",
+  "documentTitle": "Yüz Kütüphanesi - Kestrel",
   "uploadFaceImage": {
     "title": "Yüz Resmi Yükle",
     "desc": "Yüzleri taramak ve {{pageToggle}} için dahil etmek üzere bir resim yükleyin"

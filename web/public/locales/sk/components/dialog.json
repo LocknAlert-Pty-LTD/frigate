@@ -1,13 +1,13 @@
 {
   "restart": {
-    "title": "Ste si istý, že chcete reštartovať Frigate ?",
+    "title": "Ste si istý, že chcete reštartovať Kestrel ?",
     "button": "Reštart",
     "restarting": {
-      "title": "Frigate sa reštartuje",
+      "title": "Kestrel sa reštartuje",
       "content": "Táto stránka bude obnovená o {{countdown}} sekúnd.",
       "button": "Vynútiť opätovné načítanie teraz"
     },
-    "description": "Počas reštartu bude Frigate nakrátko zastavený."
+    "description": "Počas reštartu bude Kestrel nakrátko zastavený."
   },
   "explore": {
     "plus": {
@@ -17,7 +17,7 @@
       },
       "review": {
         "question": {
-          "label": "Potvrďte tento štítok pre Frigate Plus",
+          "label": "Potvrďte tento štítok pre Kestrel Plus",
           "ask_a": "Je tento objekt typom <code>{{label}}</code>?",
           "ask_an": "Tento objekt je <code>{{label}}</code>?",
           "ask_full": "Je tento objekt typom <code>{{untranslatedLabel}}</code>{{translatedLabel}}?"

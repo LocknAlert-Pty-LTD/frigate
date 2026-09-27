@@ -1,13 +1,13 @@
 {
   "restart": {
-    "title": "Sei sicuro di voler riavviare Frigate?",
+    "title": "Sei sicuro di voler riavviare Kestrel?",
     "button": "Riavvia",
     "restarting": {
-      "title": "Frigate si sta riavviando",
+      "title": "Kestrel si sta riavviando",
       "content": "Questa pagina si ricaricherà in {{countdown}} secondi.",
       "button": "Forza ricarica ora"
     },
-    "description": "Questo fermerà brevemente Frigate mentre si riavvia."
+    "description": "Questo fermerà brevemente Kestrel mentre si riavvia."
   },
   "explore": {
     "plus": {
@@ -20,7 +20,7 @@
           "submitted": "Inviato"
         },
         "question": {
-          "label": "Conferma questa etichetta per Frigate Plus",
+          "label": "Conferma questa etichetta per Kestrel Plus",
           "ask_a": "Questo oggetto è un <code>{{label}}</code>?",
           "ask_an": "Questo oggetto è un <code>{{label}}</code>?",
           "ask_full": "Questo oggetto è un <code>{{untranslatedLabel}}</code> ({{translatedLabel}})?"
@@ -187,10 +187,10 @@
     "shareTimestamp": {
       "label": "Condividi orario",
       "title": "Condividi orario",
-      "description": "Condividi un URL con l'orario della posizione attuale del lettore oppure scegli un orario personalizzato. Tieni presente che questo URL non è pubblico ed è accessibile solo agli utenti che hanno accesso a Frigate e a questa telecamera.",
+      "description": "Condividi un URL con l'orario della posizione attuale del lettore oppure scegli un orario personalizzato. Tieni presente che questo URL non è pubblico ed è accessibile solo agli utenti che hanno accesso a Kestrel e a questa telecamera.",
       "custom": "Orario personalizzato",
       "button": "URL dell'orario di condivisione",
-      "shareTitle": "Orario revisione Frigate: {{camera}}"
+      "shareTitle": "Orario revisione Kestrel: {{camera}}"
     }
   },
   "imagePicker": {

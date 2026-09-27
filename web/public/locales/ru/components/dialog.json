@@ -1,13 +1,13 @@
 {
   "restart": {
-    "title": "Вы уверены, что хотите перезапустить Frigate?",
+    "title": "Вы уверены, что хотите перезапустить Kestrel?",
     "button": "Перезапуск",
     "restarting": {
-      "title": "Frigate перезапускается",
+      "title": "Kestrel перезапускается",
       "content": "Эта страница перезагрузится через {{countdown}} сек.",
       "button": "Принудительная перезагрузка"
     },
-    "description": "Это перезагрузки перезагрузит Frigate."
+    "description": "Это перезагрузки перезагрузит Kestrel."
   },
   "explore": {
     "plus": {
@@ -21,7 +21,7 @@
         },
         "question": {
           "ask_an": "Это объект — <code>{{label}}</code> ?",
-          "label": "Подтвердить эту метку для Frigate Plus",
+          "label": "Подтвердить эту метку для Kestrel Plus",
           "ask_a": "Это объект — <code>{{label}}</code>?",
           "ask_full": "Это объект — <code>{{untranslatedLabel}}</code> ({{translatedLabel}})?"
         },

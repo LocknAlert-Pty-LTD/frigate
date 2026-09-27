@@ -1,19 +1,19 @@
 {
   "restart": {
-    "title": "Jste si jistí, že chcete restartovat Frigate?",
+    "title": "Jste si jistí, že chcete restartovat Kestrel?",
     "button": "Restartovat",
     "restarting": {
-      "title": "Frigate restartuje",
+      "title": "Kestrel restartuje",
       "content": "Tato stránka bude obnovena za {{countdown}} sekund.",
       "button": "Vynutit opětovné načtení"
     },
-    "description": "Frigate bude během restartu krátce nedostupný."
+    "description": "Kestrel bude během restartu krátce nedostupný."
   },
   "explore": {
     "plus": {
       "review": {
         "question": {
-          "label": "Potvrďte tento štítek pro Frigate Plus",
+          "label": "Potvrďte tento štítek pro Kestrel Plus",
           "ask_a": "Je tento objekt <code>{{label}}</code>?",
           "ask_an": "Tento objekt je <code>{{label}}</code>?",
           "ask_full": "Je tento objekt <code>{{untranslatedLabel}}</code> ({{translatedLabel}})?"

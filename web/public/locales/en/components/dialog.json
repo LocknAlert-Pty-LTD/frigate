@@ -1,10 +1,10 @@
 {
   "restart": {
-    "title": "Are you sure you want to restart Frigate?",
-    "description": "This will briefly stop Frigate while it restarts.",
+    "title": "Are you sure you want to restart Kestrel?",
+    "description": "This will briefly stop Kestrel while it restarts.",
     "button": "Restart",
     "restarting": {
-      "title": "Frigate is Restarting",
+      "title": "Kestrel is Restarting",
       "content": "This page will reload in {{countdown}} seconds.",
       "button": "Force Reload Now"
     }
@@ -17,7 +17,7 @@
       },
       "review": {
         "question": {
-          "label": "Confirm this label for Frigate Plus",
+          "label": "Confirm this label for Kestrel Plus",
           "ask_a": "Is this object a <code>{{label}}</code>?",
           "ask_an": "Is this object an <code>{{label}}</code>?",
           "ask_full": "Is this object a <code>{{untranslatedLabel}}</code> ({{translatedLabel}})?"
@@ -172,10 +172,10 @@
     "shareTimestamp": {
       "label": "Share Timestamp",
       "title": "Share Timestamp",
-      "description": "Share a timestamped URL of current player position or choose a custom timestamp. Note that this is not a public share URL and is only accessible to users with access to Frigate and this camera.",
+      "description": "Share a timestamped URL of current player position or choose a custom timestamp. Note that this is not a public share URL and is only accessible to users with access to Kestrel and this camera.",
       "custom": "Custom Timestamp",
       "button": "Share Timestamp URL",
-      "shareTitle": "Frigate Review Timestamp: {{camera}}"
+      "shareTitle": "Kestrel Review Timestamp: {{camera}}"
     },
     "confirmDelete": {
       "title": "Confirm Delete",

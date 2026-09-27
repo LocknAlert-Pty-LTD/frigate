@@ -141,21 +141,21 @@
     }
   },
   "documentTitle": {
-    "default": "Ustawienia - Frigate",
-    "masksAndZones": "Edytor Masek i Stref - Frigate",
-    "frigatePlus": "Ustawienia Frigate+ - Frigate",
-    "general": "Ustawienia Interfejsu - Frigate",
-    "authentication": "Ustawienia Uwierzytelniania - Frigate",
-    "motionTuner": "Konfigurator Ruchu - Frigate",
-    "object": "Debug - Frigate",
-    "notifications": "Ustawienia powiadomień - Frigate",
-    "enrichments": "Ustawienia wzbogacania - Frigate",
-    "cameraManagement": "Zarządzanie kamerami – Frigate",
-    "cameraReview": "Ustawienia przeglądu kamer - Frigate",
-    "globalConfig": "Konfiguracja globalna - Frigate",
-    "cameraConfig": "Konfiguracja kamery - Frigate",
-    "maintenance": "Konserwacja – Frigate",
-    "profiles": "Profile - Frigate",
+    "default": "Ustawienia - Kestrel",
+    "masksAndZones": "Edytor Masek i Stref - Kestrel",
+    "frigatePlus": "Ustawienia Frigate+ - Kestrel",
+    "general": "Ustawienia Interfejsu - Kestrel",
+    "authentication": "Ustawienia Uwierzytelniania - Kestrel",
+    "motionTuner": "Konfigurator Ruchu - Kestrel",
+    "object": "Debug - Kestrel",
+    "notifications": "Ustawienia powiadomień - Kestrel",
+    "enrichments": "Ustawienia wzbogacania - Kestrel",
+    "cameraManagement": "Zarządzanie kamerami – Kestrel",
+    "cameraReview": "Ustawienia przeglądu kamer - Kestrel",
+    "globalConfig": "Konfiguracja globalna - Kestrel",
+    "cameraConfig": "Konfiguracja kamery - Kestrel",
+    "maintenance": "Konserwacja – Kestrel",
+    "profiles": "Profile - Kestrel",
     "detectorsAndModel": "Detektory i model"
   },
   "masksAndZones": {
@@ -235,7 +235,7 @@
     },
     "zones": {
       "label": "Strefy",
-      "documentTitle": "Edytuj Strefę - Frigate",
+      "documentTitle": "Edytuj Strefę - Kestrel",
       "desc": {
         "title": "Strefy pozwalają na zdefiniowanie konkretnych obszarów kadru, dzięki czemu można sprawdzić, czy obiekt znajduje się w danym obszarze.",
         "documentation": "Dokumentacja"
@@ -299,7 +299,7 @@
       "point_few": "{{count}} punkty",
       "point_many": "{{count}} punktów",
       "clickDrawPolygon": "Kliknij aby narysować wielokąt na obrazie.",
-      "documentTitle": "Edytuj maskę ruchu - Frigate",
+      "documentTitle": "Edytuj maskę ruchu - Kestrel",
       "add": "Nowa Maska Ruchu",
       "polygonAreaTooLarge": {
         "tips": "Maski ruchu nie zapobiegają wykrywaniu obiektów. Powinieneś użyć wymaganej strefy zamiast tego.",
@@ -339,7 +339,7 @@
       "point_few": "{{count}} punkty",
       "point_many": "{{count}} punktów",
       "label": "Maski Obiektów",
-      "documentTitle": "Edytuj Maskę Obiektu - Frigate",
+      "documentTitle": "Edytuj Maskę Obiektu - Kestrel",
       "desc": {
         "title": "Maski filtrujące obiekty są używane do filtrowania fałszywych detekcji dla danego typu obiektu na podstawie lokalizacji.",
         "documentation": "Dokumentacja"
@@ -380,7 +380,7 @@
     "objectList": "Lista Obiektów",
     "debugging": "Debugowanie",
     "title": "Debugowanie",
-    "detectorDesc": "Frigate używa twoich detektorów ({{detectors}}) do wykrywania obiektów w strumieniu wideo kamery.",
+    "detectorDesc": "Kestrel używa twoich detektorów ({{detectors}}) do wykrywania obiektów w strumieniu wideo kamery.",
     "boundingBoxes": {
       "desc": "Pokaż ramki ograniczające wokół śledzonych obiektów",
       "colors": {
@@ -438,7 +438,7 @@
   "motionDetectionTuner": {
     "title": "Tuner Wykrywania Ruchu",
     "desc": {
-      "title": "Frigate używa wykrywania ruchu jako pierwszej linii sprawdzenia, czy w kadrze dzieje się coś wartego sprawdzenia przez detekcję obiektów.",
+      "title": "Kestrel używa wykrywania ruchu jako pierwszej linii sprawdzenia, czy w kadrze dzieje się coś wartego sprawdzenia przez detekcję obiektów.",
       "documentation": "Przeczytaj Przewodnik Dostrajania Ruchu"
     },
     "Threshold": {
@@ -543,7 +543,7 @@
       },
       "createUser": {
         "title": "Utwórz nowego użytkownika",
-        "desc": "Dodaj nowe konto użytkownika i określ rolę dla dostępu do obszarów interfejsu Frigate.",
+        "desc": "Dodaj nowe konto użytkownika i określ rolę dla dostępu do obszarów interfejsu Kestrel.",
         "usernameOnlyInclude": "Nazwa użytkownika może zawierać tylko litery, cyfry lub znak _",
         "confirmPassword": "Proszę potwierdź swoje hasło"
       },
@@ -567,7 +567,7 @@
     },
     "management": {
       "title": "Zarządzanie Użytkownikami",
-      "desc": "Zarządzaj kontami użytkowników tej instancji Frigate."
+      "desc": "Zarządzaj kontami użytkowników tej instancji Kestrel."
     },
     "title": "Użytkownicy"
   },
@@ -575,12 +575,12 @@
     "title": "Powiadomienia",
     "notificationSettings": {
       "title": "Ustawienia powiadomień",
-      "desc": "Frigate może wysyłać natywne powiadomienia push na twoje urządzenie, gdy działa w przeglądarce lub jest zainstalowany jako PWA."
+      "desc": "Kestrel może wysyłać natywne powiadomienia push na twoje urządzenie, gdy działa w przeglądarce lub jest zainstalowany jako PWA."
     },
     "notificationUnavailable": {
       "title": "Powiadomienia niedostępne",
-      "desc": "Powiadomienia push w przeglądarce wymagają bezpiecznego kontekstu (<code>https://…</code>). To jest ograniczenie przeglądarki. Uzyskaj dostęp do Frigate przez bezpieczne połączenie, aby korzystać z powiadomień.",
-      "descPwa": "W systemie iOS powiadomienia web push są dostępne tylko wtedy, gdy Frigate jest zainstalowane na ekranie głównym. Otwórz menu <strong>Udostępnij</strong>, wybierz <strong>Do ekranu początkowego</strong>, a następnie otwórz Frigate z nowej ikony, aby zarejestrować to urządzenie do powiadomień."
+      "desc": "Powiadomienia push w przeglądarce wymagają bezpiecznego kontekstu (<code>https://…</code>). To jest ograniczenie przeglądarki. Uzyskaj dostęp do Kestrel przez bezpieczne połączenie, aby korzystać z powiadomień.",
+      "descPwa": "W systemie iOS powiadomienia web push są dostępne tylko wtedy, gdy Kestrel jest zainstalowane na ekranie głównym. Otwórz menu <strong>Udostępnij</strong>, wybierz <strong>Do ekranu początkowego</strong>, a następnie otwórz Kestrel z nowej ikony, aby zarejestrować to urządzenie do powiadomień."
     },
     "globalSettings": {
       "title": "Ustawienia globalne",
@@ -603,7 +603,7 @@
       },
       "success": {
         "settingSaved": "Ustawienia powiadomień zostały zapisane.",
-        "registered": "Rejestracja powiadomień zakończona powodzeniem. Przed wysłaniem jakichkolwiek powiadomień (włącznie z testowym) wymagane jest ponowne uruchomienie Frigate."
+        "registered": "Rejestracja powiadomień zakończona powodzeniem. Przed wysłaniem jakichkolwiek powiadomień (włącznie z testowym) wymagane jest ponowne uruchomienie Kestrel."
       }
     },
     "email": {
@@ -669,12 +669,12 @@
       }
     },
     "toast": {
-      "success": "Ustawienia Frigate+ zostały zapisane. Uruchom ponownie Frigate, aby zastosować zmiany.",
+      "success": "Ustawienia Frigate+ zostały zapisane. Uruchom ponownie Kestrel, aby zastosować zmiany.",
       "error": "Nie udało się zapisać zmian konfiguracji: {{errorMessage}}"
     },
     "restart_required": "Wymagane ponowne uruchomienie (Zmieniony model Frigate+)",
     "unsavedChanges": "Niezapisane zmiany ustawień Frigate+",
-    "description": "Frigate+ to usługa subskrypcyjna dająca dostęp do dodatkowych funkcji Frigate, w tym możliwość używania niestandardowych modeli detekcji obiektów wytrenowanych na Twoich danych. Tutaj możesz zarządzać ustawieniami modelu Frigate+.",
+    "description": "Frigate+ to usługa subskrypcyjna dająca dostęp do dodatkowych funkcji Kestrel, w tym możliwość używania niestandardowych modeli detekcji obiektów wytrenowanych na Twoich danych. Tutaj możesz zarządzać ustawieniami modelu Frigate+.",
     "cardTitles": {
       "api": "API",
       "currentModel": "Bieżący model",
@@ -686,7 +686,7 @@
   "enrichments": {
     "faceRecognition": {
       "title": "Rozpoznawanie twarzy",
-      "desc": "Rozpoznawanie twarzy pozwala na przypisywanie imion osobom, a gdy ich twarz zostanie rozpoznana, Frigate przypisze imię osoby jako sub label. Ta informacja jest wyświetlana w interfejsie, filtrach oraz powiadomieniach.",
+      "desc": "Rozpoznawanie twarzy pozwala na przypisywanie imion osobom, a gdy ich twarz zostanie rozpoznana, Kestrel przypisze imię osoby jako sub label. Ta informacja jest wyświetlana w interfejsie, filtrach oraz powiadomieniach.",
       "modelSize": {
         "label": "Rozmiar modelu",
         "desc": "Rozmiar modelu używanego do rozpoznawania twarzy.",
@@ -708,7 +708,7 @@
     },
     "semanticSearch": {
       "title": "Wyszukiwanie semantyczne",
-      "desc": "Wyszukiwanie semantyczne w Frigate pozwala na znajdowanie śledzonych obiektów w elementach przeglądowych za pomocą samego obrazu, opisu tekstowego zdefiniowanego przez użytkownika lub automatycznie wygenerowanego.",
+      "desc": "Wyszukiwanie semantyczne w Kestrel pozwala na znajdowanie śledzonych obiektów w elementach przeglądowych za pomocą samego obrazu, opisu tekstowego zdefiniowanego przez użytkownika lub automatycznie wygenerowanego.",
       "reindexNow": {
         "label": "Reindeksuj teraz",
         "desc": "Reindeksowanie zregeneruje osadzenia dla wszystkich śledzonych obiektów. Ten proces działa w tle i może maksymalnie obciążyć procesor oraz zająć sporo czasu w zależności od liczby śledzonych obiektów.",
@@ -734,18 +734,18 @@
     },
     "licensePlateRecognition": {
       "title": "Rozpoznawanie tablic rejestracyjnych",
-      "desc": "Frigate może rozpoznawać tablice rejestracyjne na pojazdach i automatycznie dodawać wykryte znaki do pola recognized_license_plate lub znaną nazwę jako sub_label do obiektów typu samochód. Typowy przypadek użycia to odczytywanie tablic rejestracyjnych samochodów wjeżdżających na podjazd lub przejeżdżających ulicą."
+      "desc": "Kestrel może rozpoznawać tablice rejestracyjne na pojazdach i automatycznie dodawać wykryte znaki do pola recognized_license_plate lub znaną nazwę jako sub_label do obiektów typu samochód. Typowy przypadek użycia to odczytywanie tablic rejestracyjnych samochodów wjeżdżających na podjazd lub przejeżdżających ulicą."
     },
     "restart_required": "Wymagany restart (zmieniono ustawienia wzbogacania)",
     "toast": {
-      "success": "Ustawienia wzbogacania zostały zapisane. Uruchom ponownie Frigate, aby zastosować zmiany.",
+      "success": "Ustawienia wzbogacania zostały zapisane. Uruchom ponownie Kestrel, aby zastosować zmiany.",
       "error": "Nie udało się zapisać zmian konfiguracji: {{errorMessage}}"
     }
   },
   "roles": {
     "management": {
       "title": "Zarządzanie rolami podglądu",
-      "desc": "Zarządzaj własnymi rolami podglądu i ich dostępem do kamer dla tej instancji Frigate."
+      "desc": "Zarządzaj własnymi rolami podglądu i ich dostępem do kamer dla tej instancji Kestrel."
     },
     "addRole": "Dodaj rolę",
     "table": {
@@ -884,7 +884,7 @@
         },
         "actions": {
           "title": "Akcje",
-          "desc": "Domyślnie Frigate wysyła komunikat MQTT dla wszystkich wyzwalaczy. Podetykiety dodają nazwę wyzwalacza do etykiety obiektu. Atrybuty to metadane, które można przeszukiwać, przechowywane oddzielnie w metadanych śledzonego obiektu.",
+          "desc": "Domyślnie Kestrel wysyła komunikat MQTT dla wszystkich wyzwalaczy. Podetykiety dodają nazwę wyzwalacza do etykiety obiektu. Atrybuty to metadane, które można przeszukiwać, przechowywane oddzielnie w metadanych śledzonego obiektu.",
           "error": {
             "min": "Musisz wybrać co najmniej jedną akcję."
           }
@@ -1076,7 +1076,7 @@
       "disconnectStream": "Rozłącz",
       "estimatedBandwidth": "Przewidywana przepustowość",
       "roles": "Role",
-      "ffmpegModuleDescription": "Jeżeli po kilku próbach strumień nadal nie ładuje się, uruchom ten tryb. Gdy włączony jest ten tryb Frigate będzie używać modułu ffmpeg z go2rtc. Może to zapewnić lepszą kompatybilność z niektórymi typami strumieniów.",
+      "ffmpegModuleDescription": "Jeżeli po kilku próbach strumień nadal nie ładuje się, uruchom ten tryb. Gdy włączony jest ten tryb Kestrel będzie używać modułu ffmpeg z go2rtc. Może to zapewnić lepszą kompatybilność z niektórymi typami strumieniów.",
       "none": "Brak",
       "error": "Błąd",
       "streamValidated": "Strumień numer: {{number}} przeszedł test pozytywnie",
@@ -1113,7 +1113,7 @@
       "connectStream": "Połącz",
       "ffmpegModule": "Użyj trybu zgodności strumienia"
     },
-    "description": "Wykonaj poniższe kroki aby dodać nową kamerę do Frigate."
+    "description": "Wykonaj poniższe kroki aby dodać nową kamerę do Kestrel."
   },
   "cameraManagement": {
     "title": "Zarządzaj kamerami",
@@ -1124,14 +1124,14 @@
     "streams": {
       "title": "Włącz / Wyłącz kamery",
       "label": "Stan kamery",
-      "description": "Ustaw stan pracy dla każdej kamery.<br /><br /><strong>Włączona</strong>: strumienie są przetwarzane normalnie.<br /><strong>Wyłączona</strong>: tymczasowo wstrzymuje przetwarzanie. Stan nie jest zachowywany po restarcie Frigate.<br /><strong>Zdezaktywowana</strong>: zatrzymuje przetwarzanie i zapisuje zmianę w konfiguracji. Wymagany jest restart, aby ponownie włączyć kamerę.<br /><br /><em>Uwaga: Zdezaktywowanie nie wpływa na retransmisje go2rtc.</em><br /><br />Przeciągnij uchwyt, aby zmienić kolejność aktywnych kamer w całym interfejsie, w tym na pulpicie Na żywo oraz w listach wyboru kamer.",
+      "description": "Ustaw stan pracy dla każdej kamery.<br /><br /><strong>Włączona</strong>: strumienie są przetwarzane normalnie.<br /><strong>Wyłączona</strong>: tymczasowo wstrzymuje przetwarzanie. Stan nie jest zachowywany po restarcie Kestrel.<br /><strong>Zdezaktywowana</strong>: zatrzymuje przetwarzanie i zapisuje zmianę w konfiguracji. Wymagany jest restart, aby ponownie włączyć kamerę.<br /><br /><em>Uwaga: Zdezaktywowanie nie wpływa na retransmisje go2rtc.</em><br /><br />Przeciągnij uchwyt, aby zmienić kolejność aktywnych kamer w całym interfejsie, w tym na pulpicie Na żywo oraz w listach wyboru kamer.",
       "disabledSubheading": "Zdezaktywowane w konfiguracji",
       "status": {
         "on": "Włączona",
         "off": "Wyłączona",
         "disabled": "Zdezaktywowana"
       },
-      "enableSuccess": "Włączono {{cameraName}}. Zrestartuj Frigate, aby zastosować.",
+      "enableSuccess": "Włączono {{cameraName}}. Zrestartuj Kestrel, aby zastosować.",
       "disableSuccess": "Zdezaktywowano {{cameraName}} i zapisano w konfiguracji.",
       "reorderHandle": "Przeciągnij, aby zmienić kolejność",
       "saving": "Zapisywanie…",
@@ -1139,9 +1139,9 @@
       "details": {
         "edit": "Edytuj szczegóły kamery",
         "title": "Edytuj szczegóły kamery",
-        "description": "Zaktualizuj nazwę wyświetlaną, zewnętrzny adres URL oraz widoczność tej kamery w interfejsie Frigate.",
+        "description": "Zaktualizuj nazwę wyświetlaną, zewnętrzny adres URL oraz widoczność tej kamery w interfejsie Kestrel.",
         "friendlyNameLabel": "Nazwa wyświetlana",
-        "friendlyNameHelp": "Przyjazna nazwa wyświetlana dla tej kamery w interfejsie Frigate. Pozostaw puste, aby używać ID kamery.",
+        "friendlyNameHelp": "Przyjazna nazwa wyświetlana dla tej kamery w interfejsie Kestrel. Pozostaw puste, aby używać ID kamery.",
         "webuiUrlLabel": "Adres URL panelu WWW kamery",
         "webuiUrlHelp": "Adres URL umożliwiający bezpośrednie przejście do panelu WWW kamery z widoku Debugowania. Pozostaw puste, aby wyłączyć łącze.",
         "webuiUrlInvalid": "Musi być prawidłowym adresem URL (np. https://example.com).",
@@ -1207,7 +1207,7 @@
       "description": "Ustaw typ dla każdej kamery. Dedykowane kamery LPR to kamery jednozadaniowe z silnym zoomem optycznym do rejestrowania tablic na odległych pojazdach. Większość kamer powinna używać typu zwykłego, chyba że kamera jest dedykowana wyłącznie do LPR i jest precyzyjnie wykadrowana na tablice.",
       "normal": "Zwykła",
       "dedicatedLpr": "Dedykowana LPR",
-      "saveSuccess": "Zaktualizowano typ kamery dla {{cameraName}}. Zrestartuj Frigate, aby zastosować zmiany."
+      "saveSuccess": "Zaktualizowano typ kamery dla {{cameraName}}. Zrestartuj Kestrel, aby zastosować zmiany."
     },
     "clone": {
       "sectionTitle": "Klonowanie ustawień",
@@ -1276,20 +1276,20 @@
         "changeCount_one": "Zostanie zastosowana {{count}} zmiana",
         "changeCount_few": "Zostaną zastosowane {{count}} zmiany",
         "changeCount_many": "Zostanie zastosowanych {{count}} zmian",
-        "restartNeeded": "Niektóre zmiany będą wymagały restartu Frigate.",
+        "restartNeeded": "Niektóre zmiany będą wymagały restartu Kestrel.",
         "liveOnly": "Wszystkie zmiany zostaną zastosowane natychmiast bez konieczności restartu.",
         "submit": "Klonuj",
         "submitting": "Klonowanie…"
       },
       "toast": {
         "success": "Skopiowano ustawienia do {{cameraName}}",
-        "successWithRestart": "Skopiowano ustawienia do {{cameraName}}. Zrestartuj Frigate, aby zastosować wszystkie zmiany.",
+        "successWithRestart": "Skopiowano ustawienia do {{cameraName}}. Zrestartuj Kestrel, aby zastosować wszystkie zmiany.",
         "successMulti_one": "Skopiowano ustawienia do {{count}} kamery",
         "successMulti_few": "Skopiowano ustawienia do {{count}} kamer",
         "successMulti_many": "Skopiowano ustawienia do {{count}} kamer",
-        "successMultiWithRestart_one": "Skopiowano ustawienia do {{count}} kamery. Zrestartuj Frigate, aby zastosować wszystkie zmiany.",
-        "successMultiWithRestart_few": "Skopiowano ustawienia do {{count}} kamer. Zrestartuj Frigate, aby zastosować wszystkie zmiany.",
-        "successMultiWithRestart_many": "Skopiowano ustawienia do {{count}} kamer. Zrestartuj Frigate, aby zastosować wszystkie zmiany.",
+        "successMultiWithRestart_one": "Skopiowano ustawienia do {{count}} kamery. Zrestartuj Kestrel, aby zastosować wszystkie zmiany.",
+        "successMultiWithRestart_few": "Skopiowano ustawienia do {{count}} kamer. Zrestartuj Kestrel, aby zastosować wszystkie zmiany.",
+        "successMultiWithRestart_many": "Skopiowano ustawienia do {{count}} kamer. Zrestartuj Kestrel, aby zastosować wszystkie zmiany.",
         "partialFailure": "Zastosowano {{successCount}} sekcji; błąd w {{failedSection}}: {{errorMessage}}",
         "partialFailureMulti": "Skopiowano do {{successCount}} kamer; błąd dla {{failed}}: {{errorMessage}}",
         "newCameraPartialFailure": "Kamera {{cameraName}} została utworzona, ale nie udało się skopiować niektórych ustawień: {{errorMessage}}",
@@ -1303,7 +1303,7 @@
       "alerts": "Alerty ",
       "detections": "Wykrycia ",
       "title": "Recenzja",
-      "desc": "Tymczasowo włącz/wyłącz alerty i wykrywania dla tej kamery do momentu ponownego uruchomienia programu Frigate. Po wyłączeniu nie będą generowane żadne nowe elementy do przeglądu. "
+      "desc": "Tymczasowo włącz/wyłącz alerty i wykrywania dla tej kamery do momentu ponownego uruchomienia programu Kestrel. Po wyłączeniu nie będą generowane żadne nowe elementy do przeglądu. "
     },
     "reviewClassification": {
       "title": "Przegląd klasyfikacji",
@@ -1318,11 +1318,11 @@
       "selectAlertsZones": "Wybierz strefę dla Alertów",
       "selectDetectionsZones": "Wybierz strefę dla Wykryć",
       "limitDetections": "Ogranicz detekcje do konkretnych stref",
-      "desc": "Frigate dzieli elementy do przeglądu na alarmy i detekcje. Domyślnie wszystkie obiekty typu <em>osoba</em> i <em>samochód</em> są traktowane jako alerty. Możesz doprecyzować kategoryzację elementów do przeglądu, konfigurując dla nich wymagane strefy.",
+      "desc": "Kestrel dzieli elementy do przeglądu na alarmy i detekcje. Domyślnie wszystkie obiekty typu <em>osoba</em> i <em>samochód</em> są traktowane jako alerty. Możesz doprecyzować kategoryzację elementów do przeglądu, konfigurując dla nich wymagane strefy.",
       "objectAlertsTips": "Wszystkie obiekty {{alertsLabels}} w {{cameraName}} będą wyświetlane jako alarmy.",
       "zoneObjectAlertsTips": "Wszystkie obiekty {{alertsLabels}} wykryte w {{zone}} na {{cameraName}} zostaną wyświetlone jako alarmy.",
       "toast": {
-        "success": "Konfiguracja klasyfikacji została zapisana. Uruchom ponownie program Frigate, aby zastosować zmiany."
+        "success": "Konfiguracja klasyfikacji została zapisana. Uruchom ponownie program Kestrel, aby zastosować zmiany."
       }
     },
     "title": "Ustawienia przeglądu kamery",
@@ -1399,7 +1399,7 @@
     "title": "Konserwacja",
     "sync": {
       "title": "Synchronizacja multimediów",
-      "desc": "Frigate okresowo czyści multimedia zgodnie z harmonogramem retencji. Obecność pojedynczych osieroconych plików podczas działania jest normalna. Użyj tej funkcji, aby usunąć z dysku osierocone pliki multimedialne, do których nie ma już odwołań w bazie danych.",
+      "desc": "Kestrel okresowo czyści multimedia zgodnie z harmonogramem retencji. Obecność pojedynczych osieroconych plików podczas działania jest normalna. Użyj tej funkcji, aby usunąć z dysku osierocone pliki multimedialne, do których nie ma już odwołań w bazie danych.",
       "started": "Rozpoczęto synchronizację multimediów.",
       "alreadyRunning": "Zadanie synchronizacji jest już uruchomione",
       "error": "Nie udało się rozpocząć synchronizacji",
@@ -1446,10 +1446,10 @@
     },
     "regionGrid": {
       "title": "Siatka regionów (Region Grid)",
-      "desc": "Siatka regionów to optymalizacja ucząca się, gdzie w polu widzenia kamery zazwyczaj pojawiają się obiekty o różnych rozmiarach. Frigate używa tych danych do efektywnego dobierania rozmiarów regionów detekcji. Siatka buduje się automatycznie na podstawie śledzonych obiektów.",
+      "desc": "Siatka regionów to optymalizacja ucząca się, gdzie w polu widzenia kamery zazwyczaj pojawiają się obiekty o różnych rozmiarach. Kestrel używa tych danych do efektywnego dobierania rozmiarów regionów detekcji. Siatka buduje się automatycznie na podstawie śledzonych obiektów.",
       "clear": "Wyczyść siatkę regionów",
       "clearConfirmTitle": "Wyczyścić siatkę regionów?",
-      "clearConfirmDesc": "Czyszczenie siatki regionów nie jest zalecane, chyba że niedawno zmieniono rozmiar modelu detektora lub zmieniono fizyczne położenie kamery i występują problemy ze śledzeniem obiektów. Siatka zostanie automatycznie odbudowana z czasem. Wymagany jest restart Frigate.",
+      "clearConfirmDesc": "Czyszczenie siatki regionów nie jest zalecane, chyba że niedawno zmieniono rozmiar modelu detektora lub zmieniono fizyczne położenie kamery i występują problemy ze śledzeniem obiektów. Siatka zostanie automatycznie odbudowana z czasem. Wymagany jest restart Kestrel.",
       "clearSuccess": "Pomyślnie wyczyszczono siatkę regionów",
       "clearError": "Nie udało się wyczyścić siatki regionów",
       "restartRequired": "Wymagany restart, aby zmiany w siatce regionów zaczęły obowiązywać"
@@ -1708,7 +1708,7 @@
   "toast": {
     "success": "Ustawienia zapisane pomyślnie",
     "applied": "Ustawienia zastosowane pomyślnie",
-    "successRestartRequired": "Ustawienia zapisane pomyślnie. Zrestartuj Frigate, aby zastosować zmiany.",
+    "successRestartRequired": "Ustawienia zapisane pomyślnie. Zrestartuj Kestrel, aby zastosować zmiany.",
     "error": "Nie udało się zapisać ustawień",
     "validationError": "Błąd walidacji: {{message}}",
     "resetSuccess": "Przywrócono domyślne ustawienia globalne",
@@ -1716,9 +1716,9 @@
     "saveAllSuccess_one": "Pomyślnie zapisano {{count}} sekcję.",
     "saveAllSuccess_few": "Pomyślnie zapisano {{count}} sekcje.",
     "saveAllSuccess_many": "Pomyślnie zapisano {{count}} sekcji.",
-    "saveAllSuccessRestartRequired_one": "Pomyślnie zapisano {{count}} sekcję. Zrestartuj Frigate, aby zastosować zmiany.",
-    "saveAllSuccessRestartRequired_few": "Pomyślnie zapisano {{count}} sekcje. Zrestartuj Frigate, aby zastosować zmiany.",
-    "saveAllSuccessRestartRequired_many": "Pomyślnie zapisano {{count}} sekcji. Zrestartuj Frigate, aby zastosować zmiany.",
+    "saveAllSuccessRestartRequired_one": "Pomyślnie zapisano {{count}} sekcję. Zrestartuj Kestrel, aby zastosować zmiany.",
+    "saveAllSuccessRestartRequired_few": "Pomyślnie zapisano {{count}} sekcje. Zrestartuj Kestrel, aby zastosować zmiany.",
+    "saveAllSuccessRestartRequired_many": "Pomyślnie zapisano {{count}} sekcji. Zrestartuj Kestrel, aby zastosować zmiany.",
     "saveAllPartial_one": "Zapisano {{successCount}} z {{totalCount}} sekcji. Niepowodzenie: {{failCount}}.",
     "saveAllPartial_few": "Zapisano {{successCount}} z {{totalCount}} sekcji. Niepowodzenie: {{failCount}}.",
     "saveAllPartial_many": "Zapisano {{successCount}} z {{totalCount}} sekcji. Niepowodzenie: {{failCount}}.",
@@ -1889,7 +1889,7 @@
       "recordDisabled": "Nagrywanie jest wyłączone, elementy przeglądu nie będą generowane.",
       "detectDisabled": "Detekcja obiektów jest wyłączona. Elementy przeglądu wymagają wykrytych obiektów do kategoryzowania alertów i detekcji.",
       "allNonAlertDetections": "Wszystkie aktywności niebędące alertami zostaną uwzględnione jako detekcje.",
-      "genaiImageSourceRecordingsRecordDisabled": "Źródło obrazu jest ustawione na recordings, ale nagrywanie jest wyłączone. Frigate użyje obrazów podglądu."
+      "genaiImageSourceRecordingsRecordDisabled": "Źródło obrazu jest ustawione na recordings, ale nagrywanie jest wyłączone. Kestrel użyje obrazów podglądu."
     },
     "audio": {
       "noAudioRole": "Żaden strumień nie ma zdefiniowanej roli audio. Musisz włączyć rolę audio, aby wykrywanie dźwięku działało."
@@ -1908,7 +1908,7 @@
       "globalResolutionMultipleCameras": "Ustawiono globalną rozdzielczość detekcji przy wielu skonfigurowanych kamerach. Jeśli kamery nie mają identycznej rozdzielczości i proporcji, szerokość i wysokość detekcji należy zdefiniować dla każdej kamery osobno, dopasowując do jej natywnych proporcji."
     },
     "model": {
-      "optimizedFor320": "Frigate jest zoptymalizowany pod kątem modelu 320x320, który jest najlepszym wyborem dla większości instalacji. Model 640x640 jest wolniejszy i pomaga tylko w szczególnych scenariuszach.",
+      "optimizedFor320": "Kestrel jest zoptymalizowany pod kątem modelu 320x320, który jest najlepszym wyborem dla większości instalacji. Model 640x640 jest wolniejszy i pomaga tylko w szczególnych scenariuszach.",
       "inputDimensionsNotDetectResolution": "Szerokość i wysokość wejściowa modelu to wymiary wejściowe modelu detekcji obiektów, a nie rozdzielczość detekcji kamery. Powinny one odpowiadać wymiarom używanego modelu — zwykle kwadratowym, jak 320x320 lub 640x640."
     },
     "ffmpeg": {

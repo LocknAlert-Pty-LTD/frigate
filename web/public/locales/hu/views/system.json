@@ -1,15 +1,15 @@
 {
   "documentTitle": {
-    "cameras": "Kamera statisztikák - Frigate",
-    "storage": "Tárhely statisztikák - Frigate",
-    "general": "Általános Statisztikák - Frigate",
+    "cameras": "Kamera statisztikák - Kestrel",
+    "storage": "Tárhely statisztikák - Kestrel",
+    "general": "Általános Statisztikák - Kestrel",
     "logs": {
-      "frigate": "Frigate naplók - Frigate",
-      "go2rtc": "Go2RTC naplók - Frigate",
-      "nginx": "Nginx naplók - Frigate",
-      "websocket": "Üzenet naplók - Frigate"
+      "frigate": "Kestrel naplók - Kestrel",
+      "go2rtc": "Go2RTC naplók - Kestrel",
+      "nginx": "Nginx naplók - Kestrel",
+      "websocket": "Üzenet naplók - Kestrel"
     },
-    "enrichments": "Kiegészítés statisztikák - Frigate"
+    "enrichments": "Kiegészítés statisztikák - Kestrel"
   },
   "cameras": {
     "label": {
@@ -152,7 +152,7 @@
   "storage": {
     "recordings": {
       "title": "Felvételek",
-      "tips": "Ez az érték mutatja a Frigate adatbázisában található felvételek teljes tárhely felhasználását. A Frigate nem követi az összes fájl által foglalt tárhelyet.",
+      "tips": "Ez az érték mutatja a Kestrel adatbázisában található felvételek teljes tárhely felhasználását. A Kestrel nem követi az összes fájl által foglalt tárhelyet.",
       "earliestRecording": "Legkorábbi elérhető felvétel:"
     },
     "title": "Tárhely",
@@ -166,7 +166,7 @@
       "bandwidth": "Sávszélesség",
       "unused": {
         "title": "Felhasználatlan",
-        "tips": "Ez az érték nem feltétlenül tükrözi pontosan a Frigate számára elérhető szabad helyet, ha a meghajtón egyéb fájlok is tárolva vannak a Frigate felvételein kívül. A Frigate nem követi a tárhelyhasználatot a saját felvételein kívül."
+        "tips": "Ez az érték nem feltétlenül tükrözi pontosan a Kestrel számára elérhető szabad helyet, ha a meghajtón egyéb fájlok is tárolva vannak a Kestrel felvételein kívül. A Kestrel nem követi a tárhelyhasználatot a saját felvételein kívül."
       }
     },
     "shm": {

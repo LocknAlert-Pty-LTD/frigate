@@ -160,7 +160,7 @@
         },
         "retry_interval": {
             "label": "Återförsöksintervall för FFmpeg",
-            "description": "Antal sekunder att vänta innan Frigate försöker återansluta en kameraström efter ett fel. Standardvärdet är 10."
+            "description": "Antal sekunder att vänta innan Kestrel försöker återansluta en kameraström efter ett fel. Standardvärdet är 10."
         },
         "apple_compatibility": {
             "label": "Apple-kompatibilitet",
@@ -694,7 +694,7 @@
         },
         "topic_prefix": {
             "label": "Ämnesprefix",
-            "description": "Prefix för alla Frigate-ämnen i MQTT; måste vara unikt om flera instanser körs."
+            "description": "Prefix för alla Kestrel-ämnen i MQTT; måste vara unikt om flera instanser körs."
         },
         "client_id": {
             "label": "Klient-ID",
@@ -789,7 +789,7 @@
             },
             "calibrate_on_startup": {
                 "label": "Kalibrera vid start",
-                "description": "Mät PTZ-motorernas hastigheter vid start för att förbättra spårningsnoggrannheten. Frigate uppdaterar konfigurationen med movement_weights efter kalibreringen."
+                "description": "Mät PTZ-motorernas hastigheter vid start för att förbättra spårningsnoggrannheten. Kestrel uppdaterar konfigurationen med movement_weights efter kalibreringen."
             },
             "zooming": {
                 "label": "Zoomläge",
@@ -826,7 +826,7 @@
         },
         "ignore_time_mismatch": {
             "label": "Ignorera tidsavvikelse",
-            "description": "Ignorera skillnader i tidssynkronisering mellan kameran och Frigate-servern vid ONVIF-kommunikation."
+            "description": "Ignorera skillnader i tidssynkronisering mellan kameran och Kestrel-servern vid ONVIF-kommunikation."
         }
     },
     "profiles": {
@@ -834,11 +834,11 @@
     },
     "safe_mode": {
         "label": "Säkert läge",
-        "description": "När detta är aktiverat startar Frigate i felsäkert läge med begränsad funktionalitet för felsökning."
+        "description": "När detta är aktiverat startar Kestrel i felsäkert läge med begränsad funktionalitet för felsökning."
     },
     "environment_vars": {
         "label": "Miljövariabler",
-        "description": "Nyckel-/värdepar med miljövariabler som ska ställas in för Frigate-processen i Home Assistant OS. Användare som inte kör HAOS måste i stället konfigurera Docker-miljövariabler."
+        "description": "Nyckel-/värdepar med miljövariabler som ska ställas in för Kestrel-processen i Home Assistant OS. Användare som inte kör HAOS måste i stället konfigurera Docker-miljövariabler."
     },
     "logger": {
         "label": "Loggning",
@@ -902,7 +902,7 @@
     },
     "database": {
         "label": "Databas",
-        "description": "Inställningar för SQLite-databasen som används av Frigate för att lagra metadata för spårade objekt och inspelningar.",
+        "description": "Inställningar för SQLite-databasen som används av Kestrel för att lagra metadata för spårade objekt och inspelningar.",
         "path": {
             "label": "Databassökväg",
             "description": "Filsystemsökväg där Frigates SQLite-databasfil ska lagras."
@@ -928,17 +928,17 @@
             "description": "Konfiguration av interna och externa lyssningsportar. Detta är avsett för avancerade användare. I de flesta fall rekommenderas att portinställningarna ändras i Docker Compose-filen.",
             "internal": {
                 "label": "Intern port",
-                "description": "Intern lyssningsport för Frigate (standard: 5000)."
+                "description": "Intern lyssningsport för Kestrel (standard: 5000)."
             },
             "external": {
                 "label": "Extern port",
-                "description": "Extern lyssningsport för Frigate (standard: 8971)."
+                "description": "Extern lyssningsport för Kestrel (standard: 8971)."
             }
         }
     },
     "proxy": {
         "label": "Proxyserver",
-        "description": "Inställningar för att köra Frigate bakom en omvänd proxy som skickar vidare autentiserade användarheaders.",
+        "description": "Inställningar för att köra Kestrel bakom en omvänd proxy som skickar vidare autentiserade användarheaders.",
         "header_map": {
             "label": "Header-mappning",
             "description": "Mappar inkommande proxyheaders till Frigates användar- och rollfält för proxybaserad autentisering.",
@@ -952,7 +952,7 @@
             },
             "role_map": {
                 "label": "Rollmappning",
-                "description": "Mappar gruppvärden från uppströmsproxyn till Frigate-roller, till exempel en administratörsgrupp till adminrollen."
+                "description": "Mappar gruppvärden från uppströmsproxyn till Kestrel-roller, till exempel en administratörsgrupp till adminrollen."
             }
         },
         "logout_url": {
@@ -1017,7 +1017,7 @@
         },
         "version_check": {
             "label": "Versionskontroll",
-            "description": "Aktivera en utgående kontroll för att se om en nyare version av Frigate finns tillgänglig."
+            "description": "Aktivera en utgående kontroll för att se om en nyare version av Kestrel finns tillgänglig."
         }
     },
     "tls": {

@@ -9,5 +9,5 @@ class TlsConfig(FrigateBaseModel):
     enabled: bool = Field(
         default=True,
         title="Enable TLS",
-        description="Enable TLS for Frigate's web UI and API on the configured TLS port.",
+        description="Enable TLS for Kestrel's web UI and API on the configured TLS port.",
     )

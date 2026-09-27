@@ -24,10 +24,10 @@ frigate/util/runtime_deps.py once a Hailo detector is configured.
 
 Examples:
 
-  python scripts/build_images.py --repo rainelocknalert/locknalert-frigate \\
+  python scripts/build_images.py --repo rainelocknalert/kestrel \\
       --tag 0.19.0 tensorrt --push
 
-  python scripts/build_images.py --repo rainelocknalert/locknalert-frigate \\
+  python scripts/build_images.py --repo rainelocknalert/kestrel \\
       --tag 0.19.0 tensorrt jp5 jp6 default --push --dry-run
 """
 

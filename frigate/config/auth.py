@@ -9,7 +9,7 @@ class AuthConfig(FrigateBaseModel):
     enabled: bool = Field(
         default=True,
         title="Enable authentication",
-        description="Enable native authentication for the Frigate UI.",
+        description="Enable native authentication for the Kestrel UI.",
     )
     reset_admin_password: bool = Field(
         default=False,

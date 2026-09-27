@@ -7,7 +7,7 @@
       "content": "العد التنازلي",
       "button": "فرض إعادة التحميل الآن"
     },
-    "description": "هذا سيؤدي لإيقاف Frigate مؤقتا أثناء إعادة تشغيلها"
+    "description": "هذا سيؤدي لإيقاف Kestrel مؤقتا أثناء إعادة تشغيلها"
   },
   "explore": {
     "plus": {
@@ -20,7 +20,7 @@
           "submitted": "تم تقديمه"
         },
         "question": {
-          "label": "تأكد من صحة هذه التسمية لـ Frigate Plus",
+          "label": "تأكد من صحة هذه التسمية لـ Kestrel Plus",
           "ask_a": "هل هذا الكائن هو <code>{{label}}</code>؟",
           "ask_an": "هل هذا الكائن هو <code>{{label}}</code>؟",
           "ask_full": "هل هذا الكائن هو <code>{{untranslatedLabel}}</code> ({{translatedLabel}})?"

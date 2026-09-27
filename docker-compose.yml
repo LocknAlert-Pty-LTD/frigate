@@ -8,16 +8,16 @@ services:
   frigate:
     container_name: frigate
     restart: unless-stopped
-    # Name of the image this builds. Override FRIGATE_IMAGE (env var or a .env
+    # Name of the image this builds. Override KESTREL_IMAGE (env var or a .env
     # file next to this compose file) to build here and push for the server:
     #
-    #   FRIGATE_IMAGE=docker.io/<user>/frigate:tensorrt docker compose build
+    #   KESTREL_IMAGE=docker.io/<user>/kestrel:tensorrt docker compose build
     #   docker login
-    #   FRIGATE_IMAGE=docker.io/<user>/frigate:tensorrt docker compose push
+    #   KESTREL_IMAGE=docker.io/<user>/kestrel:tensorrt docker compose push
     #
-    # then on the Ubuntu server, with the same FRIGATE_IMAGE set:
+    # then on the Ubuntu server, with the same KESTREL_IMAGE set:
     #   docker compose pull && docker compose up -d
-    #image: ${FRIGATE_IMAGE:-frigate:latest-tensorrt}
+    #image: ${KESTREL_IMAGE:-kestrel:latest-tensorrt}
     build:
       context: .
       # The TensorRT target lives in the main Dockerfile so that compose can

@@ -1,5 +1,5 @@
 {
-  "documentTitle": "Keşfet - Frigate",
+  "documentTitle": "Keşfet - Kestrel",
   "details": {
     "timestamp": "Zaman Damgası",
     "item": {
@@ -10,7 +10,7 @@
         "viewInExplore": "Keşfet'te Görüntüle"
       },
       "tips": {
-        "hasMissingObjects": "Eğer Frigate'in <em>{{objects}}</em> etiketine sahip nesneleri kaydetmesini istiyorsanız yapılandırmanızı buna göre ayarlayın",
+        "hasMissingObjects": "Eğer Kestrel'in <em>{{objects}}</em> etiketine sahip nesneleri kaydetmesini istiyorsanız yapılandırmanızı buna göre ayarlayın",
         "mismatch_one": "Tespit edilmiş olan bir nesne bu İncele öğesine dahil edildi. Bu nesne Alarm veya Tespit olarak derecelendirilemedi veya çoktan silindi/temizlendi.",
         "mismatch_other": "Tespit edilmiş olan {{count}} adet nesne bu İncele öğesine dahil edildi. Bu nesneler Alarm veya Tespit olarak derecelendirilemedi veya çoktan silindi/temizlendi."
       },
@@ -19,7 +19,7 @@
           "updatedSublabel": "Alt etiket başarıyla gücellendi.",
           "regenerate": "Yeni bir açıklama {{provider}} sağlayıcısından talep edildi. Sağlayıcının hızına bağlı olarak yeni açıklamanın oluşturulması biraz zaman alabilir.",
           "updatedLPR": "Plaka başarıyla güncellendi.",
-          "audioTranscription": "Ses dökümü başarıyla istendi. Frigate sunucun­uzun hızına bağlı olarak döküm işlemi tamamlanması biraz zaman alabilir.",
+          "audioTranscription": "Ses dökümü başarıyla istendi. Kestrel sunucun­uzun hızına bağlı olarak döküm işlemi tamamlanması biraz zaman alabilir.",
           "updatedAttributes": "Özellikler başarıyla güncellendi."
         },
         "error": {
@@ -42,7 +42,7 @@
     "zones": "Alanlar",
     "description": {
       "label": "Açıklama",
-      "aiTips": "Frigate, Nesne Geçmişi tamamlanana kadar Üretken Yapay Zeka sağlayıcısından bir resim açıklaması talep etmeyecektir.",
+      "aiTips": "Kestrel, Nesne Geçmişi tamamlanana kadar Üretken Yapay Zeka sağlayıcısından bir resim açıklaması talep etmeyecektir.",
       "placeholder": "Takip edilen nesnenin açıklaması"
     },
     "expandRegenerationMenu": "Yeniden Üret menüsünü genişlet",
@@ -106,11 +106,11 @@
         "textModel": "Metin modeli",
         "textTokenizer": "Metin tokenizeri"
       },
-      "error": "Bir hata oluştu. Frigate günlüklerini kontrol edin.",
+      "error": "Bir hata oluştu. Kestrel günlüklerini kontrol edin.",
       "tips": {
         "context": "Model indirildikten sonra takip edilmiş nesnelerinizin gömüleri tekrar dizinlemeyi tercih edebilirsiniz."
       },
-      "context": "Frigate, Anlamsal Arama özelliği için gerekli olan gömü modellerini indiriyor. Ağ bağlantınızın hızına göre bu işlem bir kaç dakika sürebilir."
+      "context": "Kestrel, Anlamsal Arama özelliği için gerekli olan gömü modellerini indiriyor. Ağ bağlantınızın hızına göre bu işlem bir kaç dakika sürebilir."
     }
   },
   "trackedObjectDetails": "Takip Edilen Nesne Detayları",

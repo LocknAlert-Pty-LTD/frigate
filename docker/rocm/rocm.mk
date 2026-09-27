@@ -2,7 +2,7 @@ BOARDS += rocm
 
 local-rocm: version
 	docker buildx bake --file=docker/rocm/rocm.hcl rocm \
-		--set rocm.tags=frigate:latest-rocm \
+		--set rocm.tags=kestrel:latest-rocm \
 		--load
 
 build-rocm: version

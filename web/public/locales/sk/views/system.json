@@ -1,13 +1,13 @@
 {
   "documentTitle": {
-    "cameras": "Štatistiky kamier - Frigate",
-    "storage": "Štatistiky úložiska - Frigate",
-    "general": "Všeobecné štatistiky - Frigate",
-    "enrichments": "Štatistiky AI funkcií - Frigate",
+    "cameras": "Štatistiky kamier - Kestrel",
+    "storage": "Štatistiky úložiska - Kestrel",
+    "general": "Všeobecné štatistiky - Kestrel",
+    "enrichments": "Štatistiky AI funkcií - Kestrel",
     "logs": {
-      "frigate": "Protokoly Frigate - Frigate",
-      "go2rtc": "Protokoly Go2RTC - Frigate",
-      "nginx": "Protokoly Ngnix - Frigate"
+      "frigate": "Protokoly Kestrel - Kestrel",
+      "go2rtc": "Protokoly Go2RTC - Kestrel",
+      "nginx": "Protokoly Ngnix - Kestrel"
     }
   },
   "title": "System",
@@ -95,7 +95,7 @@
     "overview": "Prehľad",
     "recordings": {
       "title": "Nahrávky",
-      "tips": "Táto hodnota predstavuje celkové úložisko, ktoré používajú nahrávky v databáze Frigate. Frigate nesleduje využitie úložiska pre všetky súbory na vašom disku.",
+      "tips": "Táto hodnota predstavuje celkové úložisko, ktoré používajú nahrávky v databáze Kestrel. Kestrel nesleduje využitie úložiska pre všetky súbory na vašom disku.",
       "earliestRecording": "Najstaršia dostupná nahrávka:"
     },
     "shm": {
@@ -111,7 +111,7 @@
       "bandwidth": "Šírka pásma",
       "unused": {
         "title": "Nepoužité",
-        "tips": "Táto hodnota nemusí presne zodpovedať voľnému miestu dostupnému pre Frigate, ak máte na disku uložené aj iné súbory okrem nahrávok Frigate. Frigate nesleduje využitie úložiska mimo svojich nahrávok."
+        "tips": "Táto hodnota nemusí presne zodpovedať voľnému miestu dostupnému pre Kestrel, ak máte na disku uložené aj iné súbory okrem nahrávok Kestrel. Kestrel nesleduje využitie úložiska mimo svojich nahrávok."
       }
     }
   },

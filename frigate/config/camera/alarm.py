@@ -88,7 +88,7 @@ class CameraAlarmConfig(FrigateBaseModel):
     zones: dict[str, AlarmZoneConfig] = Field(
         default_factory=dict,
         title="Alarm zones",
-        description="Alarm zone settings keyed by the Frigate zone name defined under this camera's zones.",
+        description="Alarm zone settings keyed by the Kestrel zone name defined under this camera's zones.",
     )
 
     def build_rules(self, camera: str) -> dict[tuple[str, str], ZoneAlarmRule]:

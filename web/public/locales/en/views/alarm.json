@@ -1,5 +1,5 @@
 {
-  "documentTitle": "Alarm - Frigate",
+  "documentTitle": "Alarm - Kestrel",
   "title": "Alarm",
   "description": "Arm, disarm, and monitor the alarm engine.",
   "notEnabled": "Alarm is not enabled. Enable it in Global Alarm settings.",

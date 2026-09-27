@@ -2,7 +2,7 @@ BOARDS += synaptics
 
 local-synaptics: version
 	docker buildx bake --file=docker/synaptics/synaptics.hcl synaptics \
-		--set synaptics.tags=frigate:latest-synaptics \
+		--set synaptics.tags=kestrel:latest-synaptics \
 		--load
 
 build-synaptics: version

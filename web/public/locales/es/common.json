@@ -14,7 +14,7 @@
     "day_many": "{{time}} días",
     "day_other": "{{time}} días",
     "untilForTime": "Hasta {{time}}",
-    "untilForRestart": "Hasta que Frigate se reinicie.",
+    "untilForRestart": "Hasta que Kestrel se reinicie.",
     "untilRestart": "Hasta que se reinicie",
     "ago": "Hace {{timeAgo}}",
     "justNow": "Ahora mismo",
@@ -171,9 +171,9 @@
     },
     "documentation": {
       "title": "Documentación",
-      "label": "Documentación de Frigate"
+      "label": "Documentación de Kestrel"
     },
-    "restart": "Reiniciar Frigate",
+    "restart": "Reiniciar Kestrel",
     "live": {
       "title": "Directo",
       "cameras": {
@@ -289,7 +289,7 @@
     "title": "Rol",
     "admin": "Administrador",
     "viewer": "Espectador",
-    "desc": "Los administradores tienen acceso completo a todas las funciones en la interfaz de usuario de Frigate. Los espectadores están limitados a ver cámaras, elementos de revisión y grabaciones históricas en la interfaz de usuario."
+    "desc": "Los administradores tienen acceso completo a todas las funciones en la interfaz de usuario de Kestrel. Los espectadores están limitados a ver cámaras, elementos de revisión y grabaciones históricas en la interfaz de usuario."
   },
   "pagination": {
     "label": "paginación",
@@ -304,12 +304,12 @@
     "more": "Más páginas"
   },
   "accessDenied": {
-    "documentTitle": "Acceso denegado - Frigate",
+    "documentTitle": "Acceso denegado - Kestrel",
     "desc": "No tienes permiso para ver esta página.",
     "title": "Acceso denegado"
   },
   "notFound": {
-    "documentTitle": "No se ha encontrado - Frigate",
+    "documentTitle": "No se ha encontrado - Kestrel",
     "title": "404",
     "desc": "Página no encontrada"
   },
@@ -325,7 +325,7 @@
   },
   "field": {
     "optional": "Opcional",
-    "internalID": "La ID interna que usa Frigate en la configuración y en la base de datos"
+    "internalID": "La ID interna que usa Kestrel en la configuración y en la base de datos"
   },
   "no_items": "No hay elementos",
   "validation_errors": "Errores de validación",
@@ -358,7 +358,7 @@
     "title": "Esta página ha dejado de funcionar",
     "desc": "Ha ocurrido un error inesperado en esta página. Recargarla generalmente resuelve el problema. Si sigue sucediendo, copia los detalles y adjuntalos en una nueva discusión en GitHub.",
     "staleTitle": "Recarga requerida",
-    "staleDesc": "Una parte de esta interfaz no pudo ser cargada, lo que usualmente significa que Frigate fue actualizado mientras esta pestaña estaba abierta. Recarga la página para ver la nueva versión.",
+    "staleDesc": "Una parte de esta interfaz no pudo ser cargada, lo que usualmente significa que Kestrel fue actualizado mientras esta pestaña estaba abierta. Recarga la página para ver la nueva versión.",
     "partial": "Una parte de la interfaz ha dejado de funcionar.",
     "copyDetails": "Copiar detalles",
     "copyFailed": "Los detalles no pudieron ser copiados al portapapeles"

@@ -15,9 +15,9 @@
     "camera": "Kaamera"
   },
   "documentTitle": {
-    "default": "Frigate reaalajas"
+    "default": "Kestrel reaalajas"
   },
-  "documentTitle.withCamera": "{{camera}} - Otseülekanne - Frigate",
+  "documentTitle.withCamera": "{{camera}} - Otseülekanne - Kestrel",
   "lowBandwidthMode": "Väikese ribalaiusega režiim",
   "twoWayTalk": {
     "enable": "Lülita kahepoolne kõneside sisse",
@@ -165,10 +165,10 @@
       "description": "Sul pole õigust ühegi selle grupi kaamera vaatamiseks."
     },
     "title": "Ühtegi kaamerat pole seadistatud",
-    "description": "Alustamiseks ühenda mõni kaamera Frigate'iga.",
+    "description": "Alustamiseks ühenda mõni kaamera Kestrel'iga.",
     "default": {
       "title": "Ühtegi kaamerat pole seadistatud",
-      "description": "Alustamiseks ühenda mõni kaamera Frigate'iga.",
+      "description": "Alustamiseks ühenda mõni kaamera Kestrel'iga.",
       "buttonText": "Lisa kaamera"
     },
     "group": {

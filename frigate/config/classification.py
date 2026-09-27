@@ -66,7 +66,7 @@ class AudioTranscriptionConfig(FrigateBaseModel):
     model: AudioTranscriptionModelEnum | str | None = Field(
         default=AudioTranscriptionModelEnum.whisper,
         title="Audio transcription model or GenAI provider name",
-        description="The transcription backend: 'whisper' for Frigate's built-in local models, or the name of a GenAI provider with the transcribe role.",
+        description="The transcription backend: 'whisper' for Kestrel's built-in local models, or the name of a GenAI provider with the transcribe role.",
     )
 
     @field_validator("model", mode="before")

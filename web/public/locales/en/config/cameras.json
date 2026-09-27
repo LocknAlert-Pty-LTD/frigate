@@ -6,7 +6,7 @@
   },
   "friendly_name": {
     "label": "Friendly name",
-    "description": "Camera friendly name used in the Frigate UI"
+    "description": "Camera friendly name used in the Kestrel UI"
   },
   "enabled": {
     "label": "Enabled",
@@ -21,7 +21,7 @@
     },
     "zones": {
       "label": "Alarm zones",
-      "description": "Alarm zone settings keyed by the Frigate zone name defined under this camera's zones.",
+      "description": "Alarm zone settings keyed by the Kestrel zone name defined under this camera's zones.",
       "enabled": {
         "label": "Enable alarm zone",
         "description": "Enable or disable this zone as an alarm trigger."
@@ -927,7 +927,7 @@
       },
       "calibrate_on_startup": {
         "label": "Calibrate on start",
-        "description": "Measure PTZ motor speeds on startup to improve tracking accuracy. Frigate will update config with movement_weights after calibration."
+        "description": "Measure PTZ motor speeds on startup to improve tracking accuracy. Kestrel will update config with movement_weights after calibration."
       },
       "zooming": {
         "label": "Zoom mode",
@@ -964,7 +964,7 @@
     },
     "ignore_time_mismatch": {
       "label": "Ignore time mismatch",
-      "description": "Ignore time synchronization differences between camera and Frigate server for ONVIF communication."
+      "description": "Ignore time synchronization differences between camera and Kestrel server for ONVIF communication."
     }
   },
   "type": {
@@ -1000,7 +1000,7 @@
     "description": "Zones allow you to define a specific area of the frame so you can determine whether or not an object is within a particular area.",
     "friendly_name": {
       "label": "Zone name",
-      "description": "A user-friendly name for the zone, displayed in the Frigate UI. If not set, a formatted version of the zone name will be used."
+      "description": "A user-friendly name for the zone, displayed in the Kestrel UI. If not set, a formatted version of the zone name will be used."
     },
     "enabled": {
       "label": "Enabled",

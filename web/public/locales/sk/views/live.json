@@ -1,5 +1,5 @@
 {
-  "documentTitle.withCamera": "{{camera}} - Naživo - Frigate",
+  "documentTitle.withCamera": "{{camera}} - Naživo - Kestrel",
   "lowBandwidthMode": "Režim nízkej šírky pásma",
   "twoWayTalk": {
     "enable": "Povoliť obojsmernú komunikáciu",
@@ -164,7 +164,7 @@
   },
   "noCameras": {
     "title": "Nie sú konfigurované žiadne kamery",
-    "description": "Začnite tým, že pripojíte kameru do Frigate.",
+    "description": "Začnite tým, že pripojíte kameru do Kestrel.",
     "buttonText": "Pridať kameru",
     "restricted": {
       "title": "Žiadne kamery k dispozícii",

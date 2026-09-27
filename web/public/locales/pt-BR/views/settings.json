@@ -1,21 +1,21 @@
 {
   "documentTitle": {
-    "default": "Configurações - Frigate",
-    "authentication": "Configurações de Autenticação - Frigate",
-    "enrichments": "Configurações de Enriquecimento - Frigate",
-    "masksAndZones": "Editor de Máscara e Zona - Frigate",
-    "motionTuner": "Ajuste de Movimento - Frigate",
-    "object": "Debug - Frigate",
-    "general": "Configurações da interface - Frigate",
-    "frigatePlus": "Frigate+ Configurações- Frigate",
-    "notifications": "Configurações de notificação - Frigate",
-    "cameraManagement": "Gerenciar Câmeras - Frigate",
-    "cameraReview": "Configurações de Revisão de Câmera - Frigate",
-    "globalConfig": "Configuração Global - Frigate",
-    "cameraConfig": "Configuração da Câmera - Frigate",
-    "maintenance": "Manutenção - Frigate",
-    "profiles": "Perfis - Frigate",
-    "detectorsAndModel": "Detectores e modelo - Frigate"
+    "default": "Configurações - Kestrel",
+    "authentication": "Configurações de Autenticação - Kestrel",
+    "enrichments": "Configurações de Enriquecimento - Kestrel",
+    "masksAndZones": "Editor de Máscara e Zona - Kestrel",
+    "motionTuner": "Ajuste de Movimento - Kestrel",
+    "object": "Debug - Kestrel",
+    "general": "Configurações da interface - Kestrel",
+    "frigatePlus": "Frigate+ Configurações- Kestrel",
+    "notifications": "Configurações de notificação - Kestrel",
+    "cameraManagement": "Gerenciar Câmeras - Kestrel",
+    "cameraReview": "Configurações de Revisão de Câmera - Kestrel",
+    "globalConfig": "Configuração Global - Kestrel",
+    "cameraConfig": "Configuração da Câmera - Kestrel",
+    "maintenance": "Manutenção - Kestrel",
+    "profiles": "Perfis - Kestrel",
+    "detectorsAndModel": "Detectores e modelo - Kestrel"
   },
   "menu": {
     "ui": "UI",
@@ -157,7 +157,7 @@
     },
     "semanticSearch": {
       "title": "Busca Semântica",
-      "desc": "A Busca Semântica no Frigate permite você encontrar objetos rastreados dentro dos seus itens revisados, usando ou a imagem em si, uma descrição de texto definida pelo usuário ou uma gerada automaticamente.",
+      "desc": "A Busca Semântica no Kestrel permite você encontrar objetos rastreados dentro dos seus itens revisados, usando ou a imagem em si, uma descrição de texto definida pelo usuário ou uma gerada automaticamente.",
       "reindexNow": {
         "label": "Reindexar Agora",
         "desc": "A reindexação irá regenerar os embeddings para todos os objetos rastreados. Esse processo roda em segundo plano e pode demandar 100% da CPU e levar um tempo considerável dependendo do número de objetos rastreados que você possui.",
@@ -183,7 +183,7 @@
     },
     "faceRecognition": {
       "title": "Reconhecimento Facial",
-      "desc": "O reconhecimento facial permite que pessoas sejam associadas a nomes e quando seus rostos forem reconhecidos, o Frigate associará o nome da pessoa como um sub-rótulo. Essa informação é inclusa na UI, filtros e notificações.",
+      "desc": "O reconhecimento facial permite que pessoas sejam associadas a nomes e quando seus rostos forem reconhecidos, o Kestrel associará o nome da pessoa como um sub-rótulo. Essa informação é inclusa na UI, filtros e notificações.",
       "modelSize": {
         "label": "Tamanho do Modelo",
         "desc": "O tamanho do modelo usado para reconhecimento facial.",
@@ -199,11 +199,11 @@
     },
     "licensePlateRecognition": {
       "title": "Reconhecimento de Placa de Identificação",
-      "desc": "O Frigate pode reconhecer placas de identificação em veículos e automáticamente adicionar os caracteres detectados ao campo placas_de_identificação_reconhecidas ou um nome conhecido como um sub-rótulo a objetos que são do tipo carro. Um uso típico é ler a placa de carros entrando em uma garagem ou carros passando pela rua."
+      "desc": "O Kestrel pode reconhecer placas de identificação em veículos e automáticamente adicionar os caracteres detectados ao campo placas_de_identificação_reconhecidas ou um nome conhecido como um sub-rótulo a objetos que são do tipo carro. Um uso típico é ler a placa de carros entrando em uma garagem ou carros passando pela rua."
     },
     "restart_required": "Necessário reiniciar (configurações de enriquecimento foram alteradas)",
     "toast": {
-      "success": "As regras de enriquecimento foram salvas. Reinicie o Frigate para aplicar as alterações.",
+      "success": "As regras de enriquecimento foram salvas. Reinicie o Kestrel para aplicar as alterações.",
       "error": "Falha ao salvar alterações de configurações: {{errorMessage}}"
     }
   },
@@ -274,7 +274,7 @@
     },
     "zones": {
       "label": "Zonas",
-      "documentTitle": "Editar Zona - Frigate",
+      "documentTitle": "Editar Zona - Kestrel",
       "desc": {
         "title": "Zonas permitem que você defina uma área específica do quadro para que você possa determinar se um objeto está ou não em uma área em particular.",
         "documentation": "Documentação"
@@ -338,7 +338,7 @@
         }
       },
       "label": "Máscaras de Objeto",
-      "documentTitle": "Editar Máscara de Objeto - Frigate",
+      "documentTitle": "Editar Máscara de Objeto - Kestrel",
       "desc": {
         "title": "Máscaras de filtro de objetos são usadas para filtrar falsos positivos para um determinado tipo de objeto baseado na localização.",
         "documentation": "Documentação"
@@ -353,7 +353,7 @@
     },
     "motionMasks": {
       "label": "Máscara de Movimento",
-      "documentTitle": "Editar Máscara de Movimento - Frigate",
+      "documentTitle": "Editar Máscara de Movimento - Kestrel",
       "desc": {
         "title": "Máscaras de movimento são usadas para prevenir tipos de movimento de ativarem uma detecção. Excesso de mascaramento tornará mais difícil que objetos sejam rastreados.",
         "documentation": "Documentação"
@@ -381,7 +381,7 @@
   },
   "motionDetectionTuner": {
     "desc": {
-      "title": "O Frigate usa a detecção de movimento como uma verificação de primeira linha para ver se há algo acontecendo no quadro que valha a pena verificar com a detecção de objetos.",
+      "title": "O Kestrel usa a detecção de movimento como uma verificação de primeira linha para ver se há algo acontecendo no quadro que valha a pena verificar com a detecção de objetos.",
       "documentation": "Leia o Guia de Ajuste de Movimento"
     },
     "Threshold": {
@@ -403,7 +403,7 @@
     "unsavedChanges": "Alterações do Ajuste de Movimento Não Salvas ({{camera}})"
   },
   "debug": {
-    "detectorDesc": "O Frigate usa seus detectores ({{detectors}}) para detectar objetos no fluxo de vídeo da sua câmera.",
+    "detectorDesc": "O Kestrel usa seus detectores ({{detectors}}) para detectar objetos no fluxo de vídeo da sua câmera.",
     "desc": "A visualização de depuração mostra uma visão em tempo real dos objetos rastreados e suas estatísticas. A lista de objetos mostra um resumo com atraso de tempo dos objetos detectados.",
     "objectList": "Lista de Objetos",
     "boundingBoxes": {
@@ -465,7 +465,7 @@
     "title": "Usuários",
     "management": {
       "title": "Gerenciamento de Usuário",
-      "desc": "Gerenciar as contas de usuário dessa instância do Frigate."
+      "desc": "Gerenciar as contas de usuário dessa instância do Kestrel."
     },
     "addUser": "Adicionar Usuário",
     "updatePassword": "Resetar Senha",
@@ -519,7 +519,7 @@
       },
       "createUser": {
         "title": "Criar Novo Usuário",
-        "desc": "Adicionar um novo usuário e especificar um papel para acesso às áreas da interface do Frigate.",
+        "desc": "Adicionar um novo usuário e especificar um papel para acesso às áreas da interface do Kestrel.",
         "usernameOnlyInclude": "O nome de usuário pode conter apenas letras, números, . ou _",
         "confirmPassword": "Por favor confirme a sua senha"
       },
@@ -573,7 +573,7 @@
     "cancelSuspension": "Cancelar Suspensão",
     "toast": {
       "success": {
-        "registered": "Registrados para notificações com sucesso. É necessário reiniciar o Frigate para que as notificações possam ser enviadas (incluindo a notificação de teste).",
+        "registered": "Registrados para notificações com sucesso. É necessário reiniciar o Kestrel para que as notificações possam ser enviadas (incluindo a notificação de teste).",
         "settingSaved": "As configurações de notificações foram salvas."
       },
       "error": {
@@ -583,11 +583,11 @@
     "title": "Notificações",
     "notificationSettings": {
       "title": "Configurações de Notificação",
-      "desc": "O Frigate pode enviar notificações push nativamente ao seu dispositivo quando estiver sendo executado no navegador ou instalado como um PWA."
+      "desc": "O Kestrel pode enviar notificações push nativamente ao seu dispositivo quando estiver sendo executado no navegador ou instalado como um PWA."
     },
     "notificationUnavailable": {
       "title": "Notificações Indisponíveis",
-      "desc": "Notificações push da Web exigem um contexto seguro (<code>https://…</code>). Essa é uma limitação do navegador. Acesse o Frigate com seguraça para usar as notificações."
+      "desc": "Notificações push da Web exigem um contexto seguro (<code>https://…</code>). Essa é uma limitação do navegador. Acesse o Kestrel com seguraça para usar as notificações."
     },
     "globalSettings": {
       "title": "Configurações Globais",
@@ -650,7 +650,7 @@
     "unsavedChanges": "Alterações de configurações do Frigate+ não salvas",
     "restart_required": "Reinicialização necessária (modelo do Frigate+ foi alterado)",
     "toast": {
-      "success": "As configurações do Frigate+ foram salvas. Reinicie o Frigate para aplicar as alterações.",
+      "success": "As configurações do Frigate+ foram salvas. Reinicie o Kestrel para aplicar as alterações.",
       "error": "Falha ao salvar as alterações de configuração: {{errorMessage}}"
     }
   },
@@ -728,7 +728,7 @@
         },
         "actions": {
           "title": "Ações",
-          "desc": "Por padrão, o Frigate dispara uma mensagem MQTT para todos os gatilhos. Sub-etiquetas adicionam o nome do gatilho à etiqueta do objeto. Atributos são metadados pesquisáveis armazenados separadamente nos metadados de objetos rastreados.",
+          "desc": "Por padrão, o Kestrel dispara uma mensagem MQTT para todos os gatilhos. Sub-etiquetas adicionam o nome do gatilho à etiqueta do objeto. Atributos são metadados pesquisáveis armazenados separadamente nos metadados de objetos rastreados.",
           "error": {
             "min": "Ao menos uma ação deve ser selecionada."
           }
@@ -755,7 +755,7 @@
   "roles": {
     "management": {
       "title": "Gerenciamento do Papel de Visualizador",
-      "desc": "Gerenciar papéis de visualizador customizados e suas permissões de acesso para essa instância do Frigate."
+      "desc": "Gerenciar papéis de visualizador customizados e suas permissões de acesso para essa instância do Kestrel."
     },
     "addRole": "Adicionar Papel",
     "table": {
@@ -816,7 +816,7 @@
   },
   "cameraWizard": {
     "title": "Adicionar Câmera",
-    "description": "Siga os passos abaixo para adicionar uma câmera nova no seu Frigate.",
+    "description": "Siga os passos abaixo para adicionar uma câmera nova no seu Kestrel.",
     "steps": {
       "nameAndConnection": "Nome e Conexão",
       "streamConfiguration": "Configuração de Stream",

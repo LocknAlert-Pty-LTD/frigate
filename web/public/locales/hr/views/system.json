@@ -1,14 +1,14 @@
 {
   "documentTitle": {
-    "cameras": "Statistika Kamera - Frigate",
-    "general": "Opća Statistika - Frigate",
+    "cameras": "Statistika Kamera - Kestrel",
+    "general": "Opća Statistika - Kestrel",
     "logs": {
-      "go2rtc": "Zapisnici Go2RTC - Frigate",
-      "nginx": "Zapisnici Nginx - Frigate",
-      "frigate": "Zapisnici Frigate - Frigate"
+      "go2rtc": "Zapisnici Go2RTC - Kestrel",
+      "nginx": "Zapisnici Nginx - Kestrel",
+      "frigate": "Zapisnici Kestrel - Kestrel"
     },
-    "storage": "Statistika Pohrane - Frigate",
-    "enrichments": "Statistika Obogaćenja - Frigate"
+    "storage": "Statistika Pohrane - Kestrel",
+    "enrichments": "Statistika Obogaćenja - Kestrel"
   },
   "title": "Sustav",
   "logs": {
@@ -96,7 +96,7 @@
     "overview": "Pregled",
     "recordings": {
       "title": "Snimke",
-      "tips": "Ova vrijednost predstavlja ukupno korištenje prostora za snimke u Frigate bazi podataka. Frigate ne prati korištenje prostora za sve datoteke na disku.",
+      "tips": "Ova vrijednost predstavlja ukupno korištenje prostora za snimke u Kestrel bazi podataka. Kestrel ne prati korištenje prostora za sve datoteke na disku.",
       "earliestRecording": "Najranija dostupna snimka:"
     },
     "shm": {
@@ -112,7 +112,7 @@
       "bandwidth": "Propusnost",
       "unused": {
         "title": "Neiskorišteno",
-        "tips": "Ova vrijednost možda ne prikazuje točno slobodan prostor dostupan Frigate-u ako imate druge datoteke pohranjene na disku osim Frigate snimaka. Frigate ne prati korištenje prostora izvan svojih snimki."
+        "tips": "Ova vrijednost možda ne prikazuje točno slobodan prostor dostupan Kestrel-u ako imate druge datoteke pohranjene na disku osim Kestrel snimaka. Kestrel ne prati korištenje prostora izvan svojih snimki."
       }
     }
   },

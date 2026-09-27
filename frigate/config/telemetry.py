@@ -42,5 +42,5 @@ class TelemetryConfig(FrigateBaseModel):
     version_check: bool = Field(
         default=True,
         title="Version check",
-        description="Enable an outbound check to detect if a newer Frigate version is available.",
+        description="Enable an outbound check to detect if a newer Kestrel version is available.",
     )

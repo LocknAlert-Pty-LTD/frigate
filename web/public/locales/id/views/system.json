@@ -1,14 +1,14 @@
 {
   "documentTitle": {
-    "cameras": "Statistik Kamera - Frigate",
-    "storage": "Statistik Penyimpanan - Frigate",
-    "general": "Statistik Umum - Frigate",
-    "enrichments": "Statistik Enrichment - Frigate",
+    "cameras": "Statistik Kamera - Kestrel",
+    "storage": "Statistik Penyimpanan - Kestrel",
+    "general": "Statistik Umum - Kestrel",
+    "enrichments": "Statistik Enrichment - Kestrel",
     "logs": {
-      "frigate": "Log Frigate - Frigate",
-      "go2rtc": "Log Go2RTC - Frigate",
-      "nginx": "Log Nginx - Frigate",
-      "websocket": "Log Pesan - Frigate"
+      "frigate": "Log Kestrel - Kestrel",
+      "go2rtc": "Log Go2RTC - Kestrel",
+      "nginx": "Log Nginx - Kestrel",
+      "websocket": "Log Pesan - Kestrel"
     }
   },
   "title": "Sistem",
@@ -127,7 +127,7 @@
     "overview": "Ringkasan",
     "recordings": {
       "title": "Rekaman",
-      "tips": "Nilai ini menunjukkan total penyimpanan yang digunakan oleh rekaman di basis data Frigate. Frigate tidak melacak penggunaan penyimpanan untuk semua file di disk Anda.",
+      "tips": "Nilai ini menunjukkan total penyimpanan yang digunakan oleh rekaman di basis data Kestrel. Kestrel tidak melacak penggunaan penyimpanan untuk semua file di disk Anda.",
       "earliestRecording": "Rekaman paling awal yang tersedia:"
     },
     "shm": {
@@ -147,7 +147,7 @@
       "bandwidth": "Bandwidth",
       "unused": {
         "title": "Tidak Terpakai",
-        "tips": "Nilai ini mungkin tidak secara akurat merepresentasikan ruang kosong yang tersedia untuk Frigate jika Anda memiliki file lain yang disimpan di drive selain rekaman Frigate. Frigate tidak melacak penggunaan penyimpanan di luar rekamannya."
+        "tips": "Nilai ini mungkin tidak secara akurat merepresentasikan ruang kosong yang tersedia untuk Kestrel jika Anda memiliki file lain yang disimpan di drive selain rekaman Kestrel. Kestrel tidak melacak penggunaan penyimpanan di luar rekamannya."
       }
     }
   },

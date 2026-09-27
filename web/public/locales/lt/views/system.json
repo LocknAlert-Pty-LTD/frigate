@@ -1,15 +1,15 @@
 {
   "documentTitle": {
-    "cameras": "Kamerų Statistika - Frigate",
-    "storage": "Saugyklos Statistika - Frigate",
+    "cameras": "Kamerų Statistika - Kestrel",
+    "storage": "Saugyklos Statistika - Kestrel",
     "logs": {
-      "frigate": "Frigate Žurnalas - Frigate",
-      "go2rtc": "Go2RTC Žurnalas - Frigate",
-      "nginx": "Nginx Žurnalas - Frigate",
-      "websocket": "Žinučių Išrašas - Frigate"
+      "frigate": "Kestrel Žurnalas - Kestrel",
+      "go2rtc": "Go2RTC Žurnalas - Kestrel",
+      "nginx": "Nginx Žurnalas - Kestrel",
+      "websocket": "Žinučių Išrašas - Kestrel"
     },
-    "general": "Bendroji Statistika - Frigate",
-    "enrichments": "Pagerinimų Statistika - Frigate"
+    "general": "Bendroji Statistika - Kestrel",
+    "enrichments": "Pagerinimų Statistika - Kestrel"
   },
   "title": "Sistema",
   "metrics": "Sistemos metrikos",
@@ -127,7 +127,7 @@
     "overview": "Apžvalga",
     "recordings": {
       "title": "Įrašai",
-      "tips": "Ši reikšmė nurodo kiek iš viso Frigate duombazėje esantys įrašai užima vietos saugykloje. Frigate neseka kiek vietos užima visi kiti failai esantys laikmenoje.",
+      "tips": "Ši reikšmė nurodo kiek iš viso Kestrel duombazėje esantys įrašai užima vietos saugykloje. Kestrel neseka kiek vietos užima visi kiti failai esantys laikmenoje.",
       "earliestRecording": "Anksčiausias esantis įrašas:"
     },
     "cameraStorage": {
@@ -139,7 +139,7 @@
       "bandwidth": "Pralaidumas",
       "unused": {
         "title": "Nepanaudota",
-        "tips": "Jei saugykloje turite daugiau failų apart Frigate įrašų, ši reikšmė neatspindės tikslios likusios laisvos vietos Frigate panaudojimui. Frigate neseka saugyklos panaudojimo už savo įrašų ribų."
+        "tips": "Jei saugykloje turite daugiau failų apart Kestrel įrašų, ši reikšmė neatspindės tikslios likusios laisvos vietos Kestrel panaudojimui. Kestrel neseka saugyklos panaudojimo už savo įrašų ribų."
       }
     },
     "shm": {

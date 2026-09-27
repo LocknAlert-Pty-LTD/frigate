@@ -1,16 +1,16 @@
 {
   "documentTitle": {
-    "default": "Ayarlar - Frigate",
-    "masksAndZones": "Maske ve Alan Düzenleyici - Frigate",
-    "authentication": "Kimlik Doğrulama Ayarları - Frigate",
-    "motionTuner": "Hareket Algılama Ayarları - Frigate",
-    "frigatePlus": "Frigate+ Ayarları - Frigate",
-    "object": "Hata Ayıklama - Frigate",
-    "general": "Kullanıcı Arayüzü Ayarları – Frigate",
-    "notifications": "Bildirim Ayarları - Frigate",
-    "enrichments": "Zenginleştirme Ayarları - Frigate",
-    "cameraManagement": "Kameraları Yönet - Frigate",
-    "cameraReview": "Kamera İnceleme Ayarları - Frigate"
+    "default": "Ayarlar - Kestrel",
+    "masksAndZones": "Maske ve Alan Düzenleyici - Kestrel",
+    "authentication": "Kimlik Doğrulama Ayarları - Kestrel",
+    "motionTuner": "Hareket Algılama Ayarları - Kestrel",
+    "frigatePlus": "Frigate+ Ayarları - Kestrel",
+    "object": "Hata Ayıklama - Kestrel",
+    "general": "Kullanıcı Arayüzü Ayarları – Kestrel",
+    "notifications": "Bildirim Ayarları - Kestrel",
+    "enrichments": "Zenginleştirme Ayarları - Kestrel",
+    "cameraManagement": "Kameraları Yönet - Kestrel",
+    "cameraReview": "Kamera İnceleme Ayarları - Kestrel"
   },
   "menu": {
     "masksAndZones": "Maskeler / Alanlar",
@@ -161,7 +161,7 @@
     },
     "zones": {
       "label": "Alanlar",
-      "documentTitle": "Alanı Düzenle - Frigate",
+      "documentTitle": "Alanı Düzenle - Kestrel",
       "desc": {
         "documentation": "Dökümantasyon",
         "title": "Alanlar, görüntüde belirli bir alanını tanımlamanıza olanak tanır. Böylece bir nesnenin belirli bir alanda olup olmadığını tespit edebilirsiniz."
@@ -235,7 +235,7 @@
       },
       "label": "Hareket Maskesi",
       "edit": "Hareket Maskesini Düzenle",
-      "documentTitle": "Hareket Maskesini Düzenle - Frigate"
+      "documentTitle": "Hareket Maskesini Düzenle - Kestrel"
     },
     "objectMasks": {
       "desc": {
@@ -258,7 +258,7 @@
           "title": "{{polygonName}} kaydedildi."
         }
       },
-      "documentTitle": "Nesne Maskesini Düzenle - Frigate",
+      "documentTitle": "Nesne Maskesini Düzenle - Kestrel",
       "label": "Nesne Maskeleri",
       "clickDrawPolygon": "Görüntü üzerinde bir çokgen çizmek için tıklayın."
     },
@@ -280,7 +280,7 @@
       "success": "Hareket ayarları kaydedildi."
     },
     "desc": {
-      "title": "Frigate, kamera görüntüsünde nesne tespiti ile kontrol etmeye değer bir şey olup olmadığını görmek için ilk olarak hareket algılamayı kullanır.",
+      "title": "Kestrel, kamera görüntüsünde nesne tespiti ile kontrol etmeye değer bir şey olup olmadığını görmek için ilk olarak hareket algılamayı kullanır.",
       "documentation": "Hareket Algılama İnce Ayar Kılavuzunu Okuyun"
     },
     "improveContrast": {
@@ -322,7 +322,7 @@
       "tips": "Alanını ve oranını göstermek için kamera görüntüsü üzerinde bir dikdörtgen çizmek için bu seçeneği etkinleştirin. Bu değerler daha sonra yapılandırmanızda nesne şekil filtresi parametrelerini ayarlamak için kullanılabilir."
     },
     "debugging": "Hata Ayıklama",
-    "detectorDesc": "Frigate, kamera video akışınızdaki nesneleri algılamak için algılayıcılar ({{detectors}}) kullanır.",
+    "detectorDesc": "Kestrel, kamera video akışınızdaki nesneleri algılamak için algılayıcılar ({{detectors}}) kullanır.",
     "noObjects": "Nesne Yok",
     "mask": {
       "title": "Hareket maskeleri",
@@ -352,7 +352,7 @@
     "title": "Kullanıcılar",
     "management": {
       "title": "Kullanıcı Yönetimi",
-      "desc": "Bu Frigate kurulumundaki kullanıcı hesaplarını yönetin."
+      "desc": "Bu Kestrel kurulumundaki kullanıcı hesaplarını yönetin."
     },
     "addUser": "Kullanıcı Ekle",
     "toast": {
@@ -424,7 +424,7 @@
       },
       "createUser": {
         "title": "Yeni Kullanıcı Oluştur",
-        "desc": "Yeni bir kullanıcı hesabı ekleyin ve Frigate'deki erişim düzeylerini sınırlandırmak için bir rol belirtin.",
+        "desc": "Yeni bir kullanıcı hesabı ekleyin ve Kestrel'deki erişim düzeylerini sınırlandırmak için bir rol belirtin.",
         "usernameOnlyInclude": "Kullanıcı adı yalnızca harfler, sayılar, nokta veya alt çizgi (_) içerebilir",
         "confirmPassword": "Lütfen parolanızı onaylayın"
       },
@@ -465,11 +465,11 @@
     "title": "Bildirimler",
     "notificationSettings": {
       "title": "Bildirim Ayarları",
-      "desc": "Frigate, tarayıcıdan veya web uygulaması (PWA) olarak kullanıyor olmanız fark etmeksizin, tarayıcınızın bildirimler özelliği aracılığıyla bildirimler gönderebilir."
+      "desc": "Kestrel, tarayıcıdan veya web uygulaması (PWA) olarak kullanıyor olmanız fark etmeksizin, tarayıcınızın bildirimler özelliği aracılığıyla bildirimler gönderebilir."
     },
     "notificationUnavailable": {
       "title": "Bildirimler Kullanılamıyor",
-      "desc": "Web push bildirimleri güvenli bir bağlam gerektirir (<code>https://…</code>). Bu, tarayıcı sınırlamasıdır. Bildirimleri kullanmak için Frigate'e güvenli bir şekilde (https) erişin."
+      "desc": "Web push bildirimleri güvenli bir bağlam gerektirir (<code>https://…</code>). Bu, tarayıcı sınırlamasıdır. Bildirimleri kullanmak için Kestrel'e güvenli bir şekilde (https) erişin."
     },
     "globalSettings": {
       "title": "Genel Ayarlar",
@@ -499,7 +499,7 @@
     },
     "toast": {
       "success": {
-        "registered": "Bildirimlere başarıyla kaydolundu. Herhangi bir bildirimin (test bildirimi dahil) gönderilebilmesi için Frigate'in yeniden başlatılması gereklidir.",
+        "registered": "Bildirimlere başarıyla kaydolundu. Herhangi bir bildirimin (test bildirimi dahil) gönderilebilmesi için Kestrel'in yeniden başlatılması gereklidir.",
         "settingSaved": "Bildirim ayarları kaydedildi."
       },
       "error": {
@@ -550,7 +550,7 @@
       }
     },
     "toast": {
-      "success": "Frigate+ ayarları kaydedildi. Değişiklikleri uygulamak için Frigate'i yeniden başlatın.",
+      "success": "Frigate+ ayarları kaydedildi. Değişiklikleri uygulamak için Kestrel'i yeniden başlatın.",
       "error": "Yapılandırma değişiklikleri kaydedilemedi: {{errorMessage}}"
     },
     "restart_required": "Yeniden Başlatma Gerekli (Frigate+ modeli değiştirildi)",
@@ -607,11 +607,11 @@
     },
     "licensePlateRecognition": {
       "title": "Plaka Tanıma",
-      "desc": "Frigate tespit edilen araçların tescil plakalarındaki karakterleri okuyabilir ve ilgili araba türündeki nesnenin recognized_license_plate bölümüne, varsa bilindik bir adını da sub_label bölümüne ekleyebilir. Bu özelliği bir yoldan geçen yahut evin önüne park eden araçların plakalarını okumak için kullanabilirsiniz."
+      "desc": "Kestrel tespit edilen araçların tescil plakalarındaki karakterleri okuyabilir ve ilgili araba türündeki nesnenin recognized_license_plate bölümüne, varsa bilindik bir adını da sub_label bölümüne ekleyebilir. Bu özelliği bir yoldan geçen yahut evin önüne park eden araçların plakalarını okumak için kullanabilirsiniz."
     },
     "restart_required": "Yeniden başlatma gerekli (zenginleştirme ayarları değişti)",
     "toast": {
-      "success": "Zenginleştirme ayarları kaydedildi. Değişiklikleri uygulamak için Frigate'i yeniden başlatın.",
+      "success": "Zenginleştirme ayarları kaydedildi. Değişiklikleri uygulamak için Kestrel'i yeniden başlatın.",
       "error": "Yapılandırma değişiklikleri kaydedilemedi: {{errorMessage}}"
     }
   },
@@ -657,7 +657,7 @@
         },
         "actions": {
           "title": "Eylemler",
-          "desc": "Varsayılan olarak, Frigate tüm tetikleyici isimlerini bir MQTT mesajı olarak gönderir. Alt etiketler, tetikleyici ismini nesne etiketine ekler. Nitelikler, izlenen nesne meta verilerinde ayrı olarak depolanan aranabilir meta verilerdir.",
+          "desc": "Varsayılan olarak, Kestrel tüm tetikleyici isimlerini bir MQTT mesajı olarak gönderir. Alt etiketler, tetikleyici ismini nesne etiketine ekler. Nitelikler, izlenen nesne meta verilerinde ayrı olarak depolanan aranabilir meta verilerdir.",
           "error": {
             "min": "En az bir eylem seçilmelidir."
           }
@@ -738,7 +738,7 @@
   },
   "cameraWizard": {
     "title": "Kamera Ekle",
-    "description": "Aşağıdaki adımları izleyerek Frigate kurulumunuza yeni bir kamera ekleyin.",
+    "description": "Aşağıdaki adımları izleyerek Kestrel kurulumunuza yeni bir kamera ekleyin.",
     "steps": {
       "nameAndConnection": "İsim & Bağlantı",
       "probeOrSnapshot": "Probe veya Anlık Görüntü",
@@ -881,7 +881,7 @@
       "estimatedBandwidth": "Tahmini Bant Genişliği",
       "roles": "Roller",
       "ffmpegModule": "Yayın uyumluluk modunu kullan",
-      "ffmpegModuleDescription": "Yayın birkaç denemeden sonra yüklenmezse, bunu etkinleştirmeyi deneyin. Etkinleştirildiğinde, Frigate go2rtc ile ffmpeg modülünü kullanacaktır. Bu, bazı kamera yayınları ile daha iyi uyumluluk sağlayabilir.",
+      "ffmpegModuleDescription": "Yayın birkaç denemeden sonra yüklenmezse, bunu etkinleştirmeyi deneyin. Etkinleştirildiğinde, Kestrel go2rtc ile ffmpeg modülünü kullanacaktır. Bu, bazı kamera yayınları ile daha iyi uyumluluk sağlayabilir.",
       "none": "Hiçbiri",
       "error": "Hata",
       "description": "Yeni kameranızı kaydetmeden önce son doğrulama ve analiz. Kaydetmeden önce her akışı bağlayın.",
@@ -968,7 +968,7 @@
     "title": "Kamera İnceleme Ayarları",
     "object_descriptions": {
       "title": "Üretken Yapay Zeka Nesne Açıklamaları",
-      "desc": "Frigate yeniden başlatılana kadar bu kamera için Üretken Yapay Zeka nesne açıklamalarını geçici olarak etkinleştirin/devre dışı bırakın. Devre dışı bırakıldığında, bu kameradaki izlenen nesneler için yapay zeka tarafından oluşturulan açıklamalar istenmeyecektir."
+      "desc": "Kestrel yeniden başlatılana kadar bu kamera için Üretken Yapay Zeka nesne açıklamalarını geçici olarak etkinleştirin/devre dışı bırakın. Devre dışı bırakıldığında, bu kameradaki izlenen nesneler için yapay zeka tarafından oluşturulan açıklamalar istenmeyecektir."
     },
     "review_descriptions": {
       "title": "Üretken Yapay Zeka İnceleme Açıklamaları",
@@ -976,13 +976,13 @@
     },
     "review": {
       "title": "İncele",
-      "desc": "Frigate yeniden başlatılana kadar bu kamera için uyarıları ve algılamaları geçici olarak etkinleştirin/devre dışı bırakın. Devre dışı bırakıldığında, yeni inceleme öğeleri oluşturulmaz. ",
+      "desc": "Kestrel yeniden başlatılana kadar bu kamera için uyarıları ve algılamaları geçici olarak etkinleştirin/devre dışı bırakın. Devre dışı bırakıldığında, yeni inceleme öğeleri oluşturulmaz. ",
       "alerts": "Uyarılar ",
       "detections": "Tespitler "
     },
     "reviewClassification": {
       "title": "Sınıflandırmayı İncele",
-      "desc": "Frigate, inceleme öğelerini Uyarılar ve Algılamalar olarak kategorilere ayırır. Varsayılan olarak, tüm <em>kişi</em> ve <em>araba</em> nesneleri Uyarı olarak kabul edilir. İnceleme öğelerinizin kategorilendirmesini, bunlar için gerekli bölgeleri yapılandırarak iyileştirebilirsiniz.",
+      "desc": "Kestrel, inceleme öğelerini Uyarılar ve Algılamalar olarak kategorilere ayırır. Varsayılan olarak, tüm <em>kişi</em> ve <em>araba</em> nesneleri Uyarı olarak kabul edilir. İnceleme öğelerinizin kategorilendirmesini, bunlar için gerekli bölgeleri yapılandırarak iyileştirebilirsiniz.",
       "noDefinedZones": "Bu kamera için herhangi bir bölge tanımlanmamıştır.",
       "objectAlertsTips": "{{cameraName}} üzerindeki tüm {{alertsLabels}} nesneleri Uyarı olarak gösterilecektir.",
       "zoneObjectAlertsTips": "{{cameraName}} üzerinde, {{zone}} bölgesinde tespit edilen tüm {{alertsLabels}} nesneleri Uyarı olarak gösterilecektir.",
@@ -997,14 +997,14 @@
       "selectDetectionsZones": "Tespitler için bölgeleri seçin",
       "limitDetections": "Tespitleri belirli bölgelerle sınırlayın",
       "toast": {
-        "success": "Sınıflandırma yapılandırması kaydedildi. Değişiklikleri uygulamak için Frigate'i yeniden başlatın."
+        "success": "Sınıflandırma yapılandırması kaydedildi. Değişiklikleri uygulamak için Kestrel'i yeniden başlatın."
       }
     }
   },
   "roles": {
     "management": {
       "title": "İzleyici Rol Yönetimi",
-      "desc": "Bu Frigate örneği için özel görüntüleyici rollerini ve kamera erişim izinlerini yönetin."
+      "desc": "Bu Kestrel örneği için özel görüntüleyici rollerini ve kamera erişim izinlerini yönetin."
     },
     "addRole": "Rol Ekle",
     "table": {

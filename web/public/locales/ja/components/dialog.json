@@ -1,8 +1,8 @@
 {
   "restart": {
-    "title": "Frigate を再起動してもよろしいですか？",
+    "title": "Kestrel を再起動してもよろしいですか？",
     "restarting": {
-      "title": "Frigate を再起動中",
+      "title": "Kestrel を再起動中",
       "content": "このページは {{countdown}} 秒後に再読み込みされます。",
       "button": "今すぐ強制再読み込み"
     },
@@ -17,7 +17,7 @@
       },
       "review": {
         "question": {
-          "label": "Frigate Plus 用ラベルの確認",
+          "label": "Kestrel Plus 用ラベルの確認",
           "ask_a": "このオブジェクトは <code>{{label}}</code> ですか？",
           "ask_an": "このオブジェクトは <code>{{label}}</code> ですか？",
           "ask_full": "このオブジェクトは <code>{{untranslatedLabel}}</code>（{{translatedLabel}}）ですか？"
@@ -171,10 +171,10 @@
     "shareTimestamp": {
       "label": "タイムスタンプを共有",
       "title": "タイムスタンプを共有",
-      "description": "現在のプレーヤー位置をタイムスタンプ付き URL で共有するか、任意のタイムスタンプを指定できます。これは公開リンクではなく、Frigate とこのカメラへのアクセス権を持つユーザーのみアクセスできます。",
+      "description": "現在のプレーヤー位置をタイムスタンプ付き URL で共有するか、任意のタイムスタンプを指定できます。これは公開リンクではなく、Kestrel とこのカメラへのアクセス権を持つユーザーのみアクセスできます。",
       "custom": "カスタムタイムスタンプ",
       "button": "タイムスタンプ URL を共有",
-      "shareTitle": "Frigate レビュータイムスタンプ: {{camera}}"
+      "shareTitle": "Kestrel レビュータイムスタンプ: {{camera}}"
     }
   },
   "imagePicker": {

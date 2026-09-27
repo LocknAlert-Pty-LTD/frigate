@@ -1,7 +1,7 @@
 {
   "time": {
     "untilForTime": "Până la {{time}}",
-    "untilForRestart": "Până la repornirea Frigate.",
+    "untilForRestart": "Până la repornirea Kestrel.",
     "untilRestart": "Până la repornire",
     "ago": "{{timeAgo}} în urmă",
     "justNow": "Acum",
@@ -87,7 +87,7 @@
   "menu": {
     "documentation": {
       "title": "Documentație",
-      "label": "Documentație Frigate"
+      "label": "Documentație Kestrel"
     },
     "explore": "Căutare",
     "uiPlayground": "UI Playground",
@@ -186,7 +186,7 @@
       }
     },
     "withSystem": "Modul sistemului",
-    "restart": "Repornește Frigate",
+    "restart": "Repornește Kestrel",
     "review": "Revizuire",
     "classification": "Clasificare",
     "chat": "Chat",
@@ -289,7 +289,7 @@
   },
   "role": {
     "viewer": "Vizualizator",
-    "desc": "Administratorii au acces complet la toate funcționalitățile din interfața Frigate. Vizualizatorii sunt limitați la vizualizarea camerelor, a elementelor de revizuire și a înregistrărilor istorice în interfață.",
+    "desc": "Administratorii au acces complet la toate funcționalitățile din interfața Kestrel. Vizualizatorii sunt limitați la vizualizarea camerelor, a elementelor de revizuire și a înregistrărilor istorice în interfață.",
     "admin": "Administrator",
     "title": "Rol"
   },
@@ -307,10 +307,10 @@
   "accessDenied": {
     "title": "Acces refuzat",
     "desc": "Nu ai permisiunea să vizualizezi această pagină.",
-    "documentTitle": "Acces refuzat - Frigate"
+    "documentTitle": "Acces refuzat - Kestrel"
   },
   "notFound": {
-    "documentTitle": "Nu a fost găsit - Frigate",
+    "documentTitle": "Nu a fost găsit - Kestrel",
     "title": "404",
     "desc": "Pagină negăsită"
   },
@@ -325,7 +325,7 @@
   },
   "field": {
     "optional": "Opțional",
-    "internalID": "ID-ul Intern pe care Frigate îl folosește în configurație și în baza de date"
+    "internalID": "ID-ul Intern pe care Kestrel îl folosește în configurație și în baza de date"
   },
   "no_items": "Niciun element",
   "validation_errors": "Erori de validare",
@@ -336,7 +336,7 @@
     "title": "Această pagină a încetat să mai funcționeze",
     "desc": "Pagina a întâmpinat o eroare neașteptată. Reîncărcarea rezolvă de obicei problema. Dacă problema persistă, copiază detaliile și atașează-le într-o discuție pe GitHub.",
     "staleTitle": "Reîncărcare necesară",
-    "staleDesc": "O parte din interfață nu a putut fi încărcată, ceea ce înseamnă de obicei că Frigate a fost actualizat în timp ce această filă era deschisă. Reîncarcă pentru a prelua nouă versiune.",
+    "staleDesc": "O parte din interfață nu a putut fi încărcată, ceea ce înseamnă de obicei că Kestrel a fost actualizat în timp ce această filă era deschisă. Reîncarcă pentru a prelua nouă versiune.",
     "partial": "O parte din interfață a încetat să mai funcționeze.",
     "copyDetails": "Copiază detaliile",
     "copyFailed": "Nu s-au putut copia detaliile în clipboard"

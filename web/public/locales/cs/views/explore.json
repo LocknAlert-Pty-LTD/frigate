@@ -1,6 +1,6 @@
 {
   "generativeAI": "Generativní AI",
-  "documentTitle": "Prozkoumat – Frigate",
+  "documentTitle": "Prozkoumat – Kestrel",
   "details": {
     "timestamp": "Časové razítko",
     "snapshotScore": {
@@ -14,7 +14,7 @@
         "viewInExplore": "Zobrazit v Průzkumu"
       },
       "tips": {
-        "hasMissingObjects": "Upravte svou konfiguraci, pokud chcete, aby Frigate ukládal sledované objekty pro následující štítky: <em>{{objects}}</em>",
+        "hasMissingObjects": "Upravte svou konfiguraci, pokud chcete, aby Kestrel ukládal sledované objekty pro následující štítky: <em>{{objects}}</em>",
         "mismatch_one": "{{count}} nedostupný objekt byl detekován a vložen do této položky kontroly. Tento objekt se buď nekvalifikoval jako výstraha nebo detekce, nebo již byl vyčištěn/smazán.",
         "mismatch_few": "{{count}} nedostupné objekty byly detekovány a vloženy do této položky kontroly. Tyto objekty se buď nekvalifikovaly jako výstraha nebo detekce, nebo již byly vyčištěny/smazány.",
         "mismatch_other": "{{count}} nedostupných objektů bylo detekováno a vloženo do této položky kontroly. Tyto objekty se buď nekvalifikovaly jako výstraha nebo detekce, nebo již byly vyčištěny/smazány."
@@ -24,7 +24,7 @@
           "regenerate": "Od {{provider}} byl vyžádán nový popis. V závislosti na rychlosti vašeho poskytovatele může obnovení nového popisu nějakou dobu trvat.",
           "updatedSublabel": "Úspěšně aktualizovaný podružný štítek.",
           "updatedLPR": "Úspěšně aktualizovaná SPZ.",
-          "audioTranscription": "Požádání o přepis zvuku bylo úspěšné. V závislosti na rychlosti Vašeho Frigate serveru může přepis trvat nějaký čas než bude dokončen.",
+          "audioTranscription": "Požádání o přepis zvuku bylo úspěšné. V závislosti na rychlosti Vašeho Kestrel serveru může přepis trvat nějaký čas než bude dokončen.",
           "updatedAttributes": "Atributy byly úspěšně aktualizovány."
         },
         "error": {
@@ -59,7 +59,7 @@
     "description": {
       "label": "Popis",
       "placeholder": "Popis sledovaného objektu",
-      "aiTips": "Frigate nebude vyžadovat popis od vašeho poskytovatele generativní AI, dokud neskončí životní cyklus sledovaného objektu."
+      "aiTips": "Kestrel nebude vyžadovat popis od vašeho poskytovatele generativní AI, dokud neskončí životní cyklus sledovaného objektu."
     },
     "expandRegenerationMenu": "Rozbalte nabídku regenerace",
     "regenerateFromSnapshot": "Regenerovat ze snímku",
@@ -92,7 +92,7 @@
       }
     },
     "downloadingModels": {
-      "context": "Frigate stahuje potřebné modely vložení pro podporu funkce sémantického vyhledávání. To může trvat několik minut v závislosti na rychlosti vašeho síťového připojení.",
+      "context": "Kestrel stahuje potřebné modely vložení pro podporu funkce sémantického vyhledávání. To může trvat několik minut v závislosti na rychlosti vašeho síťového připojení.",
       "setup": {
         "visionModelFeatureExtractor": "Extraktor funkcí Vision modelu",
         "visionModel": "Vision model",
@@ -102,7 +102,7 @@
       "tips": {
         "context": "Můžete reindexovat vložení vašich sledovaných oběktů hned jak budou modely staženy."
       },
-      "error": "Nastala chyba. Zkontrolujte protokoly Frigate."
+      "error": "Nastala chyba. Zkontrolujte protokoly Kestrel."
     }
   },
   "trackedObjectsCount_one": "{{count}} sledovaný objekt ",
@@ -143,7 +143,7 @@
       "label": "Najít podobné"
     },
     "submitToPlus": {
-      "aria": "Odeslat do Frigate Plus",
+      "aria": "Odeslat do Kestrel Plus",
       "label": "Odeslat do Frigate+"
     },
     "addTrigger": {

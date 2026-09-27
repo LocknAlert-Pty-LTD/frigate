@@ -1,18 +1,18 @@
 {
   "restart": {
-    "title": "Estás seguro/a que queres reiniciar Frigate?",
+    "title": "Estás seguro/a que queres reiniciar Kestrel?",
     "button": "Reiniciar",
     "restarting": {
       "button": "Forzar reinicio",
       "content": "Esta páxina recargarase en {{countdown}} segundos.",
-      "title": "Frigate está Reiniciando"
+      "title": "Kestrel está Reiniciando"
     }
   },
   "explore": {
     "plus": {
       "review": {
         "question": {
-          "label": "Confirma esta etiqueta para Frigate Plus",
+          "label": "Confirma esta etiqueta para Kestrel Plus",
           "ask_an": "E isto un obxecto <code>{{label}}</code>?"
         }
       },

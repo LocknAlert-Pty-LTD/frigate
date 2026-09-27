@@ -1,7 +1,7 @@
 {
-  "documentTitle.withCamera": "{{camera}} - Live - Frigate",
+  "documentTitle.withCamera": "{{camera}} - Live - Kestrel",
   "documentTitle": {
-    "default": "Live - Frigate"
+    "default": "Live - Kestrel"
   },
   "lowBandwidthMode": "Mode bandwidth rendah",
   "twoWayTalk": {
@@ -175,7 +175,7 @@
   },
   "noCameras": {
     "title": "Tidak Ada Kamera yang Dikonfigurasi",
-    "description": "Mulai dengan menghubungkan kamera ke Frigate.",
+    "description": "Mulai dengan menghubungkan kamera ke Kestrel.",
     "buttonText": "Tambahkan Kamera",
     "restricted": {
       "title": "Tidak Ada Kamera yang Tersedia",
@@ -183,7 +183,7 @@
     },
     "default": {
       "title": "Tidak Ada Kamera yang Dikonfigurasi",
-      "description": "Mulai dengan menghubungkan kamera ke Frigate.",
+      "description": "Mulai dengan menghubungkan kamera ke Kestrel.",
       "buttonText": "Tambahkan Kamera"
     },
     "group": {

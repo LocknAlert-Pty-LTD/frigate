@@ -44,7 +44,7 @@
     "m": "{{time}}хв",
     "s": "{{time}}сек",
     "untilForTime": "До {{time}}",
-    "untilForRestart": "Доки Frigate не перезавантажиться.",
+    "untilForRestart": "Доки Kestrel не перезавантажиться.",
     "untilRestart": "До перезавантаження",
     "formattedTimestamp": {
       "12hour": "MMM d, h:mm:ss aaa",
@@ -203,9 +203,9 @@
     "help": "Допомогти",
     "documentation": {
       "title": "Документація",
-      "label": "Frigate документація"
+      "label": "Kestrel документація"
     },
-    "restart": "Перезапустити Frigate",
+    "restart": "Перезапустити Kestrel",
     "live": {
       "title": "Пряма трансляція",
       "allCameras": "Всi камери",
@@ -302,12 +302,12 @@
     "label": "Пагінація"
   },
   "accessDenied": {
-    "documentTitle": "Доступ заборонений - Frigate",
+    "documentTitle": "Доступ заборонений - Kestrel",
     "title": "Доступ заборонений",
     "desc": "У вас немає дозволу на перегляд цієї сторінки."
   },
   "notFound": {
-    "documentTitle": "Не знайдено - Frigate",
+    "documentTitle": "Не знайдено - Kestrel",
     "desc": "Сторінка не знайдена",
     "title": "404"
   },
@@ -323,7 +323,7 @@
   },
   "field": {
     "optional": "Необов'язково",
-    "internalID": "Внутрішній ідентифікатор, який Frigate використовує в конфігурації та базі даних"
+    "internalID": "Внутрішній ідентифікатор, який Kestrel використовує в конфігурації та базі даних"
   },
   "no_items": "Нема елементів",
   "validation_errors": "Помилки при перевірці",

@@ -18,17 +18,17 @@ JETPACK6_ARGS := ARCH=arm64 BASE_IMAGE=$(JETPACK6_BASE) SLIM_BASE=$(JETPACK6_BAS
 
 local-trt: version
 	$(X86_DGPU_ARGS) docker buildx bake --file=docker/tensorrt/trt.hcl tensorrt \
-		--set tensorrt.tags=frigate:latest-tensorrt \
+		--set tensorrt.tags=kestrel:latest-tensorrt \
 		--load
 
 local-trt-jp5: version
 	$(JETPACK5_ARGS) docker buildx bake --file=docker/tensorrt/trt.hcl tensorrt \
-		--set tensorrt.tags=frigate:latest-tensorrt-jp5 \
+		--set tensorrt.tags=kestrel:latest-tensorrt-jp5 \
 		--load
 
 local-trt-jp6: version
 	$(JETPACK6_ARGS) docker buildx bake --file=docker/tensorrt/trt.hcl tensorrt \
-		--set tensorrt.tags=frigate:latest-tensorrt-jp6 \
+		--set tensorrt.tags=kestrel:latest-tensorrt-jp6 \
 		--load
 
 build-trt:

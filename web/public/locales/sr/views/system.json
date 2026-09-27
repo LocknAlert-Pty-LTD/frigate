@@ -1,13 +1,13 @@
 {
   "documentTitle": {
-    "cameras": "Statusi kamera - Frigate",
-    "storage": "Statistika skladištenja - Frigate",
+    "cameras": "Statusi kamera - Kestrel",
+    "storage": "Statistika skladištenja - Kestrel",
     "general": "Општа статистика - Фригејт",
-    "enrichments": "Statistika obogaćivanja - Frigate",
+    "enrichments": "Statistika obogaćivanja - Kestrel",
     "logs": {
-      "frigate": "Frigate logovi - Frigate",
-      "go2rtc": "Go2RTC dnevnici - Frigate",
-      "nginx": "Nginx logovi - Frigate"
+      "frigate": "Kestrel logovi - Kestrel",
+      "go2rtc": "Go2RTC dnevnici - Kestrel",
+      "nginx": "Nginx logovi - Kestrel"
     }
   },
   "title": "Sistem",

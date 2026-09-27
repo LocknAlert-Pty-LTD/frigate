@@ -1,13 +1,13 @@
 {
   "documentTitle": {
-    "cameras": "鏡頭統計 - Frigate",
-    "storage": "儲存裝置統計 - Frigate",
-    "general": "一般統計 - Frigate",
-    "enrichments": "進階功能統計 - Frigate",
+    "cameras": "鏡頭統計 - Kestrel",
+    "storage": "儲存裝置統計 - Kestrel",
+    "general": "一般統計 - Kestrel",
+    "enrichments": "進階功能統計 - Kestrel",
     "logs": {
-      "frigate": "Frigate 日誌 - Frigate",
-      "nginx": "Nginx 日誌 - Frigate",
-      "go2rtc": "Go2RTC 日誌 - Frigate"
+      "frigate": "Kestrel 日誌 - Kestrel",
+      "nginx": "Nginx 日誌 - Kestrel",
+      "go2rtc": "Go2RTC 日誌 - Kestrel"
     }
   },
   "title": "系統",
@@ -99,7 +99,7 @@
     "recordings": {
       "title": "錄影檔案",
       "earliestRecording": "最早可用錄影檔案：",
-      "tips": "此數值代表 Frigate 資料庫中錄影檔案的總儲存使用量。Frigate 不會追蹤磁碟上所有檔案的儲存使用量。"
+      "tips": "此數值代表 Kestrel 資料庫中錄影檔案的總儲存使用量。Kestrel 不會追蹤磁碟上所有檔案的儲存使用量。"
     },
     "cameraStorage": {
       "camera": "鏡頭",
@@ -107,7 +107,7 @@
       "storageUsed": "已使用儲存",
       "bandwidth": "每小時使用量",
       "unused": {
-        "tips": "若您的磁碟中存有其他檔案，該數值可能無法準確反映 Frigate 可用的空間。Frigate 只追蹤其錄影檔案的儲存使用量。",
+        "tips": "若您的磁碟中存有其他檔案，該數值可能無法準確反映 Kestrel 可用的空間。Kestrel 只追蹤其錄影檔案的儲存使用量。",
         "title": "未使用"
       },
       "title": "鏡頭儲存",

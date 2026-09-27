@@ -1,13 +1,13 @@
 {
   "restart": {
-    "title": "Ești sigur că dorești să repornești Frigate?",
+    "title": "Ești sigur că dorești să repornești Kestrel?",
     "button": "Repornește",
     "restarting": {
-      "title": "Frigate repornește",
+      "title": "Kestrel repornește",
       "content": "Această pagină se va reâncărca automat în {{countdown}} secunde.",
       "button": "Forțează acum reîncărcarea"
     },
-    "description": "Acest lucru va opri temporar Frigate în timpul repornirii."
+    "description": "Acest lucru va opri temporar Kestrel în timpul repornirii."
   },
   "explore": {
     "plus": {
@@ -16,7 +16,7 @@
           "submitted": "Trimis"
         },
         "question": {
-          "label": "Confirmă această etichetă pentru Frigate Plus",
+          "label": "Confirmă această etichetă pentru Kestrel Plus",
           "ask_a": "Este acest obiect un <code>{{label}}</code>?",
           "ask_an": "Este acest obiect un <code>{{label}}</code>?",
           "ask_full": "Este acest obiect un <code>{{untranslatedLabel}}</code> ({{translatedLabel}})?"
@@ -55,10 +55,10 @@
     "shareTimestamp": {
       "label": "Partajează timestamp-ul",
       "title": "Partajează timestamp-ul",
-      "description": "Partajează un URL cu timestamp al poziției actuale din player sau alege un timestamp personalizat. Reține că acesta nu este un URL de partajare publică și este accesibil doar utilizatorilor care au acces la Frigate și la această cameră.",
+      "description": "Partajează un URL cu timestamp al poziției actuale din player sau alege un timestamp personalizat. Reține că acesta nu este un URL de partajare publică și este accesibil doar utilizatorilor care au acces la Kestrel și la această cameră.",
       "custom": "Timestamp personalizat",
       "button": "Partajează URL-ul cu timestamp",
-      "shareTitle": "Timestamp review Frigate: {{camera}}"
+      "shareTitle": "Timestamp review Kestrel: {{camera}}"
     },
     "genaiDescription": {
       "toast": {

@@ -1,15 +1,15 @@
 {
   "documentTitle": {
-    "storage": "Estadísticas de almacenamiento - Frigate",
-    "general": "Estadísticas generales - Frigate",
+    "storage": "Estadísticas de almacenamiento - Kestrel",
+    "general": "Estadísticas generales - Kestrel",
     "logs": {
-      "frigate": "Registros de Frigate - Frigate",
-      "go2rtc": "Registros de Go2RTC - Frigate",
-      "nginx": "Registros de Nginx - Frigate",
+      "frigate": "Registros de Kestrel - Kestrel",
+      "go2rtc": "Registros de Go2RTC - Kestrel",
+      "nginx": "Registros de Nginx - Kestrel",
       "websocket": "Mensajes Logs - Frigata"
     },
-    "cameras": "Estadísticas de cámaras - Frigate",
-    "enrichments": "Estadísticas de Enriquecimientos - Frigate"
+    "cameras": "Estadísticas de cámaras - Kestrel",
+    "enrichments": "Estadísticas de Enriquecimientos - Kestrel"
   },
   "logs": {
     "copy": {
@@ -125,7 +125,7 @@
   "storage": {
     "recordings": {
       "title": "Grabaciones",
-      "tips": "Este valor representa el almacenamiento total utilizado por las grabaciones en la base de datos de Frigate. Frigate no realiza un seguimiento del uso de almacenamiento de todos los archivos en tu disco.",
+      "tips": "Este valor representa el almacenamiento total utilizado por las grabaciones en la base de datos de Kestrel. Kestrel no realiza un seguimiento del uso de almacenamiento de todos los archivos en tu disco.",
       "earliestRecording": "Grabación más antigua disponible:"
     },
     "overview": "Resumen",
@@ -136,7 +136,7 @@
       "camera": "Cámara",
       "unused": {
         "title": "No Utilizado",
-        "tips": "Este valor puede no representar con precisión el espacio libre disponible para Frigate si tienes otros archivos almacenados en tu disco además de las grabaciones de Frigate. Frigate no realiza un seguimiento del uso de almacenamiento fuera de sus grabaciones."
+        "tips": "Este valor puede no representar con precisión el espacio libre disponible para Kestrel si tienes otros archivos almacenados en tu disco además de las grabaciones de Kestrel. Kestrel no realiza un seguimiento del uso de almacenamiento fuera de sus grabaciones."
       },
       "title": "Almacenamiento de la Cámara",
       "storageUsed": "Almacenamiento",

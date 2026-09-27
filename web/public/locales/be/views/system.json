@@ -1,16 +1,16 @@
 {
   "documentTitle": {
-    "cameras": "Статыстыка камер - Frigate",
-    "storage": "Статыстыка сховішча - Frigate",
-    "general": "Агульная статыстыка - Frigate",
-    "enrichments": "Статыстыка ўзбагачэнняў - Frigate",
+    "cameras": "Статыстыка камер - Kestrel",
+    "storage": "Статыстыка сховішча - Kestrel",
+    "general": "Агульная статыстыка - Kestrel",
+    "enrichments": "Статыстыка ўзбагачэнняў - Kestrel",
     "logs": {
-      "frigate": "Журналы Frigate - Frigate",
-      "go2rtc": "Журналы go2rtc - Frigate",
-      "nginx": "Журналы Nginx - Frigate",
-      "websocket": "Журналы паведамленняў - Frigate"
+      "frigate": "Журналы Kestrel - Kestrel",
+      "go2rtc": "Журналы go2rtc - Kestrel",
+      "nginx": "Журналы Nginx - Kestrel",
+      "websocket": "Журналы паведамленняў - Kestrel"
     },
-    "health": "Стан - Frigate"
+    "health": "Стан - Kestrel"
   },
   "title": "Сістэма",
   "metrics": "Сістэмныя метрыкі",
@@ -128,7 +128,7 @@
     "overview": "Агляд",
     "recordings": {
       "title": "Запісы",
-      "tips": "Гэта значэнне паказвае агульны аб'ём сховішча, заняты запісамі ў базе даных Frigate. Frigate не адсочвае месца, занятае ўсімі файламі на дыску.",
+      "tips": "Гэта значэнне паказвае агульны аб'ём сховішча, заняты запісамі ў базе даных Kestrel. Kestrel не адсочвае месца, занятае ўсімі файламі на дыску.",
       "earliestRecording": "Самы ранні даступны запіс:"
     },
     "shm": {
@@ -148,7 +148,7 @@
       "bandwidth": "Паласа прапускання",
       "unused": {
         "title": "Нявыкарыстана",
-        "tips": "Гэта значэнне можа недакладна адлюстроўваць вольнае месца, даступнае Frigate, калі на дыску ёсць іншыя файлы акрамя запісаў Frigate. Frigate не адсочвае месца па-за сваімі запісамі."
+        "tips": "Гэта значэнне можа недакладна адлюстроўваць вольнае месца, даступнае Kestrel, калі на дыску ёсць іншыя файлы акрамя запісаў Kestrel. Kestrel не адсочвае месца па-за сваімі запісамі."
       },
       "subStream": {
         "information": "Звесткі пра сховішча дадатковай плыні",
@@ -280,7 +280,7 @@
     "title": "Стан",
     "notices": {
       "title": "Заўвагі",
-      "empty": "Ваша ўсталёўка Frigate у парадку",
+      "empty": "Ваша ўсталёўка Kestrel у парадку",
       "dismiss": "Схаваць",
       "openSettings": "Адкрыць налады",
       "openLink": "Адкрыць спасылку",
@@ -307,7 +307,7 @@
         "shm_too_low": "Выдзеленую памяць /dev/shm ({{total}} МБ) трэба павялічыць прынамсі да {{min}} МБ",
         "failed_login_one": "Няўдалая спроба ўваходу для {{user}}",
         "failed_login_other": "Няўдалыя спробы ўваходу для {{user}}",
-        "update_available": "Даступная Frigate {{version}}"
+        "update_available": "Даступная Kestrel {{version}}"
       },
       "streamPrefix": "Плынь {{index}}: {{message}}",
       "streamPrefixRestream": "Плынь {{index}} (праз go2rtc): {{message}}",
@@ -331,7 +331,7 @@
       "nothingConfigured": "Нічога не наладжана",
       "allCameras": "Усе камеры",
       "probeUnavailable": "Выяўленне абсталявання недаступнае",
-      "justStarted": "Frigate толькі што запусціўся",
+      "justStarted": "Kestrel толькі што запусціўся",
       "deviceNotFound": "{{devices}} не знойдзена ў гэтай сістэме",
       "detectorNotRunning": "Працэс дэтэктара не запушчаны",
       "inferenceVerySlow": "Вывядзенне вельмі павольнае ({{speed}} мс)",

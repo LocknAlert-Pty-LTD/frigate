@@ -1,13 +1,13 @@
 {
   "restart": {
-    "title": "Frigate'i yeniden başlatmak istediğinize emin misiniz?",
+    "title": "Kestrel'i yeniden başlatmak istediğinize emin misiniz?",
     "button": "Yeniden Başlat",
     "restarting": {
       "content": "Bu sayfa {{countdown}} saniye sonra yeniden yüklenecektir.",
-      "title": "Frigate Yeniden Başlatılıyor",
+      "title": "Kestrel Yeniden Başlatılıyor",
       "button": "Şimdi Yeniden Yükle"
     },
-    "description": "Bu Frigate'i kısa süreliğine yeniden başlayana kadar durduracak."
+    "description": "Bu Kestrel'i kısa süreliğine yeniden başlayana kadar durduracak."
   },
   "explore": {
     "plus": {
@@ -179,10 +179,10 @@
     "shareTimestamp": {
       "label": "Zaman Damgasını Paylaş",
       "title": "Zaman Damgasını Paylaş",
-      "description": "Mevcut oynatıcı konumuna ait zaman damgalı bir URL paylaşın veya özel bir zaman damgası seçin. Bunun herkese açık bir paylaşım URL'si olmadığını ve yalnızca Frigate ile bu kameraya erişimi olan kullanıcılar tarafından görüntülenebileceğini unutmayın.",
+      "description": "Mevcut oynatıcı konumuna ait zaman damgalı bir URL paylaşın veya özel bir zaman damgası seçin. Bunun herkese açık bir paylaşım URL'si olmadığını ve yalnızca Kestrel ile bu kameraya erişimi olan kullanıcılar tarafından görüntülenebileceğini unutmayın.",
       "custom": "Özel Zaman Damgası",
       "button": "Zaman Damgalı URL'yi Paylaş",
-      "shareTitle": "Frigate İnceleme Zaman Damgası: {{camera}}"
+      "shareTitle": "Kestrel İnceleme Zaman Damgası: {{camera}}"
     }
   },
   "imagePicker": {

@@ -49,7 +49,7 @@
     },
     "submitToPlus": {
       "label": "Изпрати към Frigate+",
-      "aria": "Изпрати към Frigate Plus"
+      "aria": "Изпрати към Kestrel Plus"
     },
     "viewInHistory": {
       "label": "Виж в история",

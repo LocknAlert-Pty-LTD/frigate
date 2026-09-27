@@ -17,7 +17,7 @@ class IPv6Config(FrigateBaseModel):
     enabled: bool = Field(
         default=False,
         title="Enable IPv6",
-        description="Enable IPv6 support for Frigate services (API and UI) where applicable.",
+        description="Enable IPv6 support for Kestrel services (API and UI) where applicable.",
     )
 
 
@@ -25,12 +25,12 @@ class ListenConfig(FrigateBaseModel):
     internal: int | str = Field(
         default=5000,
         title="Internal port",
-        description="Internal listening port for Frigate (default 5000).",
+        description="Internal listening port for Kestrel (default 5000).",
     )
     external: int | str = Field(
         default=8971,
         title="External port",
-        description="External listening port for Frigate (default 8971).",
+        description="External listening port for Kestrel (default 8971).",
     )
 
     @property
@@ -53,7 +53,7 @@ class NetworkingConfig(FrigateBaseModel):
     ipv6: IPv6Config = Field(
         default_factory=IPv6Config,
         title="IPv6 configuration",
-        description="IPv6-specific settings for Frigate network services.",
+        description="IPv6-specific settings for Kestrel network services.",
     )
     listen: ListenConfig = Field(
         default_factory=ListenConfig,

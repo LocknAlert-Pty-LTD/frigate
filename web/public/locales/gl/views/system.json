@@ -1,11 +1,11 @@
 {
   "documentTitle": {
-    "cameras": "Estatísticas de cámaras - Frigate",
-    "storage": "Estatísticas de Almacenamento - Frigate",
-    "general": "Estatísticas Xerais - Frigate",
-    "enrichments": "Estatísticas complementarias - Frigate",
+    "cameras": "Estatísticas de cámaras - Kestrel",
+    "storage": "Estatísticas de Almacenamento - Kestrel",
+    "general": "Estatísticas Xerais - Kestrel",
+    "enrichments": "Estatísticas complementarias - Kestrel",
     "logs": {
-      "frigate": "Rexistros de Frigate - Frigate"
+      "frigate": "Rexistros de Kestrel - Kestrel"
     }
   },
   "title": "Sistema",

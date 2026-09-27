@@ -1,15 +1,15 @@
 {
   "documentTitle": {
-    "general": "Üldine statistika - Frigate",
-    "cameras": "Kaamerate statistika - Frigate",
-    "storage": "Andmeruumi statistika - Frigate",
+    "general": "Üldine statistika - Kestrel",
+    "cameras": "Kaamerate statistika - Kestrel",
+    "storage": "Andmeruumi statistika - Kestrel",
     "logs": {
-      "frigate": "Frigate logid - Frigate",
-      "go2rtc": "Go2RTC logid - Frigate",
-      "nginx": "Nginx logid - Frigate",
-      "websocket": "Sõnumite logid - Frigate"
+      "frigate": "Kestrel logid - Kestrel",
+      "go2rtc": "Go2RTC logid - Kestrel",
+      "nginx": "Nginx logid - Kestrel",
+      "websocket": "Sõnumite logid - Kestrel"
     },
-    "enrichments": "Rikastus statistika - Frigate"
+    "enrichments": "Rikastus statistika - Kestrel"
   },
   "logs": {
     "download": {
@@ -144,7 +144,7 @@
       "camera": "Kaamera",
       "unused": {
         "title": "Kasutamata",
-        "tips": "See väärtus ei pruugi Frigate'i jaoks saadaolevat vaba ruumi täpselt kajastada, kui teie draivil on lisaks Frigate'i salvestistele ka muid faile. Frigate ei jälgi salvestusruumi kasutamist väljaspool oma salvestisi."
+        "tips": "See väärtus ei pruugi Kestrel'i jaoks saadaolevat vaba ruumi täpselt kajastada, kui teie draivil on lisaks Kestrel'i salvestistele ka muid faile. Kestrel ei jälgi salvestusruumi kasutamist väljaspool oma salvestisi."
       },
       "bandwidth": "Ribalaius",
       "storageUsed": "Salvestusmaht",

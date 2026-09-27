@@ -1,14 +1,14 @@
 {
   "documentTitle": {
-    "storage": "Frigate - Estatísticas de Armazenamento",
-    "general": "Frigate - Estatísticas Gerais",
-    "enrichments": "Frigate - Estatísticas de Enriquecimento",
+    "storage": "Kestrel - Estatísticas de Armazenamento",
+    "general": "Kestrel - Estatísticas Gerais",
+    "enrichments": "Kestrel - Estatísticas de Enriquecimento",
     "logs": {
-      "frigate": "Frigate - Registos de Eventos do Frigate",
-      "go2rtc": "Frigate - Registos de Eventos do Go2RTC",
-      "nginx": "Frigate - Registos de Eventos do Nginx"
+      "frigate": "Kestrel - Registos de Eventos do Kestrel",
+      "go2rtc": "Kestrel - Registos de Eventos do Go2RTC",
+      "nginx": "Kestrel - Registos de Eventos do Nginx"
     },
-    "cameras": "Frigate - Estatísticas das Câmaras"
+    "cameras": "Kestrel - Estatísticas das Câmaras"
   },
   "title": "Sistema",
   "metrics": "Métricas do sistema",
@@ -42,7 +42,7 @@
       "percentageOfTotalUsed": "Porcentagem do total",
       "bandwidth": "Largura de banda",
       "unused": {
-        "tips": "Este valor pode não representar com precisão o espaço livre disponível para o Frigate se você tiver outros ficheiros armazenados em sua unidade além das gravações do Frigate. O Frigate não rastreia o uso de armazenamento fora de suas gravações.",
+        "tips": "Este valor pode não representar com precisão o espaço livre disponível para o Kestrel se você tiver outros ficheiros armazenados em sua unidade além das gravações do Kestrel. O Kestrel não rastreia o uso de armazenamento fora de suas gravações.",
         "title": "Não utilizado"
       },
       "unusedStorageInformation": "Informações de armazenamento não utilizado",
@@ -53,7 +53,7 @@
     "recordings": {
       "title": "Gravações",
       "earliestRecording": "Primeira gravação disponível:",
-      "tips": "Este valor representa o armazenamento total utilizado pelas gravações na base de dados do Frigate. O Frigate não acompanha a utilização do armazenamento de todos os ficheiros no seu disco."
+      "tips": "Este valor representa o armazenamento total utilizado pelas gravações na base de dados do Kestrel. O Kestrel não acompanha a utilização do armazenamento de todos os ficheiros no seu disco."
     },
     "shm": {
       "title": "Alocação SHM (memória partilhada)",

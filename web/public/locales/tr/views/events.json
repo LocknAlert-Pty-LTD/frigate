@@ -17,7 +17,7 @@
     "label": "Olaylar"
   },
   "recordings": {
-    "documentTitle": "Kayıtlar - Frigate"
+    "documentTitle": "Kayıtlar - Kestrel"
   },
   "calendarFilter": {
     "last24Hours": "Son 24 Saat"
@@ -27,7 +27,7 @@
     "button": "Yeni İncelenecek Öğeler Var",
     "label": "Yeni inceleme öğelerini göster"
   },
-  "documentTitle": "İncele - Frigate",
+  "documentTitle": "İncele - Kestrel",
   "motion": {
     "label": "Hareket",
     "only": "Yalnızca hareket"

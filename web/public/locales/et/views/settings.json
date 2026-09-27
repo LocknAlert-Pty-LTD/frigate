@@ -130,7 +130,7 @@
       "failure": "Viga kaamera '{{cameraName}}' salvestamisel."
     },
     "title": "Lisa kaamera",
-    "description": "Uue kaamera lisamiseks oma Frigate paigaldisesse järgige alltoodud samme."
+    "description": "Uue kaamera lisamiseks oma Kestrel paigaldisesse järgige alltoodud samme."
   },
   "users": {
     "updatePassword": "Lähtesta salasõna",
@@ -242,22 +242,22 @@
     }
   },
   "documentTitle": {
-    "default": "Seadistused - Frigate",
-    "authentication": "Autentimise seaded - Frigate",
-    "cameraReview": "Kaamerate kordusvaatuste seaded - Frigate",
-    "general": "Profiili seaded - Frigate",
-    "frigatePlus": "Frigate+ seaded - Frigate",
-    "notifications": "Teavituste seaded - Frigate",
-    "cameraManagement": "Kaamerate haldus - Frigate",
-    "masksAndZones": "Maskide ja tsoonide haldus - Frigate",
-    "object": "Silumine ja veaotsing - Frigate",
-    "enrichments": "Rikastamise seaded - Frigate",
-    "motionTuner": "Liikumise häälestaja – Frigate",
-    "globalConfig": "Globaalsed seaded – Frigate",
-    "cameraConfig": "Kaamera seaded - Frigate",
-    "detectorsAndModel": "Detektorid ja mudel – Frigate",
-    "maintenance": "Hooldus – Frigate",
-    "profiles": "Profiilid - Frigate"
+    "default": "Seadistused - Kestrel",
+    "authentication": "Autentimise seaded - Kestrel",
+    "cameraReview": "Kaamerate kordusvaatuste seaded - Kestrel",
+    "general": "Profiili seaded - Kestrel",
+    "frigatePlus": "Frigate+ seaded - Kestrel",
+    "notifications": "Teavituste seaded - Kestrel",
+    "cameraManagement": "Kaamerate haldus - Kestrel",
+    "masksAndZones": "Maskide ja tsoonide haldus - Kestrel",
+    "object": "Silumine ja veaotsing - Kestrel",
+    "enrichments": "Rikastamise seaded - Kestrel",
+    "motionTuner": "Liikumise häälestaja – Kestrel",
+    "globalConfig": "Globaalsed seaded – Kestrel",
+    "cameraConfig": "Kaamera seaded - Kestrel",
+    "detectorsAndModel": "Detektorid ja mudel – Kestrel",
+    "maintenance": "Hooldus – Kestrel",
+    "profiles": "Profiilid - Kestrel"
   },
   "general": {
     "title": "Kasutajaliidese seadistused",
@@ -332,7 +332,7 @@
     "title": "Frigate+ seadistused",
     "unsavedChanges": "Frigate+ seadistuste muudatused on salvestamata",
     "toast": {
-      "success": "Frigate+ seadistuste muudatused on salvestatud. Muudatuste kasutuselevõtmiseks käivita Frigate uuesti."
+      "success": "Frigate+ seadistuste muudatused on salvestatud. Muudatuste kasutuselevõtmiseks käivita Kestrel uuesti."
     },
     "snapshotConfig": {
       "title": "Hetkvõtte seadistused",
@@ -537,7 +537,7 @@
     "title": "Andmerikastuse seadistused",
     "restart_required": "Taaskäivitamine on vajalik (Andmerikastuse seadeid on muudetud)",
     "toast": {
-      "success": "Andmerikastamise seaded on salvestatud. Muudatuste rakendamiseks taaskäivitage Frigate.",
+      "success": "Andmerikastamise seaded on salvestatud. Muudatuste rakendamiseks taaskäivitage Kestrel.",
       "error": "Seadete muudatuste salvestamine ebaõnnestus: {{errorMessage}}"
     }
   },
@@ -549,7 +549,7 @@
     },
     "object_descriptions": {
       "title": "Generatiivse tehisaru objektikirjeldused",
-      "desc": "Luba/keela ajutiselt selle kaamera jaoks generatiivse tehisaru objektikirjeldused kuni Frigate'i taaskäivitamiseni. Kui see on keelatud, ei küsita selle kaamera jälgitavate objektide kohta tehisintellekti poolt loodud kirjeldusi."
+      "desc": "Luba/keela ajutiselt selle kaamera jaoks generatiivse tehisaru objektikirjeldused kuni Kestrel'i taaskäivitamiseni. Kui see on keelatud, ei küsita selle kaamera jälgitavate objektide kohta tehisintellekti poolt loodud kirjeldusi."
     },
     "review_descriptions": {
       "title": "Generatiivne tehisaru ülevaatamisele kuuluva sisu kirjedlused"

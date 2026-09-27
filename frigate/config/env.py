@@ -1,4 +1,4 @@
-"""Environment variable and secrets handling for the Frigate config."""
+"""Environment variable and secrets handling for the Kestrel config."""
 
 import logging
 import os
@@ -196,7 +196,7 @@ _FRIGATE_IDENT_RE = re.compile(r"FRIGATE_[A-Za-z0-9_]+")
 def substitute_frigate_vars(value: str) -> str:
     """Substitute `{FRIGATE_*}` placeholders in *value*.
 
-    Reproduces the subset of `str.format()` brace semantics that Frigate's
+    Reproduces the subset of `str.format()` brace semantics that Kestrel's
     config has historically supported, while leaving unrelated brace content
     (e.g. ffmpeg `%{localtime\\:...}` expressions) untouched:
 

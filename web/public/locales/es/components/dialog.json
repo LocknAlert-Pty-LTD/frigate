@@ -1,13 +1,13 @@
 {
   "restart": {
     "restarting": {
-      "title": "Frigate se está reiniciando",
+      "title": "Kestrel se está reiniciando",
       "button": "Forzar recarga ahora",
       "content": "Esta página se recargará en {{countdown}} segundos."
     },
-    "title": "¿Estás seguro de que quieres reiniciar Frigate?",
+    "title": "¿Estás seguro de que quieres reiniciar Kestrel?",
     "button": "Reiniciar",
-    "description": "Esto detendrá brevemente Frigate mientras se reinicia."
+    "description": "Esto detendrá brevemente Kestrel mientras se reinicia."
   },
   "explore": {
     "plus": {
@@ -20,7 +20,7 @@
           "submitted": "Enviado"
         },
         "question": {
-          "label": "Confirmar esta etiqueta para Frigate Plus",
+          "label": "Confirmar esta etiqueta para Kestrel Plus",
           "ask_a": "¿Es este objeto un <code>{{label}}</code>?",
           "ask_an": "¿Es este objeto un <code>{{label}}</code>?",
           "ask_full": "¿Es este objeto un <code>{{untranslatedLabel}}</code> ({{translatedLabel}})?"
@@ -185,12 +185,12 @@
       "markAsUnreviewed": "Marcar como no revisado"
     },
     "shareTimestamp": {
-      "description": "Comparta una URL con marca de tiempo de la posición actual del reproductor o elija una marca de tiempo personalizada. Tenga en cuenta que esta no es una URL pública para compartir y solo es accesible para los usuarios que tienen acceso a Frigate y a esta cámara.",
+      "description": "Comparta una URL con marca de tiempo de la posición actual del reproductor o elija una marca de tiempo personalizada. Tenga en cuenta que esta no es una URL pública para compartir y solo es accesible para los usuarios que tienen acceso a Kestrel y a esta cámara.",
       "label": "Compartir marca de tiempo",
       "title": "Compartir marca de tiempo",
       "custom": "Marca de tiempo personalizada",
       "button": "Compartir URL de la marca de tiempo",
-      "shareTitle": "Marca de tiempo de revisión de Frigate: {{camera}}"
+      "shareTitle": "Marca de tiempo de revisión de Kestrel: {{camera}}"
     }
   },
   "imagePicker": {

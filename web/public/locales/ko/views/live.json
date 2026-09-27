@@ -1,8 +1,8 @@
 {
   "documentTitle": {
-    "default": "실시간 - Frigate"
+    "default": "실시간 - Kestrel"
   },
-  "documentTitle.withCamera": "{{camera}} - 실시간 - Frigate",
+  "documentTitle.withCamera": "{{camera}} - 실시간 - Kestrel",
   "lowBandwidthMode": "저대역폭 모드",
   "twoWayTalk": {
     "enable": "양방향 대화 켜기",

@@ -207,7 +207,7 @@ make push-trt IMAGE_REPO=docker.io/<user>/frigate TRT_TAG=0.19.0
 
 # x86 dGPU only:
 ARCH=amd64 docker buildx bake --file=docker/tensorrt/trt.hcl tensorrt \
-  --set tensorrt.tags=docker.io/<user>/frigate:latest-tensorrt \
+  --set tensorrt.tags=docker.io/<user>/kestrel:latest-tensorrt \
   --push
 ```
 
@@ -226,7 +226,7 @@ Jetson (arm64) variants built from an amd64 host need QEMU:
 `docker run --privileged --rm tonistiigi/binfmt --install all`.
 
 Local build without pushing: `make local-trt` (or `local-trt-jp5` / `local-trt-jp6`)
-→ tags `frigate:latest-tensorrt`. `docker compose build` with no `FRIGATE_IMAGE`
+→ tags `kestrel:latest-tensorrt`. `docker compose build` with no `FRIGATE_IMAGE`
 set produces that same tag, so the two local paths are interchangeable.
 
 ### Unrelated build fix that rode along

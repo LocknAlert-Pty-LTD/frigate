@@ -2,7 +2,7 @@ BOARDS += rk
 
 local-rk: version
 	docker buildx bake --file=docker/rockchip/rk.hcl rk \
-		--set rk.tags=frigate:latest-rk \
+		--set rk.tags=kestrel:latest-rk \
 		--load
 
 build-rk: version

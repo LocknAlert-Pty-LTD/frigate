@@ -20,7 +20,7 @@ class HeaderMappingConfig(FrigateBaseModel):
     role_map: dict[str, list[str]] | None = Field(
         default_factory=dict,
         title=("Role mapping"),
-        description="Map upstream group values to Frigate roles (for example map admin groups to the admin role).",
+        description="Map upstream group values to Kestrel roles (for example map admin groups to the admin role).",
     )
 
 
@@ -28,7 +28,7 @@ class ProxyConfig(FrigateBaseModel):
     header_map: HeaderMappingConfig = Field(
         default_factory=HeaderMappingConfig,
         title="Header mapping",
-        description="Map incoming proxy headers to Frigate user and role fields for proxy-based auth.",
+        description="Map incoming proxy headers to Kestrel user and role fields for proxy-based auth.",
     )
     logout_url: str | None = Field(
         default=None,

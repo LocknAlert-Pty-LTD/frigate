@@ -57,15 +57,15 @@
     "detectIsVerySlow": "{{detect}} ช้ามาก ({{speed}} มิลลิวินาที)"
   },
   "documentTitle": {
-    "cameras": "ข้อมูลกล้อง - Frigate",
-    "storage": "สถิติคลังข้อมูล - Frigate",
-    "general": "สถิติทั่วไป - Frigate",
-    "enrichments": "สถิติเพิ่มเติม - Frigate",
+    "cameras": "ข้อมูลกล้อง - Kestrel",
+    "storage": "สถิติคลังข้อมูล - Kestrel",
+    "general": "สถิติทั่วไป - Kestrel",
+    "enrichments": "สถิติเพิ่มเติม - Kestrel",
     "logs": {
-      "frigate": "Frigate Logs - Frigate",
-      "go2rtc": "Logs ของ Go2RTC - Frigate",
-      "nginx": "Logs ของ Nginx - Frigate",
-      "websocket": "ประวัติข้อความ - Frigate"
+      "frigate": "Kestrel Logs - Kestrel",
+      "go2rtc": "Logs ของ Go2RTC - Kestrel",
+      "nginx": "Logs ของ Nginx - Kestrel",
+      "websocket": "ประวัติข้อความ - Kestrel"
     }
   },
   "logs": {

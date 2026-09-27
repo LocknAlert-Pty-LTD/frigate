@@ -1,13 +1,13 @@
 {
   "restart": {
-    "title": "Czy na pewno chcesz ponownie uruchomić Frigate?",
+    "title": "Czy na pewno chcesz ponownie uruchomić Kestrel?",
     "button": "Uruchom ponownie",
     "restarting": {
-      "title": "Frigate uruchamia się ponownie",
+      "title": "Kestrel uruchamia się ponownie",
       "content": "Strona odświeży się za {{countdown}} sekund.",
       "button": "Wymuś odświeżenie"
     },
-    "description": "Spowoduje to chwilowe zatrzymanie Frigate i ponowne uruchomienie."
+    "description": "Spowoduje to chwilowe zatrzymanie Kestrel i ponowne uruchomienie."
   },
   "explore": {
     "plus": {
@@ -23,7 +23,7 @@
           "ask_a": "Czy ten obiekt to <code>{{label}}</code>?",
           "ask_an": "Czy ten obiekt to <code>{{label}}</code>?",
           "ask_full": "Czy ten obiekt to <code>{{untranslatedLabel}}</code> ({{translatedLabel}})?",
-          "label": "Potwierdź tę etykietę dla Frigate Plus"
+          "label": "Potwierdź tę etykietę dla Kestrel Plus"
         },
         "toast": {
           "error": "Nie udało się przesłać do Frigate+. Sprawdź połączenie sieciowe i spróbuj ponownie."
@@ -159,10 +159,10 @@
     "shareTimestamp": {
       "label": "Udostępnij znacznik czasu",
       "title": "Udostępnij znacznik czasu",
-      "description": "Udostępnij adres URL z aktualnym znacznikiem czasu pozycji odtwarzacza lub wybierz niestandardowy znacznik czasu. Należy pamiętać, że nie jest to publiczny link udostępniania i jest dostępny wyłącznie dla użytkowników mających dostęp do Frigate i tej kamery.",
+      "description": "Udostępnij adres URL z aktualnym znacznikiem czasu pozycji odtwarzacza lub wybierz niestandardowy znacznik czasu. Należy pamiętać, że nie jest to publiczny link udostępniania i jest dostępny wyłącznie dla użytkowników mających dostęp do Kestrel i tej kamery.",
       "custom": "Własny znacznik czasu",
       "button": "Udostępnij adres URL ze znacznikiem czasu",
-      "shareTitle": "Znacznik czasu przeglądu Frigate: {{camera}}"
+      "shareTitle": "Znacznik czasu przeglądu Kestrel: {{camera}}"
     }
   },
   "streaming": {

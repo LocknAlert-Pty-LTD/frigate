@@ -2,7 +2,7 @@ BOARDS += rpi
 
 local-rpi: version
 	docker buildx bake --file=docker/rpi/rpi.hcl rpi \
-		--set rpi.tags=frigate:latest-rpi \
+		--set rpi.tags=kestrel:latest-rpi \
 		--load
 
 build-rpi: version

@@ -1,16 +1,16 @@
 {
   "documentTitle": {
-    "cameras": "Estadístiques de càmera - Frigate",
-    "storage": "Estadístiques d'emmagatzematge - Frigate",
-    "general": "Estadístiques generals - Frigate",
+    "cameras": "Estadístiques de càmera - Kestrel",
+    "storage": "Estadístiques d'emmagatzematge - Kestrel",
+    "general": "Estadístiques generals - Kestrel",
     "logs": {
-      "frigate": "Registres de Frigate - Frigate",
-      "go2rtc": "Registres de Go2RTC - Frigate",
-      "nginx": "Registres de Nginix - Frigate",
-      "websocket": "Registres de missatges - Frigate"
+      "frigate": "Registres de Kestrel - Kestrel",
+      "go2rtc": "Registres de Go2RTC - Kestrel",
+      "nginx": "Registres de Nginix - Kestrel",
+      "websocket": "Registres de missatges - Kestrel"
     },
-    "enrichments": "Estadístiques complementàries - Frigate",
-    "health": "Salut - Frigate"
+    "enrichments": "Estadístiques complementàries - Kestrel",
+    "health": "Salut - Kestrel"
   },
   "title": "Sistema",
   "metrics": "Mètriques del sistema",
@@ -128,7 +128,7 @@
     "recordings": {
       "title": "Gravacions",
       "earliestRecording": "Gravació més antiga disponible:",
-      "tips": "Aquest valor representa l'emmagatzematge total utilitzat per les gravacions a la base de dades de Frigate. Frigate no registre l'ús de tots els arxius del disc."
+      "tips": "Aquest valor representa l'emmagatzematge total utilitzat per les gravacions a la base de dades de Kestrel. Kestrel no registre l'ús de tots els arxius del disc."
     },
     "cameraStorage": {
       "camera": "Càmera",
@@ -138,7 +138,7 @@
       "title": "Emmagatzematge de càmera",
       "unused": {
         "title": "Sense utilitzar",
-        "tips": "Aquest valor pot no de forma exacta representar l'espai lliure disponible a Frigate si tens altres fitxers emmagatzemats en la vostra unitat més enllà dels registres de Frigate. Frigate no rastreja l'ús d'emmagatzematge extern als seus registres."
+        "tips": "Aquest valor pot no de forma exacta representar l'espai lliure disponible a Kestrel si tens altres fitxers emmagatzemats en la vostra unitat més enllà dels registres de Kestrel. Kestrel no rastreja l'ús d'emmagatzematge extern als seus registres."
       },
       "percentageOfTotalUsed": "Percentatge del total",
       "subStream": {
@@ -280,7 +280,7 @@
     "title": "Salut",
     "notices": {
       "title": "Avís",
-      "empty": "La instal·lació de Frigate és saludable",
+      "empty": "La instal·lació de Kestrel és saludable",
       "dismiss": "Descarta",
       "openSettings": "Obre la configuració",
       "openLink": "Obre l'enllaç",
@@ -307,7 +307,7 @@
         "shm_too_low": "L'assignació /dev/shm ({{total}} MB) s'hauria d'augmentar a com a mínim {{min}} MB",
         "failed_login_one": "Error en l'intent d'inici de sessió de {{user}}",
         "failed_login_other": "Intents d'inici de sessió fallits per {{user}}",
-        "update_available": "Frigate {{version}} està disponible"
+        "update_available": "Kestrel {{version}} està disponible"
       },
       "streamPrefix": "Flux {{index}}: {{message}}",
       "streamPrefixRestream": "Flux {{index}} (via go2rtc): {{message}}",
@@ -331,7 +331,7 @@
       "nothingConfigured": "Res configurat",
       "allCameras": "Totes les càmeres",
       "probeUnavailable": "La detecció de maquinari no està disponible",
-      "justStarted": "Frigate acaba de començar",
+      "justStarted": "Kestrel acaba de començar",
       "deviceNotFound": "{{devices}} no s'ha trobat en aquest sistema",
       "detectorNotRunning": "El procés del detector no s'està executant",
       "inferenceVerySlow": "La inferència és molt lenta ({{speed}} ms)",

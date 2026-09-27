@@ -1,16 +1,16 @@
 {
   "documentTitle": {
-    "cameras": "Cameras Stats - Frigate",
-    "storage": "Storage Stats - Frigate",
-    "general": "General Stats - Frigate",
-    "enrichments": "Enrichments Stats - Frigate",
+    "cameras": "Cameras Stats - Kestrel",
+    "storage": "Storage Stats - Kestrel",
+    "general": "General Stats - Kestrel",
+    "enrichments": "Enrichments Stats - Kestrel",
     "logs": {
-      "frigate": "Frigate Logs - Frigate",
-      "go2rtc": "Go2RTC Logs - Frigate",
-      "nginx": "Nginx Logs - Frigate",
-      "websocket": "Messages Logs - Frigate"
+      "frigate": "Kestrel Logs - Kestrel",
+      "go2rtc": "Go2RTC Logs - Kestrel",
+      "nginx": "Nginx Logs - Kestrel",
+      "websocket": "Messages Logs - Kestrel"
     },
-    "health": "Health - Frigate"
+    "health": "Health - Kestrel"
   },
   "title": "System",
   "metrics": "System metrics",
@@ -18,7 +18,7 @@
     "title": "Health",
     "notices": {
       "title": "Notices",
-      "empty": "Your Frigate installation is healthy",
+      "empty": "Your Kestrel installation is healthy",
       "dismiss": "Dismiss",
       "openSettings": "Open settings",
       "openLink": "Open link",
@@ -45,7 +45,7 @@
         "shm_too_low": "/dev/shm allocation ({{total}} MB) should be increased to at least {{min}} MB",
         "failed_login_one": "Failed login attempt for {{user}}",
         "failed_login_other": "Failed login attempts for {{user}}",
-        "update_available": "Frigate {{version}} is available"
+        "update_available": "Kestrel {{version}} is available"
       },
       "streamPrefix": "Stream {{index}}: {{message}}",
       "streamPrefixRestream": "Stream {{index}} (via go2rtc): {{message}}",
@@ -69,7 +69,7 @@
       "nothingConfigured": "Nothing configured",
       "allCameras": "All cameras",
       "probeUnavailable": "Hardware detection is unavailable",
-      "justStarted": "Frigate just started",
+      "justStarted": "Kestrel just started",
       "deviceNotFound": "{{devices}} was not found on this system",
       "detectorNotRunning": "Detector process is not running",
       "inferenceVerySlow": "Inference is very slow ({{speed}} ms)",
@@ -216,7 +216,7 @@
     "overview": "Overview",
     "recordings": {
       "title": "Recordings",
-      "tips": "This value represents the total storage used by the recordings in Frigate's database. Frigate does not track storage usage for all files on your disk.",
+      "tips": "This value represents the total storage used by the recordings in Kestrel's database. Kestrel does not track storage usage for all files on your disk.",
       "earliestRecording": "Earliest recording available:"
     },
     "shm": {
@@ -236,7 +236,7 @@
       "bandwidth": "Bandwidth",
       "unused": {
         "title": "Unused",
-        "tips": "This value may not accurately represent the free space available to Frigate if you have other files stored on your drive beyond Frigate's recordings. Frigate does not track storage usage outside of its recordings."
+        "tips": "This value may not accurately represent the free space available to Kestrel if you have other files stored on your drive beyond Kestrel's recordings. Kestrel does not track storage usage outside of its recordings."
       },
       "subStream": {
         "information": "Sub Stream Storage Information",

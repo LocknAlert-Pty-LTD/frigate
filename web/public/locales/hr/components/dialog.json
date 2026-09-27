@@ -1,9 +1,9 @@
 {
   "restart": {
-    "title": "Jeste li sigurni da želite ponovno pokrenuti Frigate?",
+    "title": "Jeste li sigurni da želite ponovno pokrenuti Kestrel?",
     "button": "Ponovno pokreni",
     "restarting": {
-      "title": "Frigate se ponovno pokreće",
+      "title": "Kestrel se ponovno pokreće",
       "content": "Ova stranica će se osvježiti za {{countdown}} sekundi.",
       "button": "Forsiraj ponovno pokretanje odmah"
     }
@@ -16,7 +16,7 @@
       },
       "review": {
         "question": {
-          "label": "Potvrdi oznaku za Frigate Plus",
+          "label": "Potvrdi oznaku za Kestrel Plus",
           "ask_a": "Da li je ovaj objekt <code>{{label}}</code>?",
           "ask_an": "Da li je ovaj objekt <code>{{label}}</code>?",
           "ask_full": "Da li je ovaj objekt <code>{{untranslatedLabel}}</code> ({{translatedLabel}})?"

@@ -1,14 +1,14 @@
 {
   "documentTitle": {
     "logs": {
-      "frigate": "Frigate Günlükleri - Frigate",
-      "go2rtc": "Go2RTC Günlükleri - Frigate",
-      "nginx": "Nginx Günlükleri - Frigate"
+      "frigate": "Kestrel Günlükleri - Kestrel",
+      "go2rtc": "Go2RTC Günlükleri - Kestrel",
+      "nginx": "Nginx Günlükleri - Kestrel"
     },
-    "general": "Genel İstatistikler - Frigate",
-    "storage": "Depolama İstatistikleri - Frigate",
-    "cameras": "Kamera İstatistikleri - Frigate",
-    "enrichments": "Zenginleştirme İstatistikleri - Frigate"
+    "general": "Genel İstatistikler - Kestrel",
+    "storage": "Depolama İstatistikleri - Kestrel",
+    "cameras": "Kamera İstatistikleri - Kestrel",
+    "enrichments": "Zenginleştirme İstatistikleri - Kestrel"
   },
   "metrics": "Sistem metrikleri",
   "general": {
@@ -73,13 +73,13 @@
     "recordings": {
       "title": "Kayıtlar",
       "earliestRecording": "Mevcut en erken kayıt:",
-      "tips": "Burada gösterilen değer, Frigate’in veritabanına göre kayıtların diskinizde kullandığı toplam alanı ifade eder. Frigate, diskinizdeki tüm dosyaların alan kullanımını takip etmez."
+      "tips": "Burada gösterilen değer, Kestrel’in veritabanına göre kayıtların diskinizde kullandığı toplam alanı ifade eder. Kestrel, diskinizdeki tüm dosyaların alan kullanımını takip etmez."
     },
     "cameraStorage": {
       "title": "Kamera Depolaması",
       "camera": "Kamera",
       "unused": {
-        "tips": "Eğer diskinizde Frigate'in kayıtları dışında dosyalar varsa bu değer diskinizdeki boş alanı doğru olarak göstermeyebilir. Frigate kendi kayıtları dışındaki dosyaların disk kullanımını takip etmez.",
+        "tips": "Eğer diskinizde Kestrel'in kayıtları dışında dosyalar varsa bu değer diskinizdeki boş alanı doğru olarak göstermeyebilir. Kestrel kendi kayıtları dışındaki dosyaların disk kullanımını takip etmez.",
         "title": "Kullanılmayan"
       },
       "percentageOfTotalUsed": "Toplam Yüzde",

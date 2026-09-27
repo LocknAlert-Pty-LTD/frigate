@@ -1,15 +1,15 @@
 {
   "documentTitle": {
-    "cameras": "Kamerastatistikk - Frigate",
-    "storage": "Lagringsstatistikk - Frigate",
+    "cameras": "Kamerastatistikk - Kestrel",
+    "storage": "Lagringsstatistikk - Kestrel",
     "logs": {
-      "frigate": "Frigate-logger - Frigate",
-      "go2rtc": "Go2RTC-logger - Frigate",
-      "nginx": "Nginx-logger - Frigate",
-      "websocket": "Meldingslogger - Frigate"
+      "frigate": "Kestrel-logger - Kestrel",
+      "go2rtc": "Go2RTC-logger - Kestrel",
+      "nginx": "Nginx-logger - Kestrel",
+      "websocket": "Meldingslogger - Kestrel"
     },
-    "general": "Generell statistikk - Frigate",
-    "enrichments": "Statistikk for utvidelser - Frigate"
+    "general": "Generell statistikk - Kestrel",
+    "enrichments": "Statistikk for utvidelser - Kestrel"
   },
   "logs": {
     "copy": {
@@ -125,7 +125,7 @@
     "recordings": {
       "earliestRecording": "Tidligste opptak tilgjengelig:",
       "title": "Opptak",
-      "tips": "Denne verdien representerer total lagringsplass brukt av opptakene i Frigates database. Frigate sporer ikke lagringsbruk for alle filer på disken din."
+      "tips": "Denne verdien representerer total lagringsplass brukt av opptakene i Frigates database. Kestrel sporer ikke lagringsbruk for alle filer på disken din."
     },
     "cameraStorage": {
       "storageUsed": "Lagringsbruk",
@@ -136,7 +136,7 @@
       "percentageOfTotalUsed": "Prosentandel av tilgjengelig",
       "unused": {
         "title": "Ubrukt",
-        "tips": "Denne verdien representerer kanskje ikke nøyaktig den ledige plassen Frigate har tilgang til, dersom det finnes andre filer lagret på disken. Frigate sporer kun lagring brukt av egne opptak."
+        "tips": "Denne verdien representerer kanskje ikke nøyaktig den ledige plassen Kestrel har tilgang til, dersom det finnes andre filer lagret på disken. Kestrel sporer kun lagring brukt av egne opptak."
       }
     },
     "title": "Lagring",

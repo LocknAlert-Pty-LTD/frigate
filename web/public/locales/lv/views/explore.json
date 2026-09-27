@@ -1,5 +1,5 @@
 {
-  "documentTitle": "Notikumu meklēšana - Frigate",
+  "documentTitle": "Notikumu meklēšana - Kestrel",
   "generativeAI": "Ģeneratīvs AI",
   "exploreMore": "Paskatīt vairāk objektu{{label}}",
   "details": {
@@ -21,7 +21,7 @@
     },
     "submitToPlus": {
       "label": "Iesniegt Frigate+",
-      "aria": "Iesniegt Frigate Plus"
+      "aria": "Iesniegt Kestrel Plus"
     },
     "viewInHistory": {
       "label": "Atrast vēsturē"

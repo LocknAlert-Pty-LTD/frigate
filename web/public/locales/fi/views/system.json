@@ -36,15 +36,15 @@
     }
   },
   "documentTitle": {
-    "cameras": "Kameroiden tilastot - Frigate",
+    "cameras": "Kameroiden tilastot - Kestrel",
     "storage": "Tallenteiden tilastot - Fgirage",
-    "general": "Yleiset tilastot - Frigate",
-    "enrichments": "Rikastetut tilastot - Frigate",
+    "general": "Yleiset tilastot - Kestrel",
+    "enrichments": "Rikastetut tilastot - Kestrel",
     "logs": {
-      "frigate": "Frigaten lokit - Frigate",
-      "go2rtc": "Go2RTC lokit - Frigate",
-      "nginx": "Nginx lokit - Frigate",
-      "websocket": "Viestilokit - Frigate"
+      "frigate": "Frigaten lokit - Kestrel",
+      "go2rtc": "Go2RTC lokit - Kestrel",
+      "nginx": "Nginx lokit - Kestrel",
+      "websocket": "Viestilokit - Kestrel"
     }
   },
   "title": "Järjestelmä",

@@ -3,7 +3,7 @@
     "title": "Vai esi pārliecināts, ka vēlies pārstartēt Frigati?",
     "button": "Pārstartēt",
     "restarting": {
-      "title": "Frigate tiek pārstartēta",
+      "title": "Kestrel tiek pārstartēta",
       "content": "Šī lapa tiks atkārtoti ielādēta pēc {{countdown}} sekundēm.",
       "button": "Atjaunot tagad"
     }
@@ -16,7 +16,7 @@
       },
       "review": {
         "question": {
-          "label": "Apstipriniet šo tagu pakalpojumam Frigate Plus",
+          "label": "Apstipriniet šo tagu pakalpojumam Kestrel Plus",
           "ask_a": "Vai šis objekts<code>{{label}}</code>?",
           "ask_an": "Vai šis objekts ir<code>{{label}}</code>?",
           "ask_full": "Vai šis objekts<code>{{untranslatedLabel}}</code> ({{translatedLabel}})?"
