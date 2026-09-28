@@ -524,6 +524,29 @@ required:
 ONNX Runtime partitions the model graph and runs any node TensorRT cannot compile on
 CUDA instead, so enabling it is a speed improvement rather than an all-or-nothing switch.
 
+#### FP16 precision
+
+TensorRT builds FP16 engines for the object detection model. On Ampere and
+newer GPUs, FP16 runs on the tensor cores and is significantly faster than
+FP32; it is the largest single gain TensorRT offers.
+
+Only the object detector uses FP16. The face recognition, semantic search and
+license plate models stay at full FP32 precision, since licence plate
+recognition is OCR where character accuracy matters more than a few
+milliseconds.
+
+FP16 has slightly lower numerical precision, so detection confidence scores can
+shift a little. To go back to FP32, set `USE_FP16=False` and restart — no
+rebuild needed:
+
+```yaml
+environment:
+  - USE_FP16=False
+```
+
+If you rely on a finely tuned confidence threshold, compare scores on the same
+footage before and after.
+
 #### Tuning the TensorRT workspace
 
 TensorRT reserves a scratch workspace on the GPU while it compiles and runs engines.

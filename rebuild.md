@@ -64,11 +64,28 @@ capture) correctly falls through to the generic runner when TRT is first.
 
 ### Things deliberately left alone
 
-- `trt_fp16_enable` — the ONNX detector never passes `requires_fp16=True` for
-  detection models, so TRT runs FP32, same precision as CUDA. **No accuracy
-  tradeoff was introduced.** Don't "fix" this without measuring.
-- `frigate/detectors/plugins/tensorrt.py` — the dedicated Jetson `type: tensorrt`
-  detector is a separate, unrelated code path.
+- `frigate/detectors/plugins/tensorrt.py` — the dedicated Jetson
+  `type: tensorrt` detector is a separate, unrelated code path.
+
+### FP16 (enabled for the detector only)
+
+Measured on an RTX 3060: **10 ms on CUDA → 8.83 ms on TensorRT FP32**, ~12%.
+Modest, because FP32 gets only layer fusion and kernel auto-tuning; the tensor
+cores sit idle. FP16 is where the rest is.
+
+`frigate/detectors/plugins/onnx.py` now passes `requires_fp16=True`.
+
+**Scoped to the object detector deliberately.** `get_optimized_runner()` also
+serves the face, semantic-search and license-plate models. LPR is OCR feeding
+the ParkPow integration, so trading character accuracy for detector
+milliseconds is the wrong call. `test_util_model.py` asserts the detector opts
+in and the embedding models do not, so a future edit cannot quietly widen it.
+
+FP16 shifts detection confidence scores slightly. `USE_FP16=False` reverts to
+FP32 without a rebuild — no code change, no image rebuild, just restart.
+**After enabling, re-check any alarm zone whose `min_confidence` sits near its
+threshold**, because a small downward shift there changes when the alarm fires.
+
 
 ### The version pin is the whole ballgame
 

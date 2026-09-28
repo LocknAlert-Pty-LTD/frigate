@@ -52,6 +52,20 @@ class ONNXDetector(DetectionApi):
             path,
             detector_config.device,
             model_type=detector_config.model.model_type,
+            # Let TensorRT build FP16 engines for the detection model. Ampere
+            # and newer run FP16 on tensor cores, which is the largest single
+            # speedup available here -- FP32 gets only fusion and kernel
+            # auto-tuning.
+            #
+            # Scoped to the detector on purpose. get_optimized_runner also
+            # serves the face, semantic-search and license-plate models, and
+            # LPR in particular is OCR feeding the ParkPow integration, where
+            # losing character accuracy to save milliseconds is a bad trade.
+            #
+            # FP16 shifts detection confidence scores slightly. Set
+            # USE_FP16=False to fall back to FP32 without rebuilding, and
+            # re-check any alarm zone min_confidence tuned near its threshold.
+            requires_fp16=True,
         )
 
         self.onnx_model_type = detector_config.model.model_type
