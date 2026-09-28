@@ -23,7 +23,10 @@ protobuf==3.20.3; platform_machine == 'x86_64'
 # against. If it does not, the EP fails to load and ONNX Runtime silently falls
 # back to CUDA -- the failure is a performance regression, not an error, so it
 # is easy to miss. Check with, inside the container:
-#   python3 -c "import onnxruntime; print(onnxruntime.get_available_providers())"
+#   docker run --rm --gpus all --entrypoint python3 <image> \n#     -c "import onnxruntime; print(onnxruntime.get_available_providers())"
+#
+# --entrypoint is required: the image's ENTRYPOINT is s6-overlay's /init,
+# which ignores the command and boots the whole service stack instead.
 #
 # onnxruntime-gpu 1.24 (pinned above) ships a TensorRT EP built against
 # TensorRT 10.14: the 1.24.1 release notes say "TensorRT EP: Upgraded to

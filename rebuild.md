@@ -100,9 +100,17 @@ that wants 10.14 is exactly the silent-fallback case above. Corrected to
 No NVIDIA GPU was available while writing this, so the corrected pin is
 researched but unproven. On the first real run:
 
-1. `python3 -c "import onnxruntime; print(onnxruntime.get_available_providers())"`
-   inside the container — `TensorrtExecutionProvider` must appear, with no
-   version-mismatch warning in the logs.
+1. Check the provider is actually available:
+
+   ```bash
+   docker run --rm --gpus all --entrypoint python3 <image> \n     -c "import onnxruntime; print(onnxruntime.get_available_providers())"
+   ```
+
+   `TensorrtExecutionProvider` must appear, with no version-mismatch warning.
+   **`--entrypoint` is required.** The image's ENTRYPOINT is s6-overlay's
+   `/init`, so without it the command is ignored, the whole service stack
+   boots instead, and it drowns in `/config` permission errors that have
+   nothing to do with TensorRT.
 2. Confirm the detector survives the slower first-boot engine compile (engines are
    cached to `/config/model_cache/tensorrt/ort/trt-engines`).
 3. Confirm inference speed improves over the CUDA-only baseline and detection
