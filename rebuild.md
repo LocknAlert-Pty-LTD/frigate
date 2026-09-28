@@ -95,38 +95,46 @@ the published table stops there. **That was wrong** — 10.9 against an ORT 1.24
 that wants 10.14 is exactly the silent-fallback case above. Corrected to
 `10.14.*`.
 
-### Verified on real hardware (2026-09-28)
+### How to actually verify TensorRT is live (2026-09-28)
 
-On an NVIDIA host, against `rainelocknalert/kestrel:0.19.0-tensorrt`:
+**`get_available_providers()` is not proof.** It lists the providers ONNX
+Runtime was *built* with, not the ones that can be loaded. This returns a
+perfectly healthy-looking list on an image where TensorRT cannot load at all:
 
 ```bash
 docker run --rm --gpus all --entrypoint python3 <image>   -c "import onnxruntime; print(onnxruntime.get_available_providers())"
 # ['TensorrtExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider']
 ```
 
-That settles the two things this section had been carrying as unknowns:
+That was recorded here as confirmation and it was wrong. The running container
+then showed the truth:
 
-- **The `10.14` pin is correct.** ONNX Runtime 1.24.4 loaded the TensorRT EP. A
-  mismatched runtime does not raise — the provider is simply absent from this
-  list — so its presence is the proof.
-- **`get_ort_providers()` works as intended.** TensorRT is registered *ahead of*
-  CUDA, with no `device:` setting in the config.
+```
+Failed to load library libonnxruntime_providers_tensorrt.so
+  with error: libnvinfer.so.10: cannot open shared object file
+Loaded ModelTypeEnum.yologeneric model on CUDA
+```
 
-`--entrypoint` is required. The image's ENTRYPOINT is s6-overlay's `/init`, so
-without it the command is ignored, the whole service stack boots instead, and
-the output fills with `/config` permission errors that have nothing to do with
-TensorRT.
+The cause: `tensorrt-cu12-libs` installs into
+`dist-packages/tensorrt_libs/`, and that directory was missing from
+`docker/tensorrt/detector/rootfs/etc/ld.so.conf.d/cuda_tensorrt.conf`. The libs
+were in the image; `ldconfig` had never been told where. Fixed by adding the
+path, and the build now **fails** if `ldconfig -p` cannot resolve
+`libnvinfer.so.10`, so this cannot regress quietly again.
+
+**The only trustworthy checks** are against a *running* instance:
+
+1. No `Failed to load library ... libonnxruntime_providers_tensorrt.so` in the
+   log, and the detector line reads TensorRT rather than
+   `Loaded ... model on CUDA`.
+2. `ldconfig -p | grep libnvinfer` inside the container resolves.
+3. Inference speed on the System page improves against the CUDA baseline.
 
 ### Still unproven
 
-Provider availability is not throughput. Nobody has yet confirmed:
-
-1. that the detector survives the slower first-boot engine compile (engines
-   cache to `/config/model_cache/tensorrt/ort/trt-engines`);
-2. that inference is actually faster than the CUDA-only baseline, with detection
-   confidence materially unchanged.
-
-Both need a running instance with cameras attached, not a one-shot container.
+Provider *loading* is not throughput. The first-boot engine compile (cached to
+`/config/model_cache/tensorrt/ort/trt-engines`) and any actual speed gain
+remain unmeasured.
 
 ### Build + push
 
@@ -790,7 +798,7 @@ npx tsc --noEmit && npx eslint . && npx i18next-cli extract --ci && npx vite bui
 
 | Item | Status |
 | --- | --- |
-| TensorRT `tensorrt-cu12-libs` version pin | **Resolved.** 10.14 confirmed on an NVIDIA host 2026-09-28: `get_available_providers()` returns `TensorrtExecutionProvider` first. Speed and engine-compile behaviour still unmeasured. |
+| TensorRT actually loading | `get_available_providers()` was a false positive; the running container fell back to CUDA because `tensorrt_libs` was missing from the ldconfig path. Fixed, and the build now fails if `libnvinfer.so.10` is unresolvable — but **not yet confirmed on a rebuilt image**. |
 | SIA DC-09 protocol (`protocols/sia.py`) | Best-effort, no spec available — flagged unverified. Contact ID *is* verified. |
 | ParkPow end-to-end | Unit tests now pass (8/8); no live POST confirmed against a real ParkPow instance |
 | ParkPow locale JSON | Hand-edited; still needs `generate_config_translations.py` re-run in the container |

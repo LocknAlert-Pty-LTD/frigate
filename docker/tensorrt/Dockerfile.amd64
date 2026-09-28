@@ -28,6 +28,17 @@ COPY --from=rootfs / /
 COPY docker/tensorrt/detector/rootfs/etc/ld.so.conf.d /etc/ld.so.conf.d
 RUN ldconfig
 
+# Fail the build rather than ship an image that silently runs on CUDA.
+# The TensorRT EP dlopens libnvinfer at runtime; when the loader cannot find
+# it, ONNX Runtime logs one line and falls back, so the image looks healthy
+# while doing none of what it exists for. ldconfig must resolve it here.
+RUN if ! ldconfig -p | grep -q 'libnvinfer.so.10'; then \
+        echo "ERROR: libnvinfer.so.10 is not on the loader path." >&2; \
+        echo "tensorrt-cu12-libs installs it under dist-packages/tensorrt_libs;" >&2; \
+        echo "add that directory to cuda_tensorrt.conf." >&2; \
+        exit 1; \
+    fi
+
 WORKDIR /opt/frigate/
 
 # Dev Container w/ TRT
