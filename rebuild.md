@@ -95,26 +95,38 @@ the published table stops there. **That was wrong** — 10.9 against an ORT 1.24
 that wants 10.14 is exactly the silent-fallback case above. Corrected to
 `10.14.*`.
 
-### ⚠️ Still not live-verified
+### Verified on real hardware (2026-09-28)
 
-No NVIDIA GPU was available while writing this, so the corrected pin is
-researched but unproven. On the first real run:
+On an NVIDIA host, against `rainelocknalert/kestrel:0.19.0-tensorrt`:
 
-1. Check the provider is actually available:
+```bash
+docker run --rm --gpus all --entrypoint python3 <image>   -c "import onnxruntime; print(onnxruntime.get_available_providers())"
+# ['TensorrtExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider']
+```
 
-   ```bash
-   docker run --rm --gpus all --entrypoint python3 <image> \n     -c "import onnxruntime; print(onnxruntime.get_available_providers())"
-   ```
+That settles the two things this section had been carrying as unknowns:
 
-   `TensorrtExecutionProvider` must appear, with no version-mismatch warning.
-   **`--entrypoint` is required.** The image's ENTRYPOINT is s6-overlay's
-   `/init`, so without it the command is ignored, the whole service stack
-   boots instead, and it drowns in `/config` permission errors that have
-   nothing to do with TensorRT.
-2. Confirm the detector survives the slower first-boot engine compile (engines are
-   cached to `/config/model_cache/tensorrt/ort/trt-engines`).
-3. Confirm inference speed improves over the CUDA-only baseline and detection
-   confidence scores are materially unchanged.
+- **The `10.14` pin is correct.** ONNX Runtime 1.24.4 loaded the TensorRT EP. A
+  mismatched runtime does not raise — the provider is simply absent from this
+  list — so its presence is the proof.
+- **`get_ort_providers()` works as intended.** TensorRT is registered *ahead of*
+  CUDA, with no `device:` setting in the config.
+
+`--entrypoint` is required. The image's ENTRYPOINT is s6-overlay's `/init`, so
+without it the command is ignored, the whole service stack boots instead, and
+the output fills with `/config` permission errors that have nothing to do with
+TensorRT.
+
+### Still unproven
+
+Provider availability is not throughput. Nobody has yet confirmed:
+
+1. that the detector survives the slower first-boot engine compile (engines
+   cache to `/config/model_cache/tensorrt/ort/trt-engines`);
+2. that inference is actually faster than the CUDA-only baseline, with detection
+   confidence materially unchanged.
+
+Both need a running instance with cameras attached, not a one-shot container.
 
 ### Build + push
 
@@ -778,7 +790,7 @@ npx tsc --noEmit && npx eslint . && npx i18next-cli extract --ci && npx vite bui
 
 | Item | Status |
 | --- | --- |
-| TensorRT `tensorrt-cu12-libs` version pin | Corrected 10.9 → 10.14 to match onnxruntime-gpu 1.24; researched, but never run on real GPU hardware |
+| TensorRT `tensorrt-cu12-libs` version pin | **Resolved.** 10.14 confirmed on an NVIDIA host 2026-09-28: `get_available_providers()` returns `TensorrtExecutionProvider` first. Speed and engine-compile behaviour still unmeasured. |
 | SIA DC-09 protocol (`protocols/sia.py`) | Best-effort, no spec available — flagged unverified. Contact ID *is* verified. |
 | ParkPow end-to-end | Unit tests now pass (8/8); no live POST confirmed against a real ParkPow instance |
 | ParkPow locale JSON | Hand-edited; still needs `generate_config_translations.py` re-run in the container |
