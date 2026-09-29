@@ -53,14 +53,39 @@ Two independent causes:
 | `docs/docs/configuration/object_detectors.md` | Documents automatic TRT→CUDA behavior, first-boot engine compile, larger image |
 | `frigate/test/test_util_model.py` | 3 cases: TRT auto-registered with CUDA fallback, env override, CUDA-only when TRT absent |
 
-### Why no fallback logic was needed
+### Fallback: partly automatic, partly not
 
-ONNX Runtime partitions the graph per-node and falls back to the next provider in
-the list. Registering `TensorrtExecutionProvider` immediately before
-`CUDAExecutionProvider` is therefore a strict upgrade — anything TRT can't compile
-runs on CUDA automatically. `frigate/detectors/detection_runners.py` also needed
-no change: its `providers[0] == "CUDAExecutionProvider"` check (gating CUDA-Graph
-capture) correctly falls through to the generic runner when TRT is first.
+ONNX Runtime partitions the graph per node and sends operators TensorRT cannot
+compile to the next provider in the list, so registering
+`TensorrtExecutionProvider` immediately before `CUDAExecutionProvider` handles
+unsupported *ops* for free. `frigate/detectors/detection_runners.py` needed no
+change for that: its `providers[0] == "CUDAExecutionProvider"` check (gating
+CUDA-Graph capture) correctly falls through when TRT is first.
+
+**This was originally written here as "a strict upgrade with no fallback logic
+needed". That was wrong.** Per-node partitioning does not cover an engine build
+that fails outright — that raises out of `InferenceSession`. TensorRT 10 dropped
+Pascal, so on a GTX 10-series card (SM 6.1) every build fails with
+
+```
+Target GPU SM 61 is not supported by this TensorRT release
+TensorRT EP failed to create engine from network for fused node
+```
+
+and because TensorRT is now registered unconditionally, the detector *and* the
+embeddings process died on startup and the watchdog restarted them forever. A
+machine that ran fine on CUDA was taken down by the upgrade.
+
+`_create_session()` in `detection_runners.py` now retries once without
+TensorRT, and latches `_tensorrt_unusable` for the process so the remaining
+models skip a build that cannot succeed. Only a failure that actually involved
+TensorRT is retried — a corrupt model still raises, rather than being retried
+into a more confusing error. `frigate/test/test_tensorrt_fallback.py` covers
+all of it.
+
+**Registering an execution provider is not free.** Any GPU older than Turing
+gets TensorRT offered and must fall back; test on the oldest card in the fleet,
+not just the newest.
 
 ### Things deliberately left alone
 

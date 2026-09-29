@@ -677,6 +677,72 @@ def _record_runner(
     return runner
 
 
+# Set once per process when a TensorRT engine build fails, so the remaining
+# models skip TensorRT instead of each paying for a doomed build.
+_tensorrt_unusable = False
+
+
+def _drop_tensorrt(
+    providers: list, options: list
+) -> tuple[list, list]:
+    """Return the provider list with TensorRT removed."""
+    kept = [
+        (provider, option)
+        for provider, option in zip(providers, options)
+        if provider != "TensorrtExecutionProvider"
+    ]
+    return [p for p, _ in kept], [o for _, o in kept]
+
+
+def _create_session(model_path: str, model_type: str, providers: list, options: list):
+    """Create the session, giving up on TensorRT if it cannot serve this GPU.
+
+    ONNX Runtime partitions the graph and falls back to the next provider for
+    individual *operators* TensorRT cannot compile. An engine build that fails
+    outright does not fall back -- it surfaces as an exception here. TensorRT 10
+    dropped Pascal (SM 6.1) and older, so on such a card every build fails with
+
+        Target GPU SM 61 is not supported by this TensorRT release
+
+    and without this the detector and embeddings processes die on startup and
+    the watchdog restarts them forever.
+
+    Retrying without TensorRT keeps the card on CUDA, which is what these
+    installs had before TensorRT was registered unconditionally.
+    """
+    global _tensorrt_unusable
+
+    if _tensorrt_unusable:
+        providers, options = _drop_tensorrt(providers, options)
+
+    try:
+        return ort.InferenceSession(
+            model_path,
+            sess_options=get_ort_session_options(model_type),
+            providers=providers,
+            provider_options=options,
+        )
+    except Exception as exc:
+        if "TensorrtExecutionProvider" not in providers:
+            raise
+
+        logger.warning(
+            "TensorRT could not build an engine on this GPU (%s); "
+            "falling back to the next execution provider. This is expected on "
+            "GPUs older than Turing, which TensorRT 10 no longer supports.",
+            exc,
+        )
+        _tensorrt_unusable = True
+        providers, options = _drop_tensorrt(providers, options)
+
+        return ort.InferenceSession(
+            model_path,
+            sess_options=get_ort_session_options(model_type),
+            providers=providers,
+            provider_options=options,
+        )
+
+
 def get_optimized_runner(
     model_path: str, device: str | None, model_type: str, **kwargs
 ) -> BaseModelRunner:
@@ -736,12 +802,7 @@ def get_optimized_runner(
         model_path,
         model_type,
         ONNXModelRunner(
-            ort.InferenceSession(
-                model_path,
-                sess_options=get_ort_session_options(model_type),
-                providers=providers,
-                provider_options=options,
-            ),
+            _create_session(model_path, model_type, providers, options),
             model_type=model_type,
         ),
     )
