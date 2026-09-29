@@ -526,26 +526,31 @@ CUDA instead, so enabling it is a speed improvement rather than an all-or-nothin
 
 #### FP16 precision
 
-TensorRT builds FP16 engines for the object detection model. On Ampere and
-newer GPUs, FP16 runs on the tensor cores and is significantly faster than
-FP32; it is the largest single gain TensorRT offers.
+TensorRT can build FP16 engines for the object detection model. On paper this
+is the biggest gain available, since FP16 runs on the tensor cores of Ampere
+and newer GPUs.
 
-Only the object detector uses FP16. The face recognition, semantic search and
-license plate models stay at full FP32 precision, since licence plate
-recognition is OCR where character accuracy matters more than a few
-milliseconds.
+**It is off by default because it is not reliably faster.** On an RTX 3060 at
+960x576, TensorRT FP32 ran at 8.83 ms while FP16 ran at 10 ms — giving back the
+whole TensorRT improvement. On a small detection model, the conversion layers
+TensorRT inserts between FP16 and FP32 regions can cost more than the tensor
+cores save.
 
-FP16 has slightly lower numerical precision, so detection confidence scores can
-shift a little. To go back to FP32, set `USE_FP16=False` and restart — no
-rebuild needed:
+To try it on your own hardware, set `TRT_FP16=true` and restart:
 
 ```yaml
 environment:
-  - USE_FP16=False
+  - TRT_FP16=true
 ```
 
-If you rely on a finely tuned confidence threshold, compare scores on the same
-footage before and after.
+Compare the inference speed on the System page before and after. Only the
+object detector is affected; face recognition, semantic search and license
+plate recognition always stay at FP32, since plate recognition is OCR where
+character accuracy matters more than a few milliseconds.
+
+FP16 has slightly lower numerical precision, so detection confidence scores can
+shift. If you rely on a finely tuned confidence threshold, compare scores on
+the same footage before keeping it.
 
 #### Tuning the TensorRT workspace
 

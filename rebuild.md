@@ -67,25 +67,34 @@ capture) correctly falls through to the generic runner when TRT is first.
 - `frigate/detectors/plugins/tensorrt.py` — the dedicated Jetson
   `type: tensorrt` detector is a separate, unrelated code path.
 
-### FP16 (enabled for the detector only)
+### FP16 measured slower — off by default
 
-Measured on an RTX 3060: **10 ms on CUDA → 8.83 ms on TensorRT FP32**, ~12%.
-Modest, because FP32 gets only layer fusion and kernel auto-tuning; the tensor
-cores sit idle. FP16 is where the rest is.
+Measured on an RTX 3060 at roughly 960x576 detect resolution:
 
-`frigate/detectors/plugins/onnx.py` now passes `requires_fp16=True`.
+| Path | Inference |
+| --- | --- |
+| CUDA | 10 ms |
+| TensorRT FP32 | **8.83 ms** |
+| TensorRT FP16 | 10 ms |
 
-**Scoped to the object detector deliberately.** `get_optimized_runner()` also
-serves the face, semantic-search and license-plate models. LPR is OCR feeding
-the ParkPow integration, so trading character accuracy for detector
-milliseconds is the wrong call. `test_util_model.py` asserts the detector opts
-in and the embedding models do not, so a future edit cannot quietly widen it.
+FP16 is supposed to be the largest single win on Ampere, and here it gave back
+the entire TensorRT gain. The plausible reason is model size: at this input
+resolution the detection model is small, and the reformat layers TensorRT
+inserts between FP16 and FP32 regions cost more memory bandwidth than the
+tensor cores save. FP16 pays off on large models, not automatically on small
+ones.
 
-FP16 shifts detection confidence scores slightly. `USE_FP16=False` reverts to
-FP32 without a rebuild — no code change, no image rebuild, just restart.
-**After enabling, re-check any alarm zone whose `min_confidence` sits near its
-threshold**, because a small downward shift there changes when the alarm fires.
+So `frigate/detectors/plugins/onnx.py` gates it behind `TRT_FP16=true`, default
+off. **Measure before turning it on** rather than trusting the theory — that is
+exactly what went wrong here.
 
+Scoped to the detector regardless of the setting: `get_optimized_runner()` also
+serves the face, semantic-search and license-plate models, and LPR is OCR
+feeding the ParkPow integration, where character accuracy beats milliseconds.
+`test_util_model.py` pins both the default and the scoping.
+
+FP16 also shifts detection confidence scores slightly, so anyone enabling it
+should re-check alarm zones whose `min_confidence` sits near its threshold.
 
 ### The version pin is the whole ballgame
 
