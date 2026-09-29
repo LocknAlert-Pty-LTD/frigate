@@ -142,6 +142,16 @@ function migrate_db_from_media_to_config() {
 # used by the docker healthcheck
 rm -f /dev/shm/.frigate-is-stopping
 
+# Camera shm segments from a previous run. /dev/shm is sticky (1777), so only
+# the owner may unlink; the unprivileged service cannot clear segments left by
+# a root-era run, and start_detectors dies on the first one it cannot reopen.
+# Must therefore happen here, as root, before the service starts.
+# Invoked through python3 rather than executed: the rootfs files are mode 644
+# in git, so relying on the exec bit here would make this silently do nothing.
+if [[ "$(id -u)" -eq 0 && -f /usr/local/bin/clear-stale-shm ]]; then
+    python3 /usr/local/bin/clear-stale-shm || true
+fi
+
 migrate_addon_config_dir
 migrate_db_from_media_to_config
 

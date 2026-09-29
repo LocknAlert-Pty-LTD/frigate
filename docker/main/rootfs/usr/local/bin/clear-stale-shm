@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+"""Unlink shared-memory segments left behind by a previous run.
+
+Kestrel allocates one POSIX shm segment per camera (`<camera>`, `out-<camera>`)
+plus the frame ring (`<camera>_frame<N>`). A clean shutdown removes them; a
+crash, a SIGKILL, or an upgrade that changes the runtime uid does not. The next
+start then hits:
+
+    FileExistsError: [Errno 17] File exists: '/hek'
+    PermissionError: [Errno 13] Permission denied: '/hek'
+
+because `start_detectors` creates with O_EXCL, falls back to opening the
+existing segment, and that segment belongs to a uid the process no longer runs
+as -- typically root, from before the non-root hardening in 0.19. Startup dies
+there, nginx keeps serving, and every /api/* returns 500 with nothing but
+"connect() failed (111: Connection refused)" in the log.
+
+/dev/shm is 1777 with the sticky bit, so only the owner may unlink. The
+unprivileged service therefore cannot clear its own stale segments; this runs
+from the `prepare` s6 script, as root, before the service starts.
+
+**Only removes names derived from the cameras in this instance's config.**
+/dev/shm is frequently shared with the host (`ipc: host`), where it also holds
+other containers' segments -- PostgreSQL's, for one. A blanket sweep there
+would corrupt an unrelated database, so the camera list is the whitelist.
+
+Never fails the boot: a missing or unparseable config means nothing is removed.
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+
+CONFIG_DIR = os.environ.get("CONFIG_DIR", "/config")
+
+
+def config_file() -> str | None:
+    """Mirror frigate.util.config.find_config_file without importing it.
+
+    This runs before the service, under root, with a read-only rootfs; pulling
+    in the frigate package here would drag in its whole import chain.
+    """
+    configured = os.environ.get("CONFIG_FILE", os.path.join(CONFIG_DIR, "config.yml"))
+
+    for candidate in (configured, *(
+        f"{os.path.splitext(configured)[0]}{ext}" for ext in (".yml", ".yaml")
+    )):
+        if os.path.isfile(candidate):
+            return candidate
+
+    return None
+
+
+def camera_names(path: str) -> list[str]:
+    try:
+        import yaml
+    except ImportError:
+        return []
+
+    try:
+        with open(path, encoding="utf-8") as handle:
+            config = yaml.safe_load(handle)
+    except Exception:
+        return []
+
+    if not isinstance(config, dict):
+        return []
+
+    cameras = config.get("cameras")
+    if not isinstance(cameras, dict):
+        return []
+
+    # a camera name is a path component here; refuse anything that could
+    # escape /dev/shm or name an unrelated segment
+    return [
+        name
+        for name in cameras
+        if isinstance(name, str) and name and "/" not in name and name not in (".", "..")
+    ]
+
+
+def segments_for(camera: str) -> list[str]:
+    names = [camera, f"out-{camera}"]
+    prefix = f"{camera}_frame"
+
+    try:
+        names += [entry for entry in os.listdir("/dev/shm") if entry.startswith(prefix)]
+    except OSError:
+        pass
+
+    return names
+
+
+def main() -> int:
+    path = config_file()
+    if path is None:
+        return 0
+
+    removed = 0
+    for camera in camera_names(path):
+        for name in segments_for(camera):
+            target = os.path.join("/dev/shm", name)
+            try:
+                os.unlink(target)
+                removed += 1
+            except FileNotFoundError:
+                pass
+            except OSError as err:
+                print(
+                    f"[WARN] clear-stale-shm: could not remove {target}: {err}",
+                    file=sys.stderr,
+                )
+
+    if removed:
+        print(f"[INFO] clear-stale-shm: removed {removed} stale shm segment(s)")
+
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except Exception as err:  # never block the boot over cleanup
+        print(f"[WARN] clear-stale-shm: skipped ({err})", file=sys.stderr)
+        sys.exit(0)
