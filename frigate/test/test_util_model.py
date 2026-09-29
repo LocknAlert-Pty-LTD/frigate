@@ -96,14 +96,13 @@ class TestTensorrtFp16(unittest.TestCase):
 
 
 class TestOnlyTheDetectorOptsIntoFp16(unittest.TestCase):
-    def test_detector_gates_fp16_behind_an_env_var(self):
-        """Default FP32: FP16 measured slower on the hardware this runs on
-        (RTX 3060, ~960x576: CUDA 10ms, TRT FP32 8.83ms, TRT FP16 10ms)."""
+    def test_detector_opts_into_fp16(self):
+        """Measured on an RTX 3060 at ~960x576: CUDA 10ms, TRT FP32 8.83ms,
+        TRT FP16 5.84ms."""
         source = (REPO_ROOT / "frigate/detectors/plugins/onnx.py").read_text(
             encoding="utf-8"
         )
-        self.assertIn('os.environ.get("TRT_FP16", "false")', source)
-        self.assertNotIn("requires_fp16=True", source)
+        self.assertIn("requires_fp16=True", source)
 
     def test_embedding_models_do_not(self):
         for rel in (

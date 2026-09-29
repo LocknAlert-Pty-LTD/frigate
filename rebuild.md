@@ -67,34 +67,38 @@ capture) correctly falls through to the generic runner when TRT is first.
 - `frigate/detectors/plugins/tensorrt.py` — the dedicated Jetson
   `type: tensorrt` detector is a separate, unrelated code path.
 
-### FP16 measured slower — off by default
+### FP16, and a benchmarking trap
 
 Measured on an RTX 3060 at roughly 960x576 detect resolution:
 
-| Path | Inference |
-| --- | --- |
-| CUDA | 10 ms |
-| TensorRT FP32 | **8.83 ms** |
-| TensorRT FP16 | 10 ms |
+| Path | Inference | GPU state |
+| --- | --- | --- |
+| CUDA | 10 ms | Ollama also on the card |
+| TensorRT FP32 | 8.83 ms | Ollama also on the card |
+| TensorRT FP16 | 10 ms | Ollama also on the card |
+| **TensorRT FP16** | **5.84 ms** | **quiet GPU** |
 
-FP16 is supposed to be the largest single win on Ampere, and here it gave back
-the entire TensorRT gain. The plausible reason is model size: at this input
-resolution the detection model is small, and the reformat layers TensorRT
-inserts between FP16 and FP32 regions cost more memory bandwidth than the
-tensor cores save. FP16 pays off on large models, not automatically on small
-ones.
+FP16 looked *slower* than FP32 until an Ollama instance sharing the GPU was
+stopped, at which point it dropped to 5.84 ms. The contention moved the result
+by more than the thing being measured, and it very nearly got FP16 reverted on
+the strength of a bad number.
 
-So `frigate/detectors/plugins/onnx.py` gates it behind `TRT_FP16=true`, default
-off. **Measure before turning it on** rather than trusting the theory — that is
-exactly what went wrong here.
+**Benchmark a detector on an otherwise quiet GPU.** Check with `nvidia-smi`
+before trusting any inference figure. The CUDA and FP32 rows above were taken
+under contention too and are therefore also pessimistic — only the last row is
+clean, so the true FP32 baseline is unknown and the real FP16 gain over it is
+smaller than 8.83 → 5.84 suggests.
 
-Scoped to the detector regardless of the setting: `get_optimized_runner()` also
-serves the face, semantic-search and license-plate models, and LPR is OCR
+`frigate/detectors/plugins/onnx.py` passes `requires_fp16=True`.
+`USE_FP16=False` reverts to FP32 on restart with no rebuild.
+
+Scoped to the detector: `get_optimized_runner()` also serves the face,
+semantic-search and license-plate models, which stay at FP32 because LPR is OCR
 feeding the ParkPow integration, where character accuracy beats milliseconds.
-`test_util_model.py` pins both the default and the scoping.
+`test_util_model.py` pins both the opt-in and the scoping.
 
-FP16 also shifts detection confidence scores slightly, so anyone enabling it
-should re-check alarm zones whose `min_confidence` sits near its threshold.
+FP16 shifts detection confidence scores slightly, so re-check alarm zones whose
+`min_confidence` sits near its threshold.
 
 ### The version pin is the whole ballgame
 

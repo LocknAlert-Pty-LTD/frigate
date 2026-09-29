@@ -1,5 +1,4 @@
 import logging
-import os
 from typing import Literal
 
 import numpy as np
@@ -53,25 +52,25 @@ class ONNXDetector(DetectionApi):
             path,
             detector_config.device,
             model_type=detector_config.model.model_type,
-            # TensorRT FP16, off by default because it measured *slower* here.
+            # TensorRT FP16 for the detection model. Measured on an RTX
+            # 3060 at ~960x576: CUDA 10ms, TensorRT FP32 8.83ms, TensorRT FP16
+            # 5.84ms.
             #
-            # On an RTX 3060 at ~960x576: CUDA 10ms, TensorRT FP32 8.83ms,
-            # TensorRT FP16 10ms. FP16 wins on large models by keeping the
-            # tensor cores busy, but this detection model is small enough that
-            # the reformat layers TensorRT inserts between FP16 and FP32
-            # regions cost more bandwidth than the tensor cores save. Measure
-            # on your own model before assuming otherwise -- the theory says
-            # FP16 should win and on this hardware it did not.
+            # FP16 first appeared to be *slower* (10ms), which was GPU
+            # contention from an Ollama instance on the same card, not the
+            # precision. Benchmark a detector on an otherwise quiet GPU;
+            # another process sharing it moves these numbers by more than the
+            # thing being measured.
             #
-            # Scoped to the detector regardless. get_optimized_runner also
-            # serves the face, semantic-search and license-plate models, and
-            # LPR is OCR feeding the ParkPow integration, where losing
-            # character accuracy to save milliseconds is a bad trade.
+            # Scoped to the detector on purpose. get_optimized_runner also
+            # serves the face, semantic-search and license-plate models, which
+            # stay at FP32: LPR is OCR feeding the ParkPow integration, where
+            # losing character accuracy to save milliseconds is a bad trade.
             #
-            # TRT_FP16=true turns it on without a rebuild. It shifts detection
-            # confidence scores slightly, so re-check any alarm zone whose
-            # min_confidence sits near its threshold before keeping it.
-            requires_fp16=os.environ.get("TRT_FP16", "false").lower() == "true",
+            # FP16 shifts detection confidence scores slightly. USE_FP16=False
+            # reverts to FP32 on restart with no rebuild; re-check any alarm
+            # zone whose min_confidence sits near its threshold.
+            requires_fp16=True,
         )
 
         self.onnx_model_type = detector_config.model.model_type

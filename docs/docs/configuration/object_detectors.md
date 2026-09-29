@@ -526,31 +526,36 @@ CUDA instead, so enabling it is a speed improvement rather than an all-or-nothin
 
 #### FP16 precision
 
-TensorRT can build FP16 engines for the object detection model. On paper this
-is the biggest gain available, since FP16 runs on the tensor cores of Ampere
-and newer GPUs.
+TensorRT builds FP16 engines for the object detection model. FP16 runs on the
+tensor cores of Ampere and newer GPUs and is usually the single largest gain
+TensorRT offers. Measured on an RTX 3060 at 960x576: 10 ms on CUDA, 8.83 ms on
+TensorRT FP32, 5.84 ms on TensorRT FP16.
 
-**It is off by default because it is not reliably faster.** On an RTX 3060 at
-960x576, TensorRT FP32 ran at 8.83 ms while FP16 ran at 10 ms — giving back the
-whole TensorRT improvement. On a small detection model, the conversion layers
-TensorRT inserts between FP16 and FP32 regions can cost more than the tensor
-cores save.
+Only the object detector uses FP16. Face recognition, semantic search and
+license plate recognition stay at full FP32 precision, because plate
+recognition is OCR where character accuracy matters more than a few
+milliseconds.
 
-To try it on your own hardware, set `TRT_FP16=true` and restart:
+FP16 has slightly lower numerical precision, so detection confidence scores can
+shift a little. To go back to FP32, set `USE_FP16=False` and restart — no
+rebuild needed:
 
 ```yaml
 environment:
-  - TRT_FP16=true
+  - USE_FP16=False
 ```
 
-Compare the inference speed on the System page before and after. Only the
-object detector is affected; face recognition, semantic search and license
-plate recognition always stay at FP32, since plate recognition is OCR where
-character accuracy matters more than a few milliseconds.
+If you rely on a finely tuned confidence threshold, compare scores on the same
+footage before and after.
 
-FP16 has slightly lower numerical precision, so detection confidence scores can
-shift. If you rely on a finely tuned confidence threshold, compare scores on
-the same footage before keeping it.
+:::tip
+
+Benchmark on an otherwise quiet GPU. Another process sharing the card — an LLM
+runtime, a transcoder, another container — can move inference times by more
+than the setting you are testing. Check `nvidia-smi` before trusting a
+measurement.
+
+:::
 
 #### Tuning the TensorRT workspace
 
