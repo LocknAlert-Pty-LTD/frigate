@@ -10,8 +10,11 @@ and is deliberately importable without the frigate package, so it runs under
 root before the service starts.
 """
 
+import contextlib
 import importlib.util
+import io
 import os
+import sys
 import shutil
 import tempfile
 import unittest
@@ -159,6 +162,70 @@ class TestDegradesSafely(ClearStaleShmTestCase):
         self.module.main()
 
         self.assertEqual(set(), self.present())
+
+
+class TestYamlBackend(ClearStaleShmTestCase):
+    """The image ships ruamel.yaml, not PyYAML.
+
+    An `import yaml` here fails in the container and, before this was caught,
+    made the whole cleanup a silent no-op: startup then died on the first stale
+    segment with no clue why.
+    """
+
+    def hide(self, *names: str):
+        """Make the given modules unimportable for the duration of a test."""
+        import builtins
+
+        real_import = builtins.__import__
+
+        def fake_import(name, *args, **kwargs):
+            root = name.split(".")[0]
+            if root in names:
+                raise ImportError(f"No module named {name!r}")
+            return real_import(name, *args, **kwargs)
+
+        saved = {n: sys.modules.pop(n, None) for n in names}
+        for mod in list(sys.modules):
+            if mod.split(".")[0] in names:
+                saved.setdefault(mod, sys.modules.pop(mod))
+
+        builtins.__import__ = fake_import
+        self.addCleanup(setattr, builtins, "__import__", real_import)
+        self.addCleanup(
+            lambda: sys.modules.update({k: v for k, v in saved.items() if v is not None})
+        )
+
+    def test_works_with_only_ruamel_available(self) -> None:
+        """The container case: PyYAML absent."""
+        self.hide("yaml")
+        self.write_config("cameras:\n  hek: {}\n")
+        self.touch("hek", "out-hek", "PostgreSQL.1")
+
+        self.module.main()
+
+        self.assertEqual({"PostgreSQL.1"}, self.present())
+
+    def test_works_with_only_pyyaml_available(self) -> None:
+        self.hide("ruamel")
+        self.write_config("cameras:\n  hek: {}\n")
+        self.touch("hek")
+
+        self.module.main()
+
+        self.assertEqual(set(), self.present())
+
+    def test_warns_loudly_when_no_yaml_library_exists(self) -> None:
+        """Must never fail silently -- that is what made this hard to find."""
+        self.hide("yaml", "ruamel")
+        self.write_config("cameras:\n  hek: {}\n")
+        self.touch("hek")
+
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            self.assertEqual(0, self.module.main())
+
+        self.assertIn("no YAML library available", stderr.getvalue())
+        self.assertEqual({"hek"}, self.present(), "nothing removed without a parser")
 
 
 if __name__ == "__main__":

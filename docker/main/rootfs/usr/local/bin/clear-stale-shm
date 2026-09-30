@@ -52,16 +52,42 @@ def config_file() -> str | None:
     return None
 
 
-def camera_names(path: str) -> list[str]:
+def load_config(path: str):
+    """Parse the config with whatever YAML library the image ships.
+
+    ruamel.yaml is the one Kestrel actually depends on
+    (docker/main/requirements-wheels.txt); PyYAML is not installed, so an
+    `import yaml` here silently disables the whole cleanup. Try ruamel first,
+    fall back to PyYAML, and say so loudly if neither is importable rather than
+    quietly doing nothing.
+    """
+    try:
+        from ruamel.yaml import YAML
+    except ImportError:
+        pass
+    else:
+        with open(path, encoding="utf-8") as handle:
+            return YAML(typ="safe").load(handle)
+
     try:
         import yaml
     except ImportError:
-        return []
+        print(
+            "[WARN] clear-stale-shm: no YAML library available; stale shm "
+            "segments will not be cleared and startup may fail",
+            file=sys.stderr,
+        )
+        return None
 
+    with open(path, encoding="utf-8") as handle:
+        return yaml.safe_load(handle)
+
+
+def camera_names(path: str) -> list[str]:
     try:
-        with open(path, encoding="utf-8") as handle:
-            config = yaml.safe_load(handle)
-    except Exception:
+        config = load_config(path)
+    except Exception as err:
+        print(f"[WARN] clear-stale-shm: could not read {path}: {err}", file=sys.stderr)
         return []
 
     if not isinstance(config, dict):
