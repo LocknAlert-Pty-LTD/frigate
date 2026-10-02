@@ -17,6 +17,7 @@ import { TooltipPortal } from "@radix-ui/react-tooltip";
 import { useNavigate } from "react-router-dom";
 import { HiSquare2Stack } from "react-icons/hi2";
 import { ImageShadowOverlay } from "../overlay/ImageShadowOverlay";
+import OriginalFrameDialog from "../overlay/OriginalFrameDialog";
 import {
   Dialog,
   DialogContent,
@@ -156,14 +157,17 @@ export const ClassificationCard = forwardRef<
         </div>
       )}
       <div className="absolute bottom-0 left-0 right-0 h-[50%] bg-gradient-to-t from-black/60 to-transparent" />
-      <div className="absolute bottom-0 flex w-full select-none flex-row items-center justify-between gap-2 p-2">
+      <div className="absolute bottom-0 flex w-full select-none flex-row items-end justify-between gap-1 p-2">
         <div
           className={cn(
-            "flex flex-col items-start text-white",
+            // min-w-0 lets this column shrink. Without it a long name claims its
+            // full width and pushes the action buttons off the right edge of the
+            // card, where they cannot be clicked at all.
+            "flex min-w-0 flex-col items-start text-white",
             data.score != undefined ? "text-xs" : "text-sm",
           )}
         >
-          <div className="break-all smart-capitalize">
+          <div className="w-full truncate smart-capitalize" title={data.name}>
             {data.name.toLowerCase() == "unknown"
               ? t("details.unknown")
               : data.name.toLowerCase() == "none"
@@ -183,7 +187,7 @@ export const ClassificationCard = forwardRef<
             </div>
           )}
         </div>
-        <div className="flex flex-row items-start justify-end gap-5 md:gap-2">
+        <div className="flex shrink-0 flex-row items-center justify-end gap-3 md:gap-2">
           {children}
         </div>
       </div>
@@ -215,6 +219,7 @@ export function GroupedClassificationCard({
   const navigate = useNavigate();
   const { t } = useTranslation(["views/explore", i18nLibrary]);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [fullFrame, setFullFrame] = useState<ClassificationItemData | null>(null);
 
   // If the component unmounts while the detail overlay is open, we need to
   // pop the history state that was pushed by useHistoryBack, otherwise it
@@ -429,7 +434,12 @@ export function GroupedClassificationCard({
             </Header>
             <div
               className={cn(
-                "grid w-full auto-rows-min grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 2xl:grid-cols-8",
+                // Capped at 4 columns. This dialog used to go to 8, which on a
+                // wide screen left each face about 150px across -- too small to
+                // recognise anyone, and too narrow for the row of action buttons
+                // to fit. Fewer columns means a bigger face and room for the
+                // controls, which is the whole point of opening this.
+                "grid w-full auto-rows-min grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4",
                 isDesktop && "p-2",
                 isMobile && "px-4 pb-4",
               )}
@@ -440,9 +450,11 @@ export function GroupedClassificationCard({
                     data={data}
                     threshold={threshold}
                     selected={false}
-                    clickable={false}
+                    clickable={true}
                     i18nLibrary={i18nLibrary}
-                    onClick={() => {}}
+                    // Nothing is selectable in here, so a plain click is free to
+                    // do the obvious thing: show the frame this face came from.
+                    onClick={() => setFullFrame(data)}
                   >
                     {children?.(data)}
                   </ClassificationCard>
@@ -452,6 +464,19 @@ export function GroupedClassificationCard({
           </>
         </Content>
       </Overlay>
+      {fullFrame && (
+        <OriginalFrameDialog
+          open={fullFrame != null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setFullFrame(null);
+            }
+          }}
+          eventId={fullFrame.eventId}
+          cropPath={fullFrame.filepath}
+          title={fullFrame.name}
+        />
+      )}
     </>
   );
 }

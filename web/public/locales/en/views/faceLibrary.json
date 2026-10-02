@@ -8,7 +8,11 @@
   "details": {
     "timestamp": "Timestamp",
     "unknown": "Unknown",
-    "scoreInfo": "Score is a weighted average of all face scores, weighted by the size of the face in each image."
+    "scoreInfo": "Score is a weighted average of all face scores, weighted by the size of the face in each image.",
+    "fullFrame": "Full camera frame, with the detected face boxed",
+    "thumbnailOnly": "No snapshot saved for this event; showing the thumbnail",
+    "cropOnly": "No camera frame available; showing the stored face crop",
+    "openOriginal": "Open image"
   },
   "documentTitle": "Face Library - Kestrel",
   "uploadFaceImage": {

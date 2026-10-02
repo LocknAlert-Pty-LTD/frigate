@@ -20,6 +20,7 @@ from frigate.comms.inter_process import InterProcessRequestor
 from frigate.config import FrigateConfig
 from frigate.const import FACE_DIR
 from frigate.data_processing.common.face.detector import FaceDetector
+from frigate.data_processing.common.face.liveness import LivenessAnalyzer
 from frigate.data_processing.common.face.recognizer import (
     ArcFaceRecognizer,
     FaceNetRecognizer,
@@ -61,6 +62,20 @@ class FaceRealTimeProcessor(RealTimeProcessorApi):
         self.inference_speed = InferenceSpeed(self.metrics.face_rec_speed)
 
         self.face_detector = FaceDetector(on_ready=self.faces_per_second.start)
+
+        liveness = self.face_config.liveness
+        self.liveness: LivenessAnalyzer | None = (
+            LivenessAnalyzer(
+                min_frames=liveness.min_frames,
+                depth_growth_threshold=liveness.depth_growth_threshold,
+                min_viewpoint=liveness.min_viewpoint,
+                max_noise_floor=liveness.max_noise_floor,
+                deformation_threshold=liveness.deformation_threshold,
+                appearance_threshold=liveness.appearance_threshold,
+            )
+            if liveness.enabled
+            else None
+        )
 
         self.label_map: dict[int, str] = {}
 
@@ -222,7 +237,39 @@ class FaceRealTimeProcessor(RealTimeProcessorApi):
 
         sub_label, score = res
 
+        if self.face_config.is_ignored(sub_label):
+            # Recognized, and deliberately not reported. Returns before the
+            # attempt image is written and before any history is kept, so nothing
+            # about this person reaches events, MQTT, notifications or the disk.
+            #
+            # Placed ahead of the unknown_score check on purpose: a low-scoring
+            # match would otherwise become "unknown" and be published as a
+            # stranger, which is the opposite of staying silent.
+            # The liveness track is deliberately left alone. expire_object clears
+            # it when the object ends, and dropping it here would throw away
+            # evidence that still counts if a later frame of the same person
+            # resolves to somebody who is not on the list.
+            logger.debug(f"Not reporting {sub_label}, which is on the ignore list")
+            self.__update_metrics(datetime.datetime.now().timestamp() - start)
+            return
+
         if score <= self.face_config.unknown_score:
+            sub_label = "unknown"
+
+        # Evaluated on every frame, including the ones that scored too low to
+        # carry a name. Liveness needs several frames, and those early unrecognised
+        # frames are where the evidence comes from; checking only once a name
+        # appears would leave the first recognised frame with a track one frame
+        # long, and the person would have to be recognised several more times
+        # before anything could be established.
+        live = self.__is_live(id, face_frame)
+
+        if sub_label != "unknown" and not live:
+            # Recognition cannot tell a person from a photo of them, so a name
+            # that has not been shown to belong to someone present is withheld.
+            # Reported as "unknown" rather than dropped: the attempt is still
+            # worth recording, and every consumer of a sub label already treats
+            # "unknown" as "do not act on this".
             sub_label = "unknown"
 
         logger.debug(
@@ -405,6 +452,11 @@ class FaceRealTimeProcessor(RealTimeProcessorApi):
         return None
 
     def expire_object(self, object_id: str, camera: str) -> None:
+        if self.liveness is not None:
+            # holds landmark history per object; without this it grows for the
+            # life of the process
+            self.liveness.forget(object_id)
+
         if object_id in self.person_face_history:
             self.person_face_history.pop(object_id)
 
@@ -468,6 +520,29 @@ class FaceRealTimeProcessor(RealTimeProcessorApi):
         weighted_average = weighted_scores[best_name] / total_weights[best_name]
 
         return best_name, weighted_average
+
+    def __is_live(self, object_id: str, face_frame: np.ndarray) -> bool:
+        """Whether this face has been shown to belong to someone present.
+
+        Fails closed on purpose. Every path that cannot produce evidence --
+        liveness disabled is the one exception, no landmarks, a face too small or
+        blurred for its landmarks to be precise enough -- returns False, so a name
+        is withheld rather than guessed. For a gate that is the safe direction:
+        the cost of a wrong False is that someone has to be seen more clearly,
+        and the cost of a wrong True is that a photograph opens the gate.
+        """
+        if self.liveness is None:
+            return True
+
+        landmarks = self.face_detector.get_dense_landmarks(face_frame)
+        verdict = self.liveness.observe(object_id, landmarks, face_frame)
+
+        if verdict.blocks_recognition:
+            logger.debug(
+                f"Withholding name for {object_id}: {verdict.reason} ({verdict.signals})"
+            )
+
+        return not verdict.blocks_recognition
 
     def write_face_attempt(
         self,

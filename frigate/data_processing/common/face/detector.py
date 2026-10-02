@@ -241,10 +241,48 @@ class FaceDetector:
 
         return landmarks
 
+    def get_dense_landmarks(self, input: np.ndarray) -> np.ndarray | None:
+        """All 68 landmark points for a crop that is already a face.
+
+        The 5 point alignment set is far too sparse to reason about the shape of
+        what is being looked at: 4 points define a homography exactly, so 5
+        points fit a plane almost by construction and a photo could never be
+        told from a face. Liveness needs the full set -- see
+        frigate/data_processing/common/face/liveness.py.
+
+        Returns:
+            A (68, 2) array in crop coordinates, or None
+        """
+        points = self.__fit_dense_landmarks(input)
+
+        if points is None:
+            return None
+
+        return points.astype(np.float64)
+
     def __fit_landmarks(
         self, input: np.ndarray
     ) -> tuple[tuple[float, float], ...] | None:
         """Derive the 5 alignment landmarks from the 68 point landmark model."""
+        points = self.__fit_dense_landmarks(input)
+
+        if points is None:
+            return None
+
+        # each eye is the mean of the 6 points around it
+        return tuple(
+            (float(p[0]), float(p[1]))
+            for p in (
+                points[36:42].mean(axis=0),
+                points[42:48].mean(axis=0),
+                points[30],
+                points[48],
+                points[54],
+            )
+        )
+
+    def __fit_dense_landmarks(self, input: np.ndarray) -> np.ndarray | None:
+        """Run the 68 point landmark model over the whole crop."""
         if self.landmark_detector is None:
             return None
 
@@ -263,16 +301,4 @@ class FaceDetector:
         if not success or not len(faces):
             return None
 
-        points = faces[0][0]
-
-        # each eye is the mean of the 6 points around it
-        return tuple(
-            (float(p[0]), float(p[1]))
-            for p in (
-                points[36:42].mean(axis=0),
-                points[42:48].mean(axis=0),
-                points[30],
-                points[48],
-                points[54],
-            )
-        )
+        return faces[0][0]

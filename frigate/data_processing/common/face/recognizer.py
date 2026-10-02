@@ -80,6 +80,29 @@ class FaceRecognizer(ABC):
             image, matrix, (output_size, output_size), flags=cv2.INTER_CUBIC
         )
 
+    def is_too_blurry(self, input: np.ndarray) -> bool:
+        """Whether this crop is too soft to identify anyone from.
+
+        get_blur_confidence_reduction only ever shaved up to 0.06 off the
+        score, which a strong-but-wrong match absorbs easily. A motion-blurred
+        face carries little identity information, so the honest answer is to
+        decline rather than to guess slightly less confidently.
+        """
+        threshold = self.config.face_recognition.min_blur_variance
+
+        if threshold <= 0:
+            return False
+
+        variance = cv2.Laplacian(input, cv2.CV_64F).var()
+
+        if variance < threshold:
+            logger.debug(
+                "Rejecting blurry face: variance %.1f below %d", variance, threshold
+            )
+            return True
+
+        return False
+
     def get_blur_confidence_reduction(self, input: np.ndarray) -> float:
         """Calculates the reduction in confidence based on the blur of the image."""
         if not self.config.face_recognition.blur_confidence_filter:
@@ -100,31 +123,32 @@ class FaceRecognizer(ABC):
             return 0.0
 
 
-def build_class_mean(
-    embs: list[np.ndarray],
+def keep_inlier_embeddings(
+    embs: list,
     trim: float = 0.15,
     outlier_threshold: float = 0.30,
     min_keep_frac: float = 0.7,
     max_iters: int = 3,
-) -> np.ndarray:
-    """Build a class-mean embedding with two-layer outlier protection.
+):
+    """Return the enrolled embeddings worth keeping, L2-normalised.
 
-    Layer 1 (iterative, vector-wise): drop whole embeddings whose cosine
-    similarity to the current class mean is below ``outlier_threshold``.
-    Catches mislabeled or corrupted training samples (wrong face in the
-    folder, full-frame screenshots, extreme crops) that per-dimension
-    trimming cannot detect.
+    Same iterative outlier rejection build_class_mean used -- drop whole
+    embeddings whose cosine similarity to the running class centre is too low,
+    which catches a wrong face in the folder or a full-frame screenshot -- but
+    it returns the survivors instead of averaging them away.
 
-    Layer 2 (per-dimension): ``scipy.stats.trim_mean`` on the retained set
-    to smooth per-component noise (lighting, expression, alignment jitter).
-
-    Collections with fewer than 5 images bypass outlier rejection — too few
-    samples to establish a reliable class center.
+    Averaging was the core accuracy problem. One centroid per person cannot
+    represent someone with and without glasses, or lit from either side: the
+    mean lands between the modes and matches neither well, while sitting closer
+    to other people's means. Keeping the samples lets a probe match whichever
+    enrolled image it actually resembles.
     """
     arr = np.stack(embs, axis=0)
+    arr = arr / (np.linalg.norm(arr, axis=1, keepdims=True) + 1e-9)
 
     if len(arr) < 5:
-        return np.asarray(stats.trim_mean(arr, trim, axis=0))
+        # too few samples to tell an outlier from natural variation
+        return arr
 
     keep = np.ones(len(arr), dtype=bool)
     floor = max(5, int(np.ceil(min_keep_frac * len(arr))))
@@ -132,8 +156,7 @@ def build_class_mean(
     for _ in range(max_iters):
         mean = stats.trim_mean(arr[keep], trim, axis=0)
         m_norm = mean / (np.linalg.norm(mean) + 1e-9)
-        e_norms = arr / (np.linalg.norm(arr, axis=1, keepdims=True) + 1e-9)
-        cos = e_norms @ m_norm
+        cos = arr @ m_norm
         new_keep = cos >= outlier_threshold
 
         if new_keep.sum() < floor:
@@ -143,6 +166,7 @@ def build_class_mean(
 
         if np.array_equal(new_keep, keep):
             break
+
         keep = new_keep
 
     dropped = int((~keep).sum())
@@ -152,7 +176,68 @@ def build_class_mean(
             f"Vector-wise outlier filter dropped {dropped}/{len(arr)} embeddings"
         )
 
-    return np.asarray(stats.trim_mean(arr[keep], trim, axis=0))
+    return arr[keep]
+
+
+def score_classes(embedding, class_embs: dict, top_k: int) -> list:
+    """Rank enrolled people against one probe embedding.
+
+    Each person scores as the mean of their ``top_k`` most similar enrolled
+    images. k>1 stops a single lucky frame from carrying a match; k below the
+    enrolment count stops unrelated poses from diluting a genuine one.
+
+    Returns (name, similarity) sorted best first.
+    """
+    probe = embedding / (np.linalg.norm(embedding) + 1e-9)
+    scored = []
+
+    for name, embs in class_embs.items():
+        if embs is None or len(embs) == 0:
+            continue
+
+        sims = embs @ probe
+        k = max(1, min(top_k, len(sims)))
+        top = np.sort(sims)[-k:]
+        scored.append((name, float(top.mean())))
+
+    scored.sort(key=lambda item: item[1], reverse=True)
+    return scored
+
+
+def apply_margin(scored: list, margin: float) -> tuple:
+    """Reject a match the runner-up is too close to.
+
+    A probe scoring 0.91 against one person and 0.90 against another is not a
+    confident identification, however high the absolute number looks. Without
+    this the top score wins outright, which is how look-alikes -- and family
+    members especially -- get confidently mislabelled. That is the failure mode
+    that matters when a match opens a door.
+
+    Returns (name, similarity, rejected_because_ambiguous).
+    """
+    if not scored:
+        return None, 0.0, False
+
+    best_name, best_sim = scored[0]
+
+    if margin <= 0 or len(scored) < 2:
+        return best_name, best_sim, False
+
+    runner_up = scored[1][1]
+
+    if best_sim - runner_up < margin:
+        logger.debug(
+            "Rejecting ambiguous face: %s %.3f vs %s %.3f (margin %.3f < %.3f)",
+            best_name,
+            best_sim,
+            scored[1][0],
+            runner_up,
+            best_sim - runner_up,
+            margin,
+        )
+        return None, best_sim, True
+
+    return best_name, best_sim, False
 
 
 def similarity_to_confidence(
@@ -254,7 +339,7 @@ class FaceNetRecognizer(FaceRecognizer):
 
         for name, embs in face_embeddings_map.items():
             if embs:
-                self.mean_embs[name] = build_class_mean(embs)
+                self.mean_embs[name] = keep_inlier_embeddings(embs)
 
         logger.debug("Finished building ArcFace model")
 
@@ -268,12 +353,12 @@ class FaceNetRecognizer(FaceRecognizer):
             if not self.mean_embs:
                 return None
 
-        # face recognition is best run on grayscale images
+        # judged before alignment, which resamples and hides real softness
+        if self.is_too_blurry(face_image):
+            return None
 
-        # get blur factor before aligning face
         blur_reduction = self.get_blur_confidence_reduction(face_image)
 
-        # align face and run recognition
         img = self.align_face(face_image, FACENET_INPUT_SIZE)
 
         if img is None:
@@ -281,24 +366,22 @@ class FaceNetRecognizer(FaceRecognizer):
 
         embedding = self.face_embedder([img])[0].squeeze()
 
-        score: float = 0
-        label = ""
+        scored = score_classes(
+            embedding, self.mean_embs, self.config.face_recognition.knn_top_k
+        )
+        label, similarity, ambiguous = apply_margin(
+            scored, self.config.face_recognition.recognition_margin
+        )
 
-        for name, mean_emb in self.mean_embs.items():
-            dot_product = np.dot(embedding, mean_emb)
-            magnitude_A = np.linalg.norm(embedding)
-            magnitude_B = np.linalg.norm(mean_emb)
+        if label is None:
+            # ambiguous, or nobody enrolled; either way not an identification
+            return None if ambiguous else ("", 0.0)
 
-            cosine_similarity = dot_product / (magnitude_A * magnitude_B)
-            confidence = similarity_to_confidence(
-                cosine_similarity, median=0.5, range_width=0.6
-            )
+        confidence = similarity_to_confidence(
+            similarity, median=0.5, range_width=0.6
+        )
 
-            if confidence > score:
-                score = confidence
-                label = name
-
-        return label, max(0, round(score - blur_reduction, 2))
+        return label, max(0, round(confidence - blur_reduction, 2))
 
 
 class ArcFaceRecognizer(FaceRecognizer):
@@ -372,7 +455,7 @@ class ArcFaceRecognizer(FaceRecognizer):
 
         for name, embs in face_embeddings_map.items():
             if embs:
-                self.mean_embs[name] = build_class_mean(embs)
+                self.mean_embs[name] = keep_inlier_embeddings(embs)
 
         logger.debug("Finished building ArcFace model")
 
@@ -386,12 +469,12 @@ class ArcFaceRecognizer(FaceRecognizer):
             if not self.mean_embs:
                 return None
 
-        # face recognition is best run on grayscale images
+        # judged before alignment, which resamples and hides real softness
+        if self.is_too_blurry(face_image):
+            return None
 
-        # get blur reduction before aligning face
         blur_reduction = self.get_blur_confidence_reduction(face_image)
 
-        # align face and run recognition
         img = self.align_face(face_image, ARCFACE_INPUT_SIZE)
 
         if img is None:
@@ -399,19 +482,17 @@ class ArcFaceRecognizer(FaceRecognizer):
 
         embedding = self.face_embedder([img])[0].squeeze()  # type: ignore[arg-type]
 
-        score: float = 0
-        label = ""
+        scored = score_classes(
+            embedding, self.mean_embs, self.config.face_recognition.knn_top_k
+        )
+        label, similarity, ambiguous = apply_margin(
+            scored, self.config.face_recognition.recognition_margin
+        )
 
-        for name, mean_emb in self.mean_embs.items():
-            dot_product = np.dot(embedding, mean_emb)
-            magnitude_A = np.linalg.norm(embedding)
-            magnitude_B = np.linalg.norm(mean_emb)
+        if label is None:
+            # ambiguous, or nobody enrolled; either way not an identification
+            return None if ambiguous else ("", 0.0)
 
-            cosine_similarity = dot_product / (magnitude_A * magnitude_B)
-            confidence = similarity_to_confidence(cosine_similarity)
+        confidence = similarity_to_confidence(similarity)
 
-            if confidence > score:
-                score = confidence
-                label = name
-
-        return label, max(0, round(score - blur_reduction, 2))
+        return label, max(0, round(confidence - blur_reduction, 2))

@@ -16,6 +16,177 @@ Face recognition requires a one-time internet connection to download detection a
 
 :::
 
+## Using Face Recognition for Access Control
+
+Kestrel checks that a recognised face belongs to someone actually present, rather
+than to a photograph of them, and withholds the name when it cannot establish
+that. Liveness is on by default (`face_recognition.liveness`).
+
+:::warning
+
+**A face match still should not be the only thing that opens a gate.** Liveness
+here stops a photograph. It does not stop video replayed on a good screen, and it
+is not certified presentation-attack detection (ISO/IEC 30107-3). Pair it with
+something the person carries -- a fob, a PIN, a phone -- or with an intercom
+confirmation, and treat the recognised name as strong evidence of *who* is there
+rather than as the decision itself.
+
+:::
+
+### What it checks
+
+Nothing about how a face *looks* separates a person from a good photo of them.
+What separates them is what they are:
+
+- **A photo is flat.** Any flat surface, seen from any angle, maps between two
+  views by a single projective transform. A real face does not: as the head
+  turns, the nose and the ears shift by different amounts. What no flat transform
+  can explain is parallax, and parallax is depth.
+- **A photo does not blink.** Eyes and mouths open and close. A printed face holds
+  its shape however the paper is waved. This check needs no head movement at all,
+  so it is what lets someone standing still be recognised.
+- **A photo has been through a printer or a screen**, which can leave a halftone
+  pattern or a pixel grid beating against the sensor. The weakest of the three: a
+  high-resolution screen at the right distance leaves no trace.
+
+The first two are measured from the 68 facial landmarks across several frames of
+the same tracked person, so a verdict needs a few frames and firms up as someone
+approaches.
+
+### What defeats it
+
+Stated plainly, because an access control decision deserves it:
+
+- **Video replayed on a screen.** A recording of a real face turning already
+  contains genuine parallax, and displaying it reproduces that parallax. This is
+  the attack liveness here does not stop.
+- **A curved or bent photo**, which is not flat and will show some depth. A mask,
+  or a photo wrapped around something head-shaped, is out of scope entirely.
+- **A face too small, dim or blurred for precise landmarks.** Rather than guess,
+  Kestrel refuses to judge and withholds the name (`max_noise_floor`).
+
+### Holding still does not defeat it
+
+These checks look for evidence of presence rather than for signs of fakery, so
+absent evidence is not a pass. A photo held perfectly still produces no parallax
+and no blink, and so is never recognised. The cost of that design is symmetric: a
+real person who stands motionless, face-on, and does not blink is not recognised
+either. Walking toward a camera normally supplies plenty of both.
+
+### Tuning it
+
+The defaults come from measurements on projected face geometry, in the units the
+analyzer logs. Yours are the numbers that matter. Turn on debug logging:
+
+```yaml
+logger:
+  logs:
+    frigate.data_processing.common.face.liveness: debug
+```
+
+Then hold a photo of an enrolled person up to the camera, walk past it yourself,
+and compare. Every frame logs every signal:
+
+```
+liveness 1712345678.1-abc123: face has depth (depth_growth=0.0241
+  parallax=0.0318 noise_floor=0.0077 viewpoint=0.0562 deformation=0.043
+  appearance=1.000 frames=4)
+```
+
+- `depth_growth` is the main signal: how much a flat surface fails to explain the
+  motion, over and above this face's own landmark noise. A real face turning
+  about 20 degrees measures 0.014 to 0.029; a photo measures 0.000 to 0.003.
+- `noise_floor` is how imprecise this face's landmarks are, measured from two
+  nearly identical views where anything left unexplained must be jitter. Above
+  `max_noise_floor` (0.05, roughly 2.5px) a real face and a photo become
+  indistinguishable, and Kestrel declines to judge. **Raising this does not
+  improve detection; it only permits guesses.**
+- `deformation` is how much the eyes and mouth opened or closed, relative to the
+  distance between the eyes. A real blink or a spoken word measures 0.12 to 0.15.
+- `viewpoint` is how much the view changed at all. It only decides which reason
+  is logged when a face is refused.
+- `appearance` is 1.0 for a direct-looking view, falling toward 0.0 for something
+  that looks reproduced.
+
+If real people are being refused, the usual cause is `noise_floor` sitting near
+the cap, which means the faces are too small: raise the camera resolution, move
+the camera closer, or lower `min_area` last. Loosening
+`depth_growth_threshold` is the wrong first move, because it also lets photos
+through.
+
+<ConfigTabs>
+<TabItem value="ui">
+
+Navigate to <NavPath path="Settings > Enrichments > Face recognition" />.
+
+- **Require liveness**: withhold a recognised name unless the face is shown to
+  belong to someone present. Turning this off means a printed photo or a phone
+  screen is recognised exactly like a real face.
+  - Default: `true`
+- **Minimum frames**: frames of one person needed before liveness can be decided.
+  Three is the minimum that can measure anything: two establish the landmark
+  noise floor and the third is measured against it.
+  - Default: `3`
+- **Depth threshold**: how much a flat surface must fail to explain the motion
+  before the face counts as solid.
+  - Default: `0.008`
+- **Blink threshold**: how much the eyes or mouth must open or close to count as a
+  working face.
+  - Default: `0.11`
+- **Maximum landmark noise**: refuse to judge once landmark jitter reaches this.
+  - Default: `0.05`
+- **Minimum viewpoint change**: how much the view must change before a failure to
+  show depth is treated as proof of flatness rather than as too little
+  information.
+  - Default: `0.04`
+- **Appearance threshold**: below this score for looking like a direct view,
+  reject outright.
+  - Default: `0.5`
+
+</TabItem>
+<TabItem value="yaml">
+
+```yaml
+face_recognition:
+  enabled: true
+  liveness:
+    enabled: true
+    min_frames: 3
+    depth_growth_threshold: 0.008
+    deformation_threshold: 0.11
+    max_noise_floor: 0.05
+    min_viewpoint: 0.04
+    appearance_threshold: 0.5
+```
+
+</TabItem>
+</ConfigTabs>
+
+### Stronger anti-spoofing
+
+To resist video replay, add a trained presentation-attack model. MiniFASNetV2
+from the Silent-Face-Anti-Spoofing project is Apache-2.0 licensed, around 600KB,
+and runs on CPU; `LivenessAnalyzer.observe` already accepts a `model_score` that
+replaces the frequency check when supplied. Wiring a third-party model download
+into the path that opens your gate is a decision worth making deliberately, so it
+is not enabled here. For an unattended entrance, dedicated access-control
+hardware with certified presentation-attack detection remains the right answer.
+
+### Settings that matter alongside it
+
+- `recognition_threshold` and `unknown_score` decide how confident a match must
+  be. Raising them trades recognising people less often for mislabelling them
+  less often, which is the right trade here.
+- `recognition_margin` guards the failure that matters most for access:
+  confusing one enrolled person with another. Raise it if you have enrolled
+  people who look alike.
+- `min_faces` requires the same person to be recognised across several frames
+  before the name is applied.
+- `min_blur_variance` declines faces too soft to carry identity.
+
+None of these detect spoofing; they reduce the chance of the wrong *enrolled*
+person being named.
+
 ## Model Requirements
 
 ### Face Detection
@@ -109,17 +280,24 @@ face_recognition:
 
 Navigate to <NavPath path="Settings > Enrichments > Face recognition" />.
 
-- **Model size**: Which model size to use, options are `small` or `large`.
+- **Model size**: Which model size to use, options are `small` (FaceNet) or `large` (ArcFace). ArcFace separates faces considerably better and is the default. Changing this re-embeds your whole face library on the next restart; the source images are kept, so there is nothing to re-upload.
+  - Default: `large`
 - **Unknown score threshold**: Min score to mark a person as a potential match; matches at or below this will be marked as unknown.
   - Default: `0.8`
 - **Recognition threshold**: Recognition confidence score required to add the face to the object as a sub label.
   - Default: `0.9`
 - **Minimum faces**: Min face recognitions for the sub label to be applied to the person object.
   - Default: `1`
-- **Save attempts**: Number of images of recognized faces to save for training.
-  - Default: `200`
+- **Save attempts**: Number of recent recognition attempts kept for review in the Face Library. Each is a small JPEG crop, so raising this costs little disk.
+  - Default: `400`
 - **Blur confidence filter**: Enables a filter that calculates how blurry the face is and adjusts the confidence based on this.
   - Default: `True`
+- **Minimum sharpness**: Rejects a face outright when its Laplacian variance falls below this, rather than only lowering its score the way the blur confidence filter does. A motion-blurred face carries little identity information, so it is declined instead of guessed at. Set to `0` to disable. Raise it to demand sharper faces; lower it if faces are being dropped in low light.
+  - Default: `120`
+- **Recognition margin**: How far ahead the best-matching person must be of the runner-up, in cosine similarity, before the match is accepted. A face scoring 0.91 against one person and 0.90 against another is not a confident identification however high those numbers look, and this is what stops look-alikes -- siblings especially -- being confidently mislabelled. Set to `0` to disable. Raise it if similar-looking people are being confused.
+  - Default: `0.05`
+- **Neighbours per person**: Each enrolled person is scored by the average of their this-many most similar training images. Earlier versions averaged every image of a person into a single face, which could represent nobody well: the average of someone with and without glasses matches neither. Raise it if you enrol many varied photos per person.
+  - Default: `3`
 - **Device**: Target a specific device to run the face recognition model on (multi-GPU installation). This setting is only applicable when using the `large` model. See [onnxruntime's provider options](https://onnxruntime.ai/docs/execution-providers/).
   - Default: `None`
 
@@ -129,17 +307,82 @@ Navigate to <NavPath path="Settings > Enrichments > Face recognition" />.
 ```yaml
 face_recognition:
   enabled: true
-  model_size: small
+  model_size: large
   unknown_score: 0.8
   recognition_threshold: 0.9
   min_faces: 1
-  save_attempts: 200
+  save_attempts: 400
   blur_confidence_filter: true
+  min_blur_variance: 120
+  recognition_margin: 0.05
+  knn_top_k: 3
   device: None
 ```
 
 </TabItem>
 </ConfigTabs>
+
+### People you do not want recognized
+
+`ignored_faces` names people who are never reported, even when Kestrel recognizes
+them. For anyone who lives or works somewhere and would rather the cameras did
+not keep a record of them.
+
+<ConfigTabs>
+<TabItem value="ui">
+
+Navigate to <NavPath path="Settings > Enrichments > Face recognition" />.
+
+- **Do not recognize**: names that are never reported. The face stays enrolled
+  and is still matched internally, but the name reaches nothing and no attempt
+  image is kept.
+  - Default: empty
+
+</TabItem>
+<TabItem value="yaml">
+
+```yaml
+face_recognition:
+  enabled: true
+  ignored_faces:
+    - Jane Doe
+    - jane_doe_2
+```
+
+</TabItem>
+</ConfigTabs>
+
+**They have to stay enrolled.** A name must be matched before it can be
+suppressed, so deleting someone from the face library does the opposite of what
+you want: they become an unrecognized person and get reported as `unknown` on
+every camera that sees them. Keep the training images and list the name here.
+
+**What stops:**
+
+- No `sub_label` on the tracked object, so no event, MQTT message or notification
+  carries the name.
+- No attempt image is written, so the Face Library does not fill up with crops of
+  someone who asked not to be recorded.
+
+**What does not stop:** the person is still detected as a `person` object and
+still appears in recordings and review items like anyone else. This suppresses
+*identification*, not detection. It is also not a privacy control against anyone
+with access to the recordings.
+
+Names are matched without regard to case, spaces, underscores or hyphens, so
+`Jane Doe`, `jane_doe` and `jane-doe` are the same person. Matching is on the
+whole name: listing `Jane` does not silence `Jane Doe`.
+
+Kestrel refuses to start on a blank entry in the list, which otherwise matches
+nobody and leaves someone you believed was ignored still being reported.
+
+:::warning
+
+Listing `unknown` is accepted and means "do not tell me about strangers". On a
+camera that gates access that is almost certainly a mistake -- it suppresses
+exactly the faces worth knowing about.
+
+:::
 
 ## Usage
 
