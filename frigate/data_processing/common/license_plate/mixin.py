@@ -31,6 +31,7 @@ from frigate.data_processing.common.license_plate.model import LicensePlateModel
 from frigate.embeddings.onnx.lpr_embedding import (
     LPR_DETECTION_CANVAS,
     LPR_EMBEDDING_SIZE,
+    LPR_RECOGNITION_MAX_BATCH,
     recognition_width_bucket,
 )
 from frigate.types import TrackedObjectUpdateTypesEnum
@@ -75,7 +76,8 @@ class LicensePlateProcessingMixin:
         # process plates that are stationary and have no position changes for 5 seconds
         self.stationary_scan_duration = 5
 
-        self.batch_size = 6
+        # tied to the TensorRT profile the recogniser is built with
+        self.batch_size = LPR_RECOGNITION_MAX_BATCH
 
         # Object config
         self.lp_objects: list[str] = []

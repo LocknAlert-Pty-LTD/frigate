@@ -228,6 +228,8 @@ class TestRecognitionWidthBuckets(unittest.TestCase):
 
 class TestWarmup(unittest.TestCase):
     class Runner:
+        device_name = "CUDA"
+
         def __init__(self, fail: bool = False) -> None:
             self.shapes: list[tuple] = []
             self.fail = fail
@@ -244,14 +246,15 @@ class TestWarmup(unittest.TestCase):
         runner = self.Runner()
         shapes = [(1, 3, 48, 320), (2, 3, 48, 480)]
 
-        warm_fixed_shapes(runner, shapes, "test")
-
+        self.assertTrue(warm_fixed_shapes(runner, shapes, "test"))
         self.assertEqual(shapes, runner.shapes)
 
-    def test_a_failure_does_not_raise(self) -> None:
-        """Loading the model must not fail over a warmup. The worst case is that
-        the first real call pays the tuning cost instead."""
-        warm_fixed_shapes(self.Runner(fail=True), [(1, 3, 48, 320)], "test")
+    def test_a_failure_is_reported_not_raised(self) -> None:
+        """Loading the model must not crash over a warmup. The result tells the
+        caller whether to fall back to another backend."""
+        self.assertFalse(
+            warm_fixed_shapes(self.Runner(fail=True), [(1, 3, 48, 320)], "test")
+        )
 
     def test_the_warmed_recognition_shapes_cover_every_bucket(self) -> None:
         """A bucket missing from warmup would put its tuning cost on a car."""

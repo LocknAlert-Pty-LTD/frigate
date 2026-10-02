@@ -4,6 +4,7 @@ import logging
 import os
 import platform
 import threading
+from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -694,7 +695,13 @@ def _drop_tensorrt(
     return [p for p, _ in kept], [o for _, o in kept]
 
 
-def _create_session(model_path: str, model_type: str, providers: list, options: list):
+def _create_session(
+    model_path: str,
+    model_type: str,
+    providers: list,
+    options: list,
+    isolate_tensorrt_failure: bool = False,
+):
     """Create the session, giving up on TensorRT if it cannot serve this GPU.
 
     ONNX Runtime partitions the graph and falls back to the next provider for
@@ -726,13 +733,27 @@ def _create_session(model_path: str, model_type: str, providers: list, options: 
         if "TensorrtExecutionProvider" not in providers:
             raise
 
-        logger.warning(
-            "TensorRT could not build an engine on this GPU (%s); "
-            "falling back to the next execution provider. This is expected on "
-            "GPUs older than Turing, which TensorRT 10 no longer supports.",
-            exc,
-        )
-        _tensorrt_unusable = True
+        if isolate_tensorrt_failure:
+            # A model opted onto TensorRT with an explicit shape profile. Its
+            # failing says something about this model, not about the GPU, so
+            # only this session falls back. Setting the process-wide flag here
+            # would quietly take every other model in the process -- ArcFace,
+            # the plate detector -- off TensorRT as well.
+            logger.warning(
+                "TensorRT could not build an engine for %s (%s); running it on "
+                "the next execution provider instead.",
+                model_type,
+                exc,
+            )
+        else:
+            logger.warning(
+                "TensorRT could not build an engine on this GPU (%s); "
+                "falling back to the next execution provider. This is expected "
+                "on GPUs older than Turing, which TensorRT 10 no longer supports.",
+                exc,
+            )
+            _tensorrt_unusable = True
+
         providers, options = _drop_tensorrt(providers, options)
 
         return ort.InferenceSession(
@@ -741,6 +762,37 @@ def _create_session(model_path: str, model_type: str, providers: list, options: 
             providers=providers,
             provider_options=options,
         )
+
+
+@dataclass(frozen=True)
+class TensorRtShapes:
+    """The input shape range a TensorRT engine is built for.
+
+    TensorRT compiles an engine for concrete shapes. Without a profile, the ONNX
+    Runtime TensorRT provider builds one per shape it encounters, which is why
+    models with changing inputs were kept off it. A profile describes the whole
+    range up front so a single engine serves every shape inside it, with no
+    rebuild when a new one turns up.
+
+    Passing one to get_optimized_runner is what allows a model that would
+    otherwise be kept on CUDA (see prefers_cuda_over_tensorrt) onto TensorRT.
+    The caller is vouching that its inputs stay inside this range.
+    """
+
+    input_name: str
+    min_shape: tuple[int, ...]
+    opt_shape: tuple[int, ...]
+    max_shape: tuple[int, ...]
+
+    def provider_options(self) -> dict[str, str]:
+        def spec(shape: tuple[int, ...]) -> str:
+            return f"{self.input_name}:{'x'.join(str(dim) for dim in shape)}"
+
+        return {
+            "trt_profile_min_shapes": spec(self.min_shape),
+            "trt_profile_opt_shapes": spec(self.opt_shape),
+            "trt_profile_max_shapes": spec(self.max_shape),
+        }
 
 
 def prefers_cuda_over_tensorrt(model_type: str) -> bool:
@@ -783,6 +835,7 @@ def get_optimized_runner(
 ) -> BaseModelRunner:
     """Get an optimized runner for the hardware."""
     device = device or "AUTO"
+    tensorrt_shapes: TensorRtShapes | None = kwargs.pop("tensorrt_shapes", None)
 
     if device != "CPU" and is_rknn_compatible(model_path):
         rknn_path = auto_convert_model(model_path)
@@ -824,8 +877,11 @@ def get_optimized_runner(
             ),
         )
 
-    if prefers_cuda_over_tensorrt(model_type):
-        if providers and providers[0] == "TensorrtExecutionProvider":
+    if providers and providers[0] == "TensorrtExecutionProvider":
+        if tensorrt_shapes is not None:
+            # one engine covering the caller's whole shape range
+            options[0] = {**options[0], **tensorrt_shapes.provider_options()}
+        elif prefers_cuda_over_tensorrt(model_type):
             # A dynamic input shape makes TensorRT rebuild its engine per shape;
             # CUDA runs the same model with no build step at all
             logger.debug(
@@ -865,7 +921,13 @@ def get_optimized_runner(
         model_path,
         model_type,
         ONNXModelRunner(
-            _create_session(model_path, model_type, providers, options),
+            _create_session(
+                model_path,
+                model_type,
+                providers,
+                options,
+                isolate_tensorrt_failure=tensorrt_shapes is not None,
+            ),
             model_type=model_type,
         ),
     )
