@@ -45,6 +45,8 @@ export type DetectorStats = {
   detection_start: number;
   inference_speed: number;
   pid: number;
+  /** Execution provider the model actually loaded on, e.g. "TensorRT". */
+  device?: string;
   temperature?: number;
   cpu?: string;
   mem?: string;

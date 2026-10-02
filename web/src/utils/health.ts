@@ -236,12 +236,26 @@ export function detectionRows({
       };
     }
 
+    // The execution provider the detector actually loaded on, reported by the
+    // detector process itself. Worth showing: the only other mention of a
+    // backend on this screen is the ffmpeg hwaccel row, which says CUDA because
+    // it is decoding video there -- and reading that as the detector backend is
+    // an easy and wrong conclusion when the detector is really on TensorRT.
+    const providers = [
+      ...new Set(
+        modelRunners
+          .map((name) => stats.detectors[name]?.device)
+          .filter((device): device is string => Boolean(device)),
+      ),
+    ];
+
     return {
       id,
       state: "ok",
       label,
       detail: [
         detail,
+        providers.join(", "),
         t("health.hardware.inferenceMs", {
           ns: "views/system",
           speed: slowest,

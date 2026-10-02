@@ -131,6 +131,14 @@ def get_detector_stats(
             "pid": pid,
         }
 
+        # The execution provider the model actually loaded on, reported by the
+        # detector subprocess. Omitted rather than guessed when a detector does
+        # not load through get_optimized_runner.
+        device = getattr(detector, "device", None)
+
+        if device is not None and device.value:
+            detector_stat["device"] = device.value.decode(errors="replace")
+
         temps = get_hardware_temperatures(detector_type)
 
         if current_index < len(temps) and temps[current_index] is not None:

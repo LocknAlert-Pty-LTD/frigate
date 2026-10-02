@@ -5,7 +5,7 @@ import threading
 import time
 from abc import ABC, abstractmethod
 from collections import deque
-from multiprocessing import Queue, Value
+from multiprocessing import Array, Queue, Value
 from multiprocessing.synchronize import Event as MpEvent
 from typing import Any
 
@@ -121,6 +121,7 @@ class DetectorRunner(FrigateProcess):
         config: FrigateConfig,
         detector_config: BaseDetectorConfig,
         stop_event: MpEvent,
+        device: Any = None,
     ) -> None:
         super().__init__(stop_event, PROCESS_PRIORITY_HIGH, name=name, daemon=True)
         self.detection_queue = detection_queue
@@ -129,7 +130,39 @@ class DetectorRunner(FrigateProcess):
         self.start_time = start_time
         self.config = config
         self.detector_config = detector_config
+        self.device = device
         self.outputs: dict[str, Any] = {}
+
+    def report_device(self) -> None:
+        """Publish the execution provider the model actually loaded on.
+
+        Reported from here because this is the only process that knows. ONNX
+        Runtime tries the providers in order and the winner is not decided until
+        the session exists, so the answer cannot be derived from config -- which
+        is exactly why the dashboard could show a detector as running on CUDA
+        while it was really on TensorRT.
+
+        Best effort. Detectors that do not go through get_optimized_runner
+        register nothing, and the stats simply omit the field rather than
+        guessing.
+        """
+        if self.device is None:
+            return
+
+        try:
+            from frigate.detectors.detection_runners import snapshot_loaded_devices
+
+            devices = snapshot_loaded_devices()
+        except Exception as err:
+            logger.debug(f"Could not determine the detector execution provider: {err}")
+            return
+
+        if not devices:
+            return
+
+        # one model per detector process, so the single entry is this one
+        _model_type, device_name = next(iter(devices.values()))
+        self.device.value = device_name.encode()[:31]
 
     def create_output_shm(self, name: str) -> None:
         out_shm = UntrackedSharedMemory(name=f"out-{name}", create=False)
@@ -141,6 +174,7 @@ class DetectorRunner(FrigateProcess):
 
         frame_manager = SharedMemoryFrameManager()
         object_detector = LocalObjectDetector(detector_config=self.detector_config)
+        self.report_device()
         detector_publisher = ObjectDetectorPublisher()
 
         for name in self.cameras:
@@ -196,6 +230,7 @@ class AsyncDetectorRunner(FrigateProcess):
         config: FrigateConfig,
         detector_config: BaseDetectorConfig,
         stop_event: MpEvent,
+        device: Any = None,
     ) -> None:
         super().__init__(stop_event, PROCESS_PRIORITY_HIGH, name=name, daemon=True)
         self.detection_queue = detection_queue
@@ -204,6 +239,10 @@ class AsyncDetectorRunner(FrigateProcess):
         self.start_time = start_time
         self.config = config
         self.detector_config = detector_config
+        # Accepted so both runners take the same arguments. MemryX does not load
+        # through get_optimized_runner, so nothing is reported and the stats omit
+        # the field rather than inventing one.
+        self.device = device
         self.outputs: dict[str, Any] = {}
         self._frame_manager: SharedMemoryFrameManager | None = None
         self._publisher: ObjectDetectorPublisher | None = None
@@ -330,6 +369,11 @@ class ObjectDetectProcess:
         self.detection_queue = detection_queue
         self.avg_inference_speed = Value("d", 0.01)
         self.detection_start = Value("d", 0.0)
+        # The execution provider the detector actually loaded on, filled in by
+        # the subprocess once the model is up. It cannot be worked out here: the
+        # session is created in that process, and which provider claims the
+        # model is only known after ONNX Runtime has tried them in order.
+        self.device = Array("c", 32)
         self.detect_process: FrigateProcess | None = None
         self.config = config
         self.detector_config = detector_config
@@ -382,6 +426,7 @@ class ObjectDetectProcess:
                 self.config,
                 self.detector_config,
                 self.stop_event,
+                self.device,
             )
         else:
             self.detect_process = DetectorRunner(
@@ -393,6 +438,7 @@ class ObjectDetectProcess:
                 self.config,
                 self.detector_config,
                 self.stop_event,
+                self.device,
             )
         self.detect_process.start()
 
