@@ -34,6 +34,12 @@ import sys
 
 CONFIG_DIR = os.environ.get("CONFIG_DIR", "/config")
 
+# Named rather than inlined so a test can point it at a temporary directory.
+# Patching os.unlink instead would leak into shutil and every other caller in
+# the process, which is how the first version of the tests broke their own
+# teardown.
+SHM_DIR = "/dev/shm"
+
 
 def config_file() -> str | None:
     """Mirror frigate.util.config.find_config_file without importing it.
@@ -111,7 +117,7 @@ def segments_for(camera: str) -> list[str]:
     prefix = f"{camera}_frame"
 
     try:
-        names += [entry for entry in os.listdir("/dev/shm") if entry.startswith(prefix)]
+        names += [entry for entry in os.listdir(SHM_DIR) if entry.startswith(prefix)]
     except OSError:
         pass
 
@@ -126,7 +132,7 @@ def main() -> int:
     removed = 0
     for camera in camera_names(path):
         for name in segments_for(camera):
-            target = os.path.join("/dev/shm", name)
+            target = os.path.join(SHM_DIR, name)
             try:
                 os.unlink(target)
                 removed += 1

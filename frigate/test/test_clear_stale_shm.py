@@ -43,27 +43,15 @@ class ClearStaleShmTestCase(unittest.TestCase):
         self.addCleanup(shutil.rmtree, self.shm, True)
         self.addCleanup(shutil.rmtree, self.config_dir, True)
 
-        # the script targets /dev/shm by literal path; redirect it
-        self._patch_shm_path()
-
-    def _patch_shm_path(self) -> None:
-        shm = self.shm
-        real_listdir, real_unlink, real_join = os.listdir, os.unlink, os.path.join
-
-        def listdir(path):
-            return real_listdir(shm if path == "/dev/shm" else path)
-
-        def unlink(path):
-            if path.startswith("/dev/shm/"):
-                path = real_join(shm, path[len("/dev/shm/") :])
-            return real_unlink(path)
-
-        def join(a, *rest):
-            return real_join(shm if a == "/dev/shm" else a, *rest)
-
-        self.module.os.listdir = listdir
-        self.module.os.unlink = unlink
-        self.module.os.path.join = join
+        # The script reads its target from a module constant, so pointing it at
+        # a temporary directory is a plain assignment.
+        #
+        # An earlier version patched self.module.os.unlink instead. That is the
+        # *same* module object every other import of os shares, so the patch
+        # escaped the script entirely and shutil.rmtree -- which passes dir_fd
+        # -- blew up in this class's own teardown. It only showed up on Linux;
+        # rmtree takes a different path on Windows and passed there.
+        self.module.SHM_DIR = self.shm
 
     def write_config(self, body: str) -> None:
         Path(self.config_dir, "config.yml").write_text(body, encoding="utf-8")
