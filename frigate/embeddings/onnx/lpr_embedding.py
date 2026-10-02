@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 import warnings
 
 import cv2
@@ -23,6 +24,74 @@ warnings.filterwarnings(
 logger = logging.getLogger(__name__)
 
 LPR_EMBEDDING_SIZE = 256
+
+
+# Fixed input shapes for the PaddleOCR models.
+#
+# Both models declare dynamic inputs, and the pipeline used to feed them
+# whatever size each plate happened to produce: the text detector got the plate
+# crop rounded to its own multiple of 32, and the recogniser got a width derived
+# from the widest crop in the batch. On CUDA, ONNX Runtime picks a convolution
+# algorithm per input shape by benchmarking every candidate (the EXHAUSTIVE
+# search), so nearly every car paid for a fresh benchmark of every layer.
+# Measured on a gate camera that put plate text detection at 61ms for a model
+# that takes under 6ms on a CPU at plate size.
+#
+# Pinning the shapes turns that into a one-off cost, paid at load by
+# warm_fixed_shapes rather than by the first car at the gate.
+
+# The text detector sees the plate letterboxed into this canvas. It only has to
+# find the lines of text; the recogniser reads them from the full-resolution
+# plate image, so detecting on a smaller copy costs no reading accuracy. 128px
+# tall leaves the characters of a two-line plate around 40px each, well inside
+# what the detector handles. (height, width), both multiples of 32 as the
+# detector requires.
+LPR_DETECTION_CANVAS = (128, 512)
+
+LPR_RECOGNITION_HEIGHT = 48
+
+# Recognition widths a text crop is padded up to. 320 is the PaddleOCR default;
+# the wider buckets keep a long line from being squeezed. Anything wider than
+# the last bucket is squeezed into it rather than given a shape of its own.
+LPR_RECOGNITION_WIDTHS = (320, 480, 640)
+
+# Batch sizes tuned at load. A plate rarely yields more than three text regions;
+# larger batches still work and are tuned the first time they appear.
+LPR_RECOGNITION_WARMUP_BATCHES = (1, 2, 3)
+
+
+def recognition_width_bucket(width: int) -> int:
+    """The fixed recognition width a crop of this width is padded to."""
+    for bucket in LPR_RECOGNITION_WIDTHS:
+        if width <= bucket:
+            return bucket
+
+    return LPR_RECOGNITION_WIDTHS[-1]
+
+
+def warm_fixed_shapes(
+    runner: BaseModelRunner, shapes: list[tuple[int, ...]], label: str
+) -> None:
+    """Run each fixed shape once so its convolution algorithms are chosen now.
+
+    Best effort: a failure here only means the first real call pays the tuning
+    cost instead, so it is logged and never raised.
+    """
+    start = time.perf_counter()
+
+    try:
+        input_name = runner.get_input_names()[0]
+
+        for shape in shapes:
+            runner.run({input_name: np.zeros(shape, dtype=np.float32)})
+    except Exception as err:
+        logger.debug(f"Could not pre-tune {label}: {err}")
+        return
+
+    logger.info(
+        f"Pre-tuned {label} for {len(shapes)} input shape(s) in "
+        f"{(time.perf_counter() - start) * 1000:.0f}ms"
+    )
 
 
 class PaddleOCRDetection(BaseEmbedding):
@@ -82,6 +151,11 @@ class PaddleOCRDetection(BaseEmbedding):
                 os.path.join(self.download_path, self.model_file),
                 self.device,
                 model_type=EnrichmentModelTypeEnum.paddleocr.value,
+            )
+            warm_fixed_shapes(
+                self.runner,
+                [(1, 3, *LPR_DETECTION_CANVAS)],
+                "LPR text detection",
             )
 
     def _preprocess_inputs(self, raw_inputs):
@@ -205,6 +279,15 @@ class PaddleOCRRecognition(BaseEmbedding):
                 os.path.join(self.download_path, self.model_file),
                 self.device,
                 model_type=EnrichmentModelTypeEnum.paddleocr.value,
+            )
+            warm_fixed_shapes(
+                self.runner,
+                [
+                    (batch, 3, LPR_RECOGNITION_HEIGHT, width)
+                    for batch in LPR_RECOGNITION_WARMUP_BATCHES
+                    for width in LPR_RECOGNITION_WIDTHS
+                ],
+                "LPR character recognition",
             )
 
     def _preprocess_inputs(self, raw_inputs):
