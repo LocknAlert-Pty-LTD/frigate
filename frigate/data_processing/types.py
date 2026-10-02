@@ -26,6 +26,7 @@ class DataProcessorMetrics:
     review_desc_dps: ValueProxy[float]
     object_desc_speed: ValueProxy[float]
     object_desc_dps: ValueProxy[float]
+    stage_speeds: DictProxy[str, float]
     classification_speeds: DictProxy[str, ValueProxy[float]]
     classification_cps: DictProxy[str, ValueProxy[float]]
     runtime_devices: DictProxy[str, str]
@@ -45,6 +46,11 @@ class DataProcessorMetrics:
         self.review_desc_dps = manager.Value("d", 0.0)
         self.object_desc_speed = manager.Value("d", 0.0)
         self.object_desc_dps = manager.Value("d", 0.0)
+        # Named sub-stage timings, keyed by stage. Unlike the fields above,
+        # this is open ended: a pipeline registers whatever breakdown is
+        # useful and it reaches the health dashboard without a schema change
+        # here, in the stats endpoint, or in the UI.
+        self.stage_speeds = manager.dict()
         self.classification_speeds = manager.dict()
         self.classification_cps = manager.dict()
         self.runtime_devices = manager.dict()

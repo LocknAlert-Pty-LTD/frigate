@@ -27,6 +27,7 @@ from frigate.models import Event, Trigger
 from frigate.types import ModelStatusTypesEnum
 from frigate.util.builtin import EventsPerSecond, InferenceSpeed, serialize
 from frigate.util.file import get_event_thumbnail_bytes
+from frigate.util.model import gpu_execution_provider_available
 
 from .genai_embedding import GenAIEmbedding
 from .onnx.jina_v1_embedding import JinaV1ImageEmbedding, JinaV1TextEmbedding
@@ -64,6 +65,24 @@ def get_metadata(event: Event) -> dict:
             if isinstance(x, str)
         }
     )
+
+
+
+def default_embedding_device() -> str:
+    """Where to run the image embedding model when nothing is configured.
+
+    Keyed on whether a GPU exists, not on `model_size`. Tying the two together
+    pinned the small model to the CPU on machines with a perfectly good GPU,
+    where a single image embedding took 820ms -- and because
+    `get_optimized_runner` turns a device of "CPU" into force_cpu, no execution
+    provider could rescue it afterwards.
+
+    The two sizes differ in which weights are downloaded, which is a separate
+    question from where they run: the small model is quantized and the large one
+    is fp16, and both are faster on a GPU than on a CPU.
+    `semantic_search.device` still overrides this, including back to "CPU".
+    """
+    return "GPU" if gpu_execution_provider_available() else "CPU"
 
 
 class Embeddings:
@@ -131,8 +150,7 @@ class Embeddings:
             self.embedding = JinaV2Embedding(
                 model_size=self.config.semantic_search.model_size,
                 requestor=self.requestor,
-                device=config.semantic_search.device
-                or ("GPU" if config.semantic_search.model_size == "large" else "CPU"),
+                device=config.semantic_search.device or default_embedding_device(),
             )
             self.text_embedding = lambda input_data: self.embedding(
                 input_data, embedding_type="text"
@@ -150,8 +168,7 @@ class Embeddings:
             self.vision_embedding = JinaV1ImageEmbedding(
                 model_size=config.semantic_search.model_size,
                 requestor=self.requestor,
-                device=config.semantic_search.device
-                or ("GPU" if config.semantic_search.model_size == "large" else "CPU"),
+                device=config.semantic_search.device or default_embedding_device(),
             )
 
     def update_stats(self) -> None:

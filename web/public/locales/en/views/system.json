@@ -361,7 +361,15 @@
       "object_description_events_per_second": "Object Description",
       "classification": "{{name}} Classification",
       "classification_speed": "{{name}} Classification Speed",
-      "classification_events_per_second": "{{name}} Classification Events Per Second"
+      "classification_events_per_second": "{{name}} Classification Events Per Second",
+      "plate_text_detection": "Plate Text Detection",
+      "plate_text_detection_speed": "Plate Text Detection Speed",
+      "plate_orientation": "Plate Orientation Check",
+      "plate_orientation_speed": "Plate Orientation Check Speed",
+      "plate_ocr": "Plate Character Recognition",
+      "plate_ocr_speed": "Plate Character Recognition Speed",
+      "plate_cpu_overhead": "Plate Image Processing (CPU)",
+      "plate_cpu_overhead_speed": "Plate Image Processing (CPU) Speed"
     }
   }
 }

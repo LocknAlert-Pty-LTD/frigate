@@ -743,6 +743,41 @@ def _create_session(model_path: str, model_type: str, providers: list, options: 
         )
 
 
+def prefers_cuda_over_tensorrt(model_type: str) -> bool:
+    """Whether TensorRT should be skipped for this model in favour of CUDA.
+
+    TensorRT compiles an engine for a concrete input shape. The ONNX Runtime
+    TensorRT EP, given no explicit shape profiles, builds and caches one engine
+    per shape it actually sees -- so a model whose input shape changes from call
+    to call pays a full engine build over and over, and the compile-time
+    advantage that is the entire reason to use TensorRT becomes a liability.
+
+    The PaddleOCR models are exactly that case. All three declare dynamic input
+    dimensions:
+
+        detection_v5-small.onnx   [batch, 3, height, width]
+        classification.onnx       [batch, 3, height, width]
+        recognition_v4.onnx       [batch, 3, 48, width]
+
+    and the recognition width is derived per batch from the widest text crop in
+    it, which for plausible plate crops takes dozens of distinct values. The Jina
+    embedding models are the same story by way of a dynamic sequence length.
+
+    CUDA handles changing shapes natively with no build step, which for models
+    this small is both faster overall and far more predictable. The license plate
+    detector is left on TensorRT: its input is a fixed [1, 3, 256, 256], so it
+    builds one engine and keeps it.
+    """
+    # Import here to avoid circular imports
+    from frigate.embeddings.types import EnrichmentModelTypeEnum
+
+    return model_type in (
+        EnrichmentModelTypeEnum.paddleocr.value,
+        EnrichmentModelTypeEnum.jina_v1.value,
+        EnrichmentModelTypeEnum.jina_v2.value,
+    )
+
+
 def get_optimized_runner(
     model_path: str, device: str | None, model_type: str, **kwargs
 ) -> BaseModelRunner:
@@ -788,6 +823,31 @@ def get_optimized_runner(
                 options[0]["device_id"],
             ),
         )
+
+    if prefers_cuda_over_tensorrt(model_type):
+        if providers and providers[0] == "TensorrtExecutionProvider":
+            # A dynamic input shape makes TensorRT rebuild its engine per shape;
+            # CUDA runs the same model with no build step at all
+            logger.debug(
+                "Skipping TensorRT for %s: dynamic input shapes make engine "
+                "caching counterproductive",
+                model_type,
+            )
+            providers.pop(0)
+            options.pop(0)
+
+        for provider, option in zip(providers, options):
+            if provider != "CUDAExecutionProvider":
+                continue
+
+            # CUDA has no engine build, but it does pick a convolution algorithm
+            # per input shape, and ONNX Runtime defaults to EXHAUSTIVE -- it
+            # benchmarks every candidate algorithm for every shape it has not
+            # seen. That pays for itself on a detector running one fixed shape
+            # forever. On these models it does not: a license plate crop resizes
+            # to a multiple of 32, so a new size means a new benchmark, and the
+            # tuning can cost more than the inference it is tuning.
+            option["cudnn_conv_algo_search"] = "HEURISTIC"
 
     if (
         providers

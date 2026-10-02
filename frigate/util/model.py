@@ -2,6 +2,8 @@
 
 import logging
 import os
+import subprocess
+import re
 from typing import Any
 
 import cv2
@@ -315,6 +317,102 @@ def post_process_yolox(
 ### ONNX Utilities
 
 
+# Execution providers that run on a discrete accelerator. OpenVINO is excluded:
+# it is present on any Intel host and reports CPU as a device, so its presence
+# says nothing about whether an accelerator exists.
+_GPU_CACHE_NAMESPACE: str | None = None
+
+
+def tensorrt_cache_namespace() -> str:
+    """A directory name identifying the GPU TensorRT engines were built for.
+
+    TensorRT engines are compiled for one specific device. Handed an engine
+    built elsewhere it warns, and then runs anyway:
+
+        Using an engine plan file across different models of devices is not
+        supported and is likely to affect performance or even cause errors or
+        deadlock.
+
+    The cache lives under /config, which is the directory people copy between
+    machines, restore from a backup, or share between a test box and the real
+    one. Without a namespace, engines built on one card are silently loaded on
+    another -- which is how that warning shows up on a working install, and it
+    costs performance at best.
+
+    Keying the path on the GPU means a different card simply builds its own
+    engines rather than reusing ones that do not fit it. Falls back to a shared
+    directory when the GPU cannot be identified, which is the previous behaviour
+    and no worse than it was.
+    """
+    global _GPU_CACHE_NAMESPACE
+
+    if _GPU_CACHE_NAMESPACE is not None:
+        return _GPU_CACHE_NAMESPACE
+
+    _GPU_CACHE_NAMESPACE = "unknown-gpu"
+
+    try:
+        result = subprocess.run(
+            [
+                "nvidia-smi",
+                "--query-gpu=name,compute_cap",
+                "--format=csv,noheader",
+                "--id=0",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError) as err:
+        logger.debug("Could not identify the GPU for the engine cache: %s", err)
+        return _GPU_CACHE_NAMESPACE
+
+    if result.returncode != 0 or not result.stdout.strip():
+        logger.debug(
+            "Could not identify the GPU for the engine cache: nvidia-smi exited %s",
+            result.returncode,
+        )
+        return _GPU_CACHE_NAMESPACE
+
+    identity = result.stdout.strip().splitlines()[0]
+
+    # A directory name, so only characters that are safe in one. Runs of dots
+    # are collapsed to a single dot: a GPU identity needs exactly one, in the
+    # compute capability, and leaving a ".." in a path component is asking for
+    # trouble no matter where the string came from.
+    namespace = re.sub(r"[^A-Za-z0-9._-]+", "-", identity)
+    namespace = re.sub(r"\.{2,}", ".", namespace).strip("-.").lower()
+
+    if namespace:
+        _GPU_CACHE_NAMESPACE = namespace
+
+    logger.debug("TensorRT engine cache namespace: %s", _GPU_CACHE_NAMESPACE)
+    return _GPU_CACHE_NAMESPACE
+
+
+GPU_EXECUTION_PROVIDERS = (
+    "TensorrtExecutionProvider",
+    "CUDAExecutionProvider",
+    "MIGraphXExecutionProvider",
+    "ROCMExecutionProvider",
+)
+
+
+def gpu_execution_provider_available() -> bool:
+    """Whether ONNX Runtime has an execution provider backed by a GPU.
+
+    Used to pick a default device for the enrichment models. Note the caveat on
+    get_available_providers: it lists what this build of ONNX Runtime was
+    compiled with, not what can actually load, so a provider named here may
+    still fall back at session creation. That is fine for choosing a default --
+    the fallback order in get_ort_providers ends at CPU either way -- but it is
+    not proof that a GPU is in use. The device a model really loaded on is
+    recorded by record_loaded_device and shown in the enrichment stats.
+    """
+    available = set(ort.get_available_providers())
+    return any(provider in available for provider in GPU_EXECUTION_PROVIDERS)
+
+
 def get_ort_providers(
     force_cpu: bool = False,
     device: str | None = "AUTO",
@@ -352,7 +450,13 @@ def get_ort_providers(
             # fallback logic needed. trt_max_workspace_size caps GPU memory
             # use (overridable via TRT_MAX_WORKSPACE_MB for large/shared GPUs).
             os.makedirs(
-                os.path.join(MODEL_CACHE_DIR, "tensorrt/ort/trt-engines"),
+                os.path.join(
+                    MODEL_CACHE_DIR, "tensorrt/ort/trt-engines", tensorrt_cache_namespace()
+                ),
+                exist_ok=True,
+            )
+            os.makedirs(
+                os.path.join(MODEL_CACHE_DIR, "tensorrt/ort", tensorrt_cache_namespace()),
                 exist_ok=True,
             )
             device_id = 0 if (not device or not device.isdigit()) else int(device)
@@ -369,11 +473,17 @@ def get_ort_providers(
                     * 1024,
                     "trt_timing_cache_enable": True,
                     "trt_engine_cache_enable": True,
+                    # Both caches hold device-specific artifacts, so they are
+                    # kept per GPU. Sharing them across cards is what produces
+                    # "Using an engine plan file across different models of
+                    # devices is not supported" and a silent performance hit.
                     "trt_timing_cache_path": os.path.join(
-                        MODEL_CACHE_DIR, "tensorrt/ort"
+                        MODEL_CACHE_DIR, "tensorrt/ort", tensorrt_cache_namespace()
                     ),
                     "trt_engine_cache_path": os.path.join(
-                        MODEL_CACHE_DIR, "tensorrt/ort/trt-engines"
+                        MODEL_CACHE_DIR,
+                        "tensorrt/ort/trt-engines",
+                        tensorrt_cache_namespace(),
                     ),
                 }
             )

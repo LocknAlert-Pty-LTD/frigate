@@ -205,6 +205,12 @@ def embeddings_stats(
             embeddings_metrics.object_desc_dps.value, 2
         )
 
+    # Per-stage breakdowns, so a slow pipeline can be read as the sum of its
+    # parts rather than one opaque number. The UI builds a card per {base}_speed
+    # key it finds, so these need no wiring beyond a display name.
+    for stage, seconds in dict(embeddings_metrics.stage_speeds).items():
+        stats[f"{stage}_speed"] = round(seconds * 1000, 2)
+
     for key in embeddings_metrics.classification_speeds.keys():
         stats[f"{key}_classification_speed"] = round(
             embeddings_metrics.classification_speeds[key].value * 1000, 2

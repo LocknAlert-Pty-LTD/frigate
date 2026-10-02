@@ -12,7 +12,8 @@ import struct
 import time
 import urllib.parse
 from collections import deque
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping, MutableMapping
+from contextlib import contextmanager
 from multiprocessing.managers import ValueProxy
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -84,6 +85,89 @@ class InferenceSpeed:
 
     def current(self) -> float:
         return self.__metric.value
+
+
+class StageTimings:
+    """Smoothed per-pass timings for the named stages inside one pipeline.
+
+    A pipeline reported as a single number tells you it is slow and nothing
+    about where. "Plate Recognition 72.59ms" covers four models and a good deal
+    of NumPy, and no amount of staring at that one figure says which to attack.
+
+    Every stage registered here becomes its own entry in the enrichment stats,
+    and the health dashboard builds its cards from whatever keys it finds there,
+    so a new stage appears on the dashboard without any UI change.
+
+    **Stages are summed within a pass before being averaged**, which is what
+    makes the cards add up to the total beside them. Averaging each model call
+    instead looks equivalent and is not: a stage that runs twice in one pass --
+    recognition does, once per batch of text crops -- then reports the cost of
+    one call while contributing two to the total, and the parts come to less than
+    the whole. An earlier version did that and the numbers visibly disagreed.
+
+    Uses perf_counter rather than the wall clock the older metrics read from
+    datetime.now(): these intervals are milliseconds, and a clock adjustment
+    landing inside one would otherwise show up as a wild outlier.
+    """
+
+    def __init__(self, published: MutableMapping[str, float], prefix: str = "") -> None:
+        self.__published = published
+        self.__prefix = prefix
+        self.__smoothed: dict[str, float] = {}
+        self.__pass_totals: dict[str, float] = {}
+        self.__pass_seconds = 0.0
+
+    def start_pass(self) -> None:
+        """Begin accounting for one trip through the pipeline."""
+        self.__pass_totals = {}
+        self.__pass_seconds = 0.0
+
+    @contextmanager
+    def measure(self, stage: str) -> Iterator[None]:
+        """Time a block and add it to this pass."""
+        start = time.perf_counter()
+
+        try:
+            yield
+        finally:
+            self.add(stage, time.perf_counter() - start)
+
+    def add(self, stage: str, seconds: float) -> None:
+        """Add time to a stage of the pass in progress."""
+        self.__pass_totals[stage] = self.__pass_totals.get(stage, 0.0) + seconds
+        self.__pass_seconds += seconds
+
+    @property
+    def pass_seconds(self) -> float:
+        """Time spent in measured stages during this pass.
+
+        Subtracted from the pipeline total to give the time that was *not* in a
+        model -- the resizing, filtering and decoding around them. That figure is
+        usually the surprise, and it is the one a GPU cannot help with.
+        """
+        return self.__pass_seconds
+
+    def flush(self) -> None:
+        """Publish this pass, smoothing each stage against earlier passes.
+
+        Only stages that ran are updated. A stage that did not run this pass has
+        no sample to contribute, and feeding it a zero would drag its average
+        toward nothing and hide a real cost.
+        """
+        for stage, seconds in self.__pass_totals.items():
+            key = f"{self.__prefix}{stage}"
+            previous = self.__smoothed.get(key)
+
+            # the same 9:1 smoothing InferenceSpeed uses, so these read on the
+            # same footing as the totals beside them on the dashboard
+            value = seconds if previous is None else (previous * 9 + seconds) / 10
+
+            self.__smoothed[key] = value
+
+            # a DictProxy write is a round trip to the manager process. Once per
+            # stage per pass is fine at the rate these pipelines run; it would
+            # not be fine per video frame.
+            self.__published[key] = value
 
 
 def deep_merge(dct1: dict, dct2: dict, override=False, merge_lists=False) -> dict:

@@ -552,7 +552,12 @@ function enrichmentSpecs(config: FrigateConfig): EnrichmentSpec[] {
     {
       id: "semantic_search",
       enabled: ss.enabled,
-      requested: ss.device ?? (ss.model_size === "large" ? "GPU" : "CPU"),
+      // Not keyed on model_size any more. That tied device to which weights
+      // were downloaded and pinned the small model to the CPU on machines with
+      // a GPU, where one image embedding took 820ms. The backend now picks a
+      // GPU whenever ONNX Runtime has a provider for one; "AUTO" says that the
+      // choice is made there rather than asserting an answer the UI cannot know.
+      requested: ss.device ?? "AUTO",
       explicit: ss.device != null,
       remote: ss.model !== "jinav1" && ss.model !== "jinav2",
       nvidiaOnly: false,

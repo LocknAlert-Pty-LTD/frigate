@@ -184,7 +184,15 @@ Switching between Jina models and a GenAI provider requires reindexing. Embeddin
 
 ### GPU Acceleration
 
-The CLIP models are downloaded in ONNX format, and the `large` model can be accelerated using GPU hardware, when available. This depends on the Docker build that is used. You can also target a specific device in a multi-GPU installation.
+The CLIP models are downloaded in ONNX format. Both sizes run on a GPU when one is
+available; `model_size` chooses which weights are downloaded, not where they run:
+
+| `model_size` | Weights                | Notes                                        |
+| ------------ | ---------------------- | -------------------------------------------- |
+| `small`      | quantized (int8)       | Smaller download, works on CPU-only hosts    |
+| `large`      | fp16                   | Better search quality, and the faster of the two on a GPU |
+
+On a machine with a GPU, prefer `large`.
 
 <ConfigTabs>
 <TabItem value="ui">
@@ -193,7 +201,7 @@ Navigate to <NavPath path="Settings > Enrichments > Semantic search" />.
 
 | Field          | Description                                                            |
 | -------------- | ---------------------------------------------------------------------- |
-| **Model size** | Set to `large` to enable GPU acceleration                              |
+| **Model size** | `large` downloads the fp16 weights; both sizes use the GPU when present |
 | **Device**     | (Optional) Specify a GPU device index in a multi-GPU system (e.g. `0`) |
 
 </TabItem>
@@ -203,7 +211,7 @@ Navigate to <NavPath path="Settings > Enrichments > Semantic search" />.
 semantic_search:
   enabled: True
   model_size: large
-  # Optional, if using the 'large' model in a multi-GPU installation
+  # Optional, in a multi-GPU installation
   device: 0
 ```
 
@@ -212,9 +220,28 @@ semantic_search:
 
 :::info
 
-If the correct build is used for your GPU / NPU and the `large` model is configured, then the GPU will be detected and used automatically.
-Specify the `device` option to target a specific GPU in a multi-GPU system (see [onnxruntime's provider options](https://onnxruntime.ai/docs/execution-providers/)).
-If you do not specify a device, the first available GPU will be used.
+With no `device` set, Kestrel uses a GPU if ONNX Runtime has a provider for one
+and the CPU otherwise. Set `device` to pick a particular GPU in a multi-GPU
+system (see [onnxruntime's provider options](https://onnxruntime.ai/docs/execution-providers/)),
+or to `CPU` to force the CPU.
+
+Check <NavPath path="Settings > Enrichments" /> for the device each model actually
+loaded on. Kestrel logs it at startup too (`Loaded jina_v2 model on CUDA`). This is
+worth confirming rather than assuming: the device a model *should* use and the one
+it *did* are not always the same, and the only symptom of getting it wrong is a
+slow inference time.
+
+:::
+
+:::warning
+
+**If image embedding inference time is in the hundreds of milliseconds, the model
+is on the CPU.** On a modern GPU it should be tens of milliseconds. Earlier
+versions chose the device from `model_size`, which pinned `small` to the CPU even
+on machines with a capable GPU, and produced inference times around 820ms. Setting
+`device: CPU` does the same thing deliberately, so check that first.
+
+:::
 
 See the [Hardware Accelerated Enrichments](/configuration/hardware_acceleration_enrichments.md) documentation.
 
