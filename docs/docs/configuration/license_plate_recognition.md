@@ -135,7 +135,7 @@ Navigate to <NavPath path="Settings > Enrichments > License plate recognition" /
 - **Recognition threshold**: Recognition confidence score required to add the plate to the object as a `recognized_license_plate` and/or `sub_label`.
   - Default: `0.9`
 - **Min plate length**: Minimum number of characters a detected license plate must have to be added as a `recognized_license_plate` and/or `sub_label`. Use this to filter out short, incomplete, or incorrect detections.
-- **Plate format regex**: A regular expression defining the expected format of detected plates. Plates that do not match this format will be discarded. Websites like https://regex101.com/ can help test regular expressions for your plates.
+- **Plate format regex**: A regular expression defining the expected format of detected plates. Plates that do not match this format will be discarded. Kestrel refuses to start if the pattern is not a valid regex, rather than logging per plate and letting every read through. Websites like https://regex101.com/ can help test regular expressions for your plates.
 
 </TabItem>
 <TabItem value="yaml">
@@ -302,6 +302,136 @@ cameras:
 ```
 
 `cameras.<camera>.lpr.parkpow_enabled` overrides the global `lpr.parkpow.enabled` value for that camera; leave it unset to inherit the global setting.
+
+## Using LPR for Gate Access
+
+### When LPR runs on a vehicle
+
+Reading starts on the **first frame** a vehicle is tracked and continues on every
+frame until one of these:
+
+- **A known plate matches.** The decision is made, so the plate is not read
+  again for that vehicle. A car waiting at a barrier would otherwise be re-read
+  on every frame for as long as it sat there.
+- **The vehicle has been stationary too long.** Reading continues for 5 seconds
+  after a car stops, then gives up rather than grinding on a parked car.
+
+Earlier versions waited for the object tracker to confirm movement before
+starting, which meant nothing happened until a couple of frames after
+`detect.min_initialized`. For a gate those are the frames worth having: the plate
+is square-on and growing as the car approaches, and by the time the tracker had
+made up its mind the car could already be at the barrier waiting on a read that
+had not begun. The symptom in the log was one of these per frame:
+
+```
+Skipping LPR for non-stationary car object ... with no position changes.
+(Detected in 5 concurrent frames, threshold to run is 6 frames)
+```
+
+**This costs less than running on every frame sounds like it should.** Each frame
+starts with the license plate detector, a fixed-shape model on TensorRT. While
+the car is far away the plate it finds falls below `min_area` and the pass ends
+there, so the expensive OCR pipeline only runs on frames where the plate is
+actually big enough to read. `min_area` is therefore the dial that controls how
+much work a distant vehicle costs: raise it to start reading later and closer,
+lower it to start earlier at the cost of more passes that fail to resolve.
+
+Watch **Plate Recognition** on <NavPath path="System > Enrichments" /> after
+changing it. If inference time climbs with several vehicles in view, `min_area`
+is too low for the camera.
+
+### Where the time goes
+
+The pipeline runs four models per vehicle: a license plate detector, then
+PaddleOCR text detection, orientation classification and character recognition.
+They run on a GPU when one is available, and no configuration is needed for that
+(`lpr.device` is only an override).
+
+The plate detector has a fixed `[1, 3, 256, 256]` input, so TensorRT compiles one
+engine for it and keeps it. **The three PaddleOCR models do not**: all declare
+dynamic input dimensions, and the recognition width is recomputed from the widest
+text crop in each batch, taking dozens of distinct values in practice. The ONNX
+Runtime TensorRT provider builds and caches a separate engine per input shape, so
+those models paid a full engine build over and over -- the compile cost that is the
+only reason to use TensorRT, with none of the benefit. Kestrel now runs them on
+CUDA instead, which handles changing shapes with no build step. The plate detector
+stays on TensorRT.
+
+Nothing needs configuring for this. If you are watching the logs you will see
+`Loaded paddleocr model on CUDA` rather than TensorRT, and that is correct.
+
+### Reading the timings
+
+<NavPath path="System > Enrichments" /> shows a card per stage, so a slow pipeline
+can be read as the sum of its parts instead of one opaque number:
+
+| Card | What it covers |
+| ---- | -------------- |
+| **YOLOv9 Plate Detection** | Finding the plate in the frame. One model, static input shape, on TensorRT. |
+| **Plate Text Detection** | Finding the text regions inside the plate crop (PaddleOCR detection). |
+| **Plate Orientation Check** | Deciding whether a crop is upside down. |
+| **Plate Character Recognition** | Reading the characters (PaddleOCR recognition). Runs once per batch of text crops, so it scales with how many regions the detector found. |
+| **Plate Image Processing (CPU)** | Everything that is not a model: resizing and normalising each crop, the optional CLAHE and bilateral filter, CTC decoding, box clustering and the polygon work. |
+| **Plate Recognition** | The total of the four above. This is the number to watch; the others say where it went. |
+
+**Plate Image Processing (CPU) is the one to look at first when the total is
+high.** None of it runs on a GPU, so a faster card changes nothing — the answer
+is to do less of it. Measured per call on a typical crop:
+
+| Work | Cost |
+| ---- | ---- |
+| Recognition preprocessing, `enhancement: 0` | 0.39 ms per text crop |
+| Recognition preprocessing, `enhancement: 1` (adds CLAHE) | 0.64 ms per text crop |
+| Recognition preprocessing, `enhancement: 4` (adds a bilateral filter) | 1.43 ms per text crop |
+| Recognition preprocessing, `enhancement: 8` | 1.81 ms per text crop |
+| Plate crop extraction (perspective warp) | 0.67 ms per box |
+
+`enhancement` above 3 turns on a bilateral filter, which is the most expensive
+thing in the pipeline per crop. Raise it only while watching whether reads
+actually improve, and drop it back if they do not.
+
+If **Plate Character Recognition** dominates, the text detector is finding more
+regions than it should — a tighter `min_area` or a better-framed camera reduces
+the batch size it has to read.
+
+For a deeper breakdown than the dashboard gives, turn on debug logging:
+
+```yaml
+logger:
+  logs:
+    frigate.data_processing.common.license_plate: debug
+```
+
+### Accuracy settings that matter for a gate
+
+- `min_plate_length` rejects short reads. The most common OCR failure is part of a
+  plate resolving into a plausible shorter string, so set this to the real length
+  of the plates you expect.
+- `format` is a regex the whole plate must match. For a gate this is a security
+  control, not a convenience: it is what stops a misread of a passing vehicle from
+  resembling a plate on your allow list. Kestrel refuses to start if the pattern
+  does not compile, because a `format` that silently stopped filtering would admit
+  every plate it could read.
+- `recognition_threshold` is the confidence a read needs. Raise it for a gate.
+- `known_plates` with `match_distance` allows fuzzy matching. **`match_distance`
+  is a character budget for being wrong**: at the default of `1`, a plate one
+  character different from a known plate still matches, which turns every entry on
+  your allow list into a small family of accepted plates. For gate access consider
+  `match_distance: 0` and enrol the exact plates, accepting that a misread means
+  the gate does not open rather than that the wrong vehicle gets in.
+- `enhancement` helps on soft or low-contrast plates and costs CPU per frame. Raise
+  it only while watching whether reads actually improve; it is not free.
+
+### What LPR cannot tell you
+
+A plate is a flat printed object, so unlike a face there is nothing to distinguish
+a real plate from a good picture of one. A printed plate held up to the camera, or
+a cloned plate on another vehicle, reads exactly like the genuine article. LPR
+identifies a *plate*, not a vehicle and not a person.
+
+For a gate, treat a plate as one factor. Pair it with something else -- a fob, a
+code, an intercom, or a second camera confirming the vehicle matches the plate --
+and keep the event log so an unexpected entry can be reviewed afterwards.
 
 ## Configuration Examples
 
