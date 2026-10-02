@@ -836,18 +836,21 @@ def get_optimized_runner(
             providers.pop(0)
             options.pop(0)
 
-        for provider, option in zip(providers, options):
-            if provider != "CUDAExecutionProvider":
-                continue
-
-            # CUDA has no engine build, but it does pick a convolution algorithm
-            # per input shape, and ONNX Runtime defaults to EXHAUSTIVE -- it
-            # benchmarks every candidate algorithm for every shape it has not
-            # seen. That pays for itself on a detector running one fixed shape
-            # forever. On these models it does not: a license plate crop resizes
-            # to a multiple of 32, so a new size means a new benchmark, and the
-            # tuning can cost more than the inference it is tuning.
-            option["cudnn_conv_algo_search"] = "HEURISTIC"
+        # cudnn_conv_algo_search is deliberately left at the ONNX Runtime
+        # default of EXHAUSTIVE.
+        #
+        # Setting it to HEURISTIC here looked right on paper: EXHAUSTIVE
+        # benchmarks every convolution algorithm for each unseen input shape,
+        # and these models see many shapes, so the tuning seemed likely to cost
+        # more than it saved. Measured on a live gate camera it was the opposite
+        # by a wide margin -- plate text detection went from 61ms to 328ms and
+        # the whole pipeline from 73ms to 400ms. EXHAUSTIVE pays once per shape
+        # and then runs the fastest kernel available; HEURISTIC skips the
+        # benchmark and picks a worse kernel on every single call.
+        #
+        # The tuning cost is real but it amortises, and the shapes repeat more
+        # than the raw count of distinct sizes suggests. Do not set this without
+        # measuring the pipeline before and after.
 
     if (
         providers

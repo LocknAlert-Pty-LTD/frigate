@@ -151,17 +151,22 @@ class TestProviderOrderAfterExclusion(unittest.TestCase):
         self.assertEqual(len(providers), len(options))
 
 
-class TestCudaTuningForDynamicShapes(unittest.TestCase):
-    """ONNX Runtime defaults cudnn_conv_algo_search to EXHAUSTIVE: it benchmarks
-    every convolution algorithm the first time it sees an input shape.
+class TestCudaAlgorithmSearchIsLeftAlone(unittest.TestCase):
+    """cudnn_conv_algo_search must stay at the ONNX Runtime default, EXHAUSTIVE.
 
-    That is the right trade for a detector running one fixed shape forever. It is
-    the wrong one for the OCR models, whose input is resized to a multiple of 32
-    from whatever the plate crop happened to be -- a new size means a new
-    benchmark, and the tuning can cost more than the inference it is tuning.
+    It was once set to HEURISTIC for the dynamic-shape OCR models, on the
+    reasoning that benchmarking every convolution algorithm for each new input
+    shape would cost more than it saved. Measured on a live gate camera it did
+    the reverse: plate text detection went from 61ms to 328ms and the whole
+    plate pipeline from 73ms to 400ms. EXHAUSTIVE pays once per shape and then
+    runs the fastest kernel; HEURISTIC skips the benchmark and runs a worse
+    kernel on every call.
+
+    These tests exist so the setting cannot quietly return. Changing it needs a
+    before-and-after measurement of the pipeline, not an argument.
     """
 
-    def tuned_options(self, model_type: str):
+    def options_for(self, model_type: str):
         from frigate.detectors.detection_runners import prefers_cuda_over_tensorrt
         from frigate.util.model import get_ort_providers
 
@@ -176,30 +181,40 @@ class TestCudaTuningForDynamicShapes(unittest.TestCase):
             providers, options = get_ort_providers(False, "AUTO")
 
         if prefers_cuda_over_tensorrt(model_type):
-            if providers[0] == "TensorrtExecutionProvider":
-                providers.pop(0)
-                options.pop(0)
-            for provider, option in zip(providers, options):
-                if provider == "CUDAExecutionProvider":
-                    option["cudnn_conv_algo_search"] = "HEURISTIC"
+            providers.pop(0)
+            options.pop(0)
 
         return dict(zip(providers, options))
 
-    def test_dynamic_shape_models_use_heuristic_search(self) -> None:
-        options = self.tuned_options(EnrichmentModelTypeEnum.paddleocr.value)
+    def test_the_ocr_models_do_not_override_it(self) -> None:
+        cuda = self.options_for(EnrichmentModelTypeEnum.paddleocr.value)[
+            "CUDAExecutionProvider"
+        ]
 
-        self.assertEqual(
-            "HEURISTIC", options["CUDAExecutionProvider"]["cudnn_conv_algo_search"]
-        )
+        self.assertNotIn("cudnn_conv_algo_search", cuda)
 
-    def test_fixed_shape_models_keep_the_default(self) -> None:
-        """The object detector and the plate detector run one shape forever, so
-        an exhaustive search is paid once and repaid on every frame after."""
-        for model_type in ("yologeneric", EnrichmentModelTypeEnum.yolov9_license_plate.value):
-            options = self.tuned_options(model_type)
-            cuda = options.get("CUDAExecutionProvider", {})
+    def test_no_model_overrides_it(self) -> None:
+        for model_type in (
+            EnrichmentModelTypeEnum.paddleocr.value,
+            EnrichmentModelTypeEnum.jina_v1.value,
+            EnrichmentModelTypeEnum.jina_v2.value,
+            EnrichmentModelTypeEnum.yolov9_license_plate.value,
+            "yologeneric",
+        ):
+            cuda = self.options_for(model_type).get("CUDAExecutionProvider", {})
 
             self.assertNotIn("cudnn_conv_algo_search", cuda, model_type)
+
+    def test_the_runner_source_does_not_set_it(self) -> None:
+        """Catches the setting being reintroduced in get_optimized_runner, which
+        the provider-options tests above do not exercise."""
+        import inspect
+
+        from frigate.detectors import detection_runners
+
+        source = inspect.getsource(detection_runners.get_optimized_runner)
+
+        self.assertNotIn('["cudnn_conv_algo_search"] =', source)
 
 
 class TestEngineCacheIsPerGpu(unittest.TestCase):
