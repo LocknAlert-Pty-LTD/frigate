@@ -1,3 +1,4 @@
+import re
 from enum import Enum
 
 from pydantic import ConfigDict, Field, field_validator
@@ -9,6 +10,7 @@ __all__ = [
     "CameraFaceRecognitionConfig",
     "CameraLicensePlateRecognitionConfig",
     "CameraAudioTranscriptionConfig",
+    "FaceLivenessConfig",
     "FaceRecognitionConfig",
     "SemanticSearchConfig",
     "CameraSemanticSearchConfig",
@@ -282,6 +284,74 @@ class CameraSemanticSearchConfig(FrigateBaseModel):
     model_config = ConfigDict(extra="forbid", protected_namespaces=())
 
 
+def _normalize_face_name(name: str) -> str:
+    """Fold the spellings of one person onto a single key."""
+    return name.strip().casefold().replace("_", " ").replace("-", " ")
+
+
+class FaceLivenessConfig(FrigateBaseModel):
+    """Whether a recognised face belongs to someone actually present.
+
+    Recognition alone cannot tell a person from a photograph of them, so these
+    checks look for what a photograph cannot supply: parallax as the head turns,
+    and blinking. See docs/docs/configuration/face_recognition.md for the
+    measurements behind the defaults, and for what this does and does not stop.
+
+    The thresholds are in the units the analyzer logs, so enable debug logging
+    for frigate.data_processing.common.face.liveness, hold a photo up to the
+    camera, then walk past it yourself, and set them from what you see.
+    """
+
+    enabled: bool = Field(
+        default=True,
+        title="Require liveness",
+        description="Withhold a recognised name unless the face is shown to belong to someone present. Disabling this means a printed photo or a phone screen will be recognised exactly like a real face.",
+    )
+    min_frames: int = Field(
+        default=3,
+        ge=2,
+        le=30,
+        title="Minimum frames",
+        description="Frames of one person needed before liveness can be decided. Three is the minimum that can measure anything: two give the landmark noise floor and the third is measured against it.",
+    )
+    depth_growth_threshold: float = Field(
+        default=0.008,
+        ge=0.0,
+        le=1.0,
+        title="Depth threshold",
+        description="How much a flat surface must fail to explain the face's motion, above the track's own noise floor, before the face counts as solid. A real face turning 20 degrees measures 0.014 to 0.029; a photo measures 0.000 to 0.003. Raise it to demand clearer proof at the cost of more refusals.",
+    )
+    deformation_threshold: float = Field(
+        default=0.11,
+        ge=0.0,
+        le=1.0,
+        title="Blink threshold",
+        description="How much the eyes or mouth must open or close, relative to the distance between the eyes, to count as a working face. A real blink or spoken word measures 0.12 to 0.15. Accepts a motionless person without needing them to turn.",
+    )
+    min_viewpoint: float = Field(
+        default=0.04,
+        ge=0.0,
+        le=1.0,
+        title="Minimum viewpoint change",
+        description="How much the view must change before a failure to show depth is treated as proof of a flat surface rather than as too little information. Only affects which reason is logged; both withhold the name.",
+    )
+    max_noise_floor: float = Field(
+        default=0.05,
+        gt=0.0,
+        le=1.0,
+        title="Maximum landmark noise",
+        description="Refuse to judge at all once a face's own landmark jitter reaches this, because a real face and a photo stop being distinguishable. Small, dim or motion-blurred faces are what exceed it. Raising it does not improve detection; it only allows guesses.",
+    )
+    appearance_threshold: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        title="Appearance threshold",
+        description="Below this score for looking like a direct view rather than a reproduction, a face is rejected outright. Detects a screen's pixel grid or a printer's halftone; a high-resolution screen at the right distance leaves no trace, so this is a backstop rather than the main defence.",
+    )
+    model_config = ConfigDict(extra="forbid", protected_namespaces=())
+
+
 class FaceRecognitionConfig(FrigateBaseModel):
     enabled: bool = Field(
         default=False,
@@ -289,9 +359,9 @@ class FaceRecognitionConfig(FrigateBaseModel):
         description="Enable or disable face recognition for all cameras; can be overridden per-camera.",
     )
     model_size: ModelSizeEnum = Field(
-        default=ModelSizeEnum.small,
+        default=ModelSizeEnum.large,
         title="Model size",
-        description="Model size to use for face embeddings (small/large); larger may require GPU.",
+        description="Model size to use for face embeddings. 'large' is ArcFace, 'small' is FaceNet. ArcFace separates faces considerably better and is the default because recognition here can gate access; drop to 'small' only if inference cost forces it.",
     )
     unknown_score: float = Field(
         title="Unknown score threshold",
@@ -327,15 +397,78 @@ class FaceRecognitionConfig(FrigateBaseModel):
         description="Minimum number of face recognitions required before applying a recognized sub-label to a person.",
     )
     save_attempts: int = Field(
-        default=200,
+        default=400,
         ge=0,
         title="Save attempts",
-        description="Number of face recognition attempts to retain for recent recognition UI.",
+        description="Number of recent face recognition attempts to retain for review in the UI. Each is a small JPEG crop, so raising this costs little disk.",
     )
     blur_confidence_filter: bool = Field(
         default=True,
         title="Blur confidence filter",
         description="Adjust confidence scores based on image blur to reduce false positives for poor quality faces.",
+    )
+    min_blur_variance: int = Field(
+        default=120,
+        ge=0,
+        title="Minimum sharpness",
+        description="Reject faces whose Laplacian variance is below this, instead of only lowering their score. 0 disables the check. Raise it to demand sharper faces, lower it if faces are being dropped.",
+    )
+    recognition_margin: float = Field(
+        default=0.05,
+        ge=0.0,
+        le=1.0,
+        title="Recognition margin",
+        description="How far ahead the best matching person must be of the runner-up, in cosine similarity, before a match is accepted. Guards against confusing similar-looking people. 0 disables the check.",
+    )
+    knn_top_k: int = Field(
+        default=3,
+        ge=1,
+        le=25,
+        title="Neighbours per person",
+        description="Score each enrolled person by the average of their this-many most similar training images, rather than against a single averaged face. Higher tolerates more varied enrolment photos.",
+    )
+    ignored_faces: list[str] = Field(
+        default_factory=list,
+        title="Do not recognize",
+        description="Names that are never reported, even when recognized. The face stays enrolled and is still matched internally, but no name reaches events, MQTT or notifications and no attempt image is kept. For people who live or work somewhere and do not want to be tracked by it. Matched without regard to case, spaces, underscores or hyphens.",
+    )
+
+    @field_validator("ignored_faces")
+    @classmethod
+    def reject_blank_names(cls, value: list[str]) -> list[str]:
+        """A blank entry would silently match nothing.
+
+        Easy to leave behind when editing the list in YAML, and the only symptom
+        would be that someone the operator believed was ignored is still being
+        reported.
+        """
+        for name in value:
+            if not name or not name.strip():
+                raise ValueError(
+                    "face_recognition.ignored_faces contains a blank name"
+                )
+
+        return value
+
+    def is_ignored(self, name: str | None) -> bool:
+        """Whether a recognized name must not be reported.
+
+        Compared on a normalized form so the list matches what people type.
+        Enrolled names come from directory names under the face library, where
+        "Jane Doe", "jane_doe" and "jane-doe" are three different folders but one
+        person to whoever writes the config.
+        """
+        if not name:
+            return False
+
+        return _normalize_face_name(name) in {
+            _normalize_face_name(ignored) for ignored in self.ignored_faces
+        }
+
+    liveness: FaceLivenessConfig = Field(
+        default_factory=FaceLivenessConfig,
+        title="Liveness",
+        description="Checks that a recognised face belongs to someone actually present rather than to a photo of them.",
     )
     device: str | None = Field(
         default=None,
@@ -426,8 +559,31 @@ class LicensePlateRecognitionConfig(FrigateBaseModel):
     format: str | None = Field(
         default=None,
         title="Plate format regex",
-        description="Optional regex to validate recognized plate strings against an expected format.",
+        description="Optional regex to validate recognized plate strings against an expected format. Rejected at startup if it is not a valid regex, since a pattern that fails to compile would otherwise disable the filter.",
     )
+
+    @field_validator("format")
+    @classmethod
+    def validate_format_regex(cls, value: str | None) -> str | None:
+        """Refuse a pattern that will not compile.
+
+        Without this the error surfaced once per plate, at which point the filter
+        is not doing anything -- and where LPR opens a gate, a filter that
+        silently stopped filtering is the failure that matters. Better to refuse
+        to start.
+        """
+        if value is None:
+            return value
+
+        try:
+            re.compile(value)
+        except re.error as err:
+            raise ValueError(
+                f"lpr.format is not a valid regular expression: {err}"
+            ) from err
+
+        return value
+
     match_distance: int = Field(
         default=1,
         title="Match distance",
