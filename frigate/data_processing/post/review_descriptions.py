@@ -29,6 +29,7 @@ from frigate.const import (
     CACHE_DIR,
     CLIPS_DIR,
     STREAM_TYPE_MAIN,
+    STREAM_TYPE_SUB,
     UPDATE_REVIEW_DESCRIPTION,
 )
 from frigate.data_processing.types import PostProcessDataEnum
@@ -566,34 +567,51 @@ class ReviewDescriptionProcessor(PostProcessorApi):
             timestamps = [start_time + (i * step) for i in range(desired_frame_count)]
 
         def extract_frame_from_recording(ts: float) -> bytes | None:
-            """Extract a single frame from recording at given timestamp."""
-            try:
-                recording = (
-                    Recordings.select(
-                        Recordings.path,
-                        Recordings.start_time,
+            """Extract a single frame from a recording at the given timestamp.
+
+            Prefers the main stream and accepts the sub stream when there is no
+            main segment covering this moment. Restricting the lookup to the
+            main stream meant a camera recording only a sub stream found nothing
+            and fell all the way back to preview frames -- which are far smaller
+            and heavily compressed, so the description was written from a worse
+            picture than the one sitting on disk.
+            """
+            for stream_type in (STREAM_TYPE_MAIN, STREAM_TYPE_SUB):
+                try:
+                    recording = (
+                        Recordings.select(
+                            Recordings.path,
+                            Recordings.start_time,
+                        )
+                        .where(
+                            (ts >= Recordings.start_time) & (ts <= Recordings.end_time)
+                        )
+                        .where(Recordings.camera == camera)
+                        .where(Recordings.stream_type == stream_type)
+                        .order_by(Recordings.start_time.desc())
+                        .limit(1)
+                        .get()
                     )
-                    .where((ts >= Recordings.start_time) & (ts <= Recordings.end_time))
-                    .where(Recordings.camera == camera)
-                    .where(Recordings.stream_type == STREAM_TYPE_MAIN)
-                    .order_by(Recordings.start_time.desc())
-                    .limit(1)
-                    .get()
-                )
+                except DoesNotExist:
+                    continue
 
                 # start_time is a DateTimeField holding a unix timestamp
                 time_in_segment = ts - cast(float, recording.start_time)
-                return get_image_from_recording(
+                image = get_image_from_recording(
                     self.config.ffmpeg,
                     recording.path,
                     time_in_segment,
                     "mjpeg",
                     height=height,
                 )
-            except DoesNotExist:
-                return None
+
+                if image:
+                    return image
+
+            return None
 
         frames: list[tuple[bytes, float]] = []
+        missing: list[float] = []
 
         for timestamp in timestamps:
             try:
@@ -608,14 +626,26 @@ class ReviewDescriptionProcessor(PostProcessorApi):
                 if image_data:
                     frames.append((image_data, timestamp))
                 else:
-                    logger.warning(
-                        f"No recording found for {camera} at timestamp {timestamp}"
-                    )
+                    missing.append(timestamp)
             except Exception as e:
                 logger.error(
                     f"Error extracting frame from recording for {camera} at {timestamp}: {e}"
                 )
                 continue
+
+        if missing:
+            # One line for the whole review item rather than one per sampled
+            # frame. A 30 second segment samples dozens of timestamps, and a
+            # camera that is simply not recording produced dozens of identical
+            # warnings per event -- enough noise to bury whatever else was in
+            # the log, while saying no more than a single line would.
+            window = f"{missing[0]:.0f} to {missing[-1]:.0f}"
+            logger.warning(
+                f"No recording covers {len(missing)} of {len(timestamps)} sampled "
+                f"frames for {camera} ({window}). Check that this camera has a "
+                "record role and that recording is enabled for it; retention may "
+                "also have already removed this period."
+            )
 
         return frames
 
