@@ -189,7 +189,10 @@ def embeddings_stats(
         )
         stats["plate_recognition"] = round(embeddings_metrics.alpr_pps.value, 2)
 
-        if embeddings_metrics.yolov9_lpr_pps.value > 0.0:
+        # keyed on the speed, which keeps its last value, rather than the rate,
+        # which falls to zero whenever no car is in view and took the card off
+        # the dashboard with it
+        if embeddings_metrics.yolov9_lpr_speed.value > 0.0:
             stats["yolov9_plate_detection_speed"] = round(
                 embeddings_metrics.yolov9_lpr_speed.value * 1000, 2
             )

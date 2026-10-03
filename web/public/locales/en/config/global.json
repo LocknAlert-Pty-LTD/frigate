@@ -1445,6 +1445,10 @@
       "label": "Plate format regex",
       "description": "Optional regex to validate recognized plate strings against an expected format."
     },
+    "allowed_characters": {
+      "label": "Allowed plate characters",
+      "description": "Characters a plate can contain, for example 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ. The recogniser picks its best guess among these instead of punctuation a plate cannot contain. Leave empty to allow every character."
+    },
     "match_distance": {
       "label": "Match distance",
       "description": "Number of character mismatches allowed when comparing detected plates to known plates."

@@ -47,15 +47,12 @@ class RecordingModel:
         self.batches: list[int] = []
         self.rows = rows
         self.columns = columns
-        self.runner = (
-            InnerRunner() if input_width is None else InnerRunner(input_width)
-        )
+        self.runner = InnerRunner() if input_width is None else InnerRunner(input_width)
 
     def __call__(self, images):
         self.batches.append(len(images))
         return [
-            np.full((self.rows, self.columns), 0.1, dtype=np.float32)
-            for _ in images
+            np.full((self.rows, self.columns), 0.1, dtype=np.float32) for _ in images
         ]
 
     @property
@@ -97,7 +94,7 @@ class Decoder:
     def __init__(self) -> None:
         self.calls = 0
 
-    def __call__(self, outputs):
+    def __call__(self, outputs, allowed_characters=None):
         start = self.calls
         self.calls += len(outputs)
         return (
@@ -121,6 +118,7 @@ def mixin(batch_size: int = 6, classification=None, recognition=None):
     instance.model_runner = Runner(classification, recognition)
     instance.ctc_decoder = Decoder()
     instance.config = type("Config", (), {"cameras": {"gate": Camera()}})()
+    instance.lpr_config = type("Lpr", (), {"allowed_characters": None})()
     # The model calls are wrapped in stage timers. Leaving this off does not
     # fail loudly: the AttributeError lands in the same `except Exception` that
     # guards inference, so the stage would simply report no plate.
@@ -132,9 +130,9 @@ def crops(count: int, width: int = 90, height: int = 30) -> list[np.ndarray]:
     """Crops of varying width, so the aspect-ratio sort actually reorders them."""
     rng = np.random.default_rng(4)
     return [
-        rng.integers(
-            0, 256, (height, width + index * 7, 3), dtype=np.uint8
-        ).astype(np.uint8)
+        rng.integers(0, 256, (height, width + index * 7, 3), dtype=np.uint8).astype(
+            np.uint8
+        )
         for index in range(count)
     ]
 
@@ -307,7 +305,9 @@ class TestClassificationMapsBackToTheRightCrop(unittest.TestCase):
             if index == 3:
                 continue
             self.assertEqual("0", results[index][0], f"crop {index}")
-            np.testing.assert_array_equal(before[index], rotated[index], f"crop {index}")
+            np.testing.assert_array_equal(
+                before[index], rotated[index], f"crop {index}"
+            )
 
     def test_a_low_confidence_flip_is_not_applied(self) -> None:
         """Rotating on a weak signal would corrupt a readable plate."""

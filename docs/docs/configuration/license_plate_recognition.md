@@ -136,6 +136,8 @@ Navigate to <NavPath path="Settings > Enrichments > License plate recognition" /
   - Default: `0.9`
 - **Min plate length**: Minimum number of characters a detected license plate must have to be added as a `recognized_license_plate` and/or `sub_label`. Use this to filter out short, incomplete, or incorrect detections.
 - **Plate format regex**: A regular expression defining the expected format of detected plates. Plates that do not match this format will be discarded. Kestrel refuses to start if the pattern is not a valid regex, rather than logging per plate and letting every read through. Websites like https://regex101.com/ can help test regular expressions for your plates.
+- **Allowed plate characters** (`allowed_characters`): The characters your plates can contain, for example `0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ`. The recognition model knows thousands of characters, and it often puts a dash, a hash or a dot somewhere in an otherwise correct read, which then matches nothing in `known_plates`. With this set, the recogniser picks the best of these characters at every position instead. A plate read as several pieces is joined without spaces, unless a space is one of the allowed characters.
+  - Default: unset (every character the model knows)
 
 </TabItem>
 <TabItem value="yaml">
@@ -146,6 +148,7 @@ lpr:
   recognition_threshold: 0.9
   min_plate_length: 4
   format: "^[A-Z]{2}[0-9]{2} [A-Z]{3}$"
+  allowed_characters: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ "
 ```
 
 </TabItem>
@@ -413,6 +416,18 @@ logger:
   does not compile, because a `format` that silently stopped filtering would admit
   every plate it could read.
 - `recognition_threshold` is the confidence a read needs. Raise it for a gate.
+- `allowed_characters` is the single largest accuracy gain measured. On 1,483 real
+  gate-camera frames (646 vehicle passes), at the default `recognition_threshold`:
+
+  | Setting | Frames read exactly | Passes with an exact read | ms per frame |
+  |---|---|---|---|
+  | defaults | 101 | 61 | 4.7 |
+  | `enhancement: 1` | 140 | 72 | 5.3 |
+  | `allowed_characters` (A-Z, 0-9) | 206 | 97 | 5.0 |
+  | both | 263 | 110 | 5.6 |
+
+  No frame in that set read as a *different* enrolled plate under any setting.
+  Most of the remaining misses are a blurred or night-time first character.
 - `known_plates` with `match_distance` allows fuzzy matching. **`match_distance`
   is a character budget for being wrong**: at the default of `1`, a plate one
   character different from a known plate still matches, which turns every entry on

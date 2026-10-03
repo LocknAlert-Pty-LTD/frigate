@@ -53,6 +53,7 @@ const lpr: SectionConfigOverrides = {
       "recognition_threshold",
       "min_plate_length",
       "format",
+      "allowed_characters",
       "match_distance",
       "known_plates",
       "enhancement",
@@ -65,6 +66,7 @@ const lpr: SectionConfigOverrides = {
       "recognition_threshold",
       "min_plate_length",
       "format",
+      "allowed_characters",
       "match_distance",
       "known_plates",
       "enhancement",
@@ -85,6 +87,9 @@ const lpr: SectionConfigOverrides = {
     ],
     uiSchema: {
       format: {
+        "ui:options": { size: "md" },
+      },
+      allowed_characters: {
         "ui:options": { size: "md" },
       },
       known_plates: {

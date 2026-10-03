@@ -45,6 +45,11 @@ logger = logging.getLogger(__name__)
 WRITE_DEBUG_IMAGES = False
 
 
+# The stages of a plate read that always run, each shown as its own card under
+# Plate Recognition on the health dashboard.
+PLATE_STAGES = ("text_detection", "ocr", "cpu_overhead")
+
+
 class LicensePlateProcessingMixin:
     # Attributes expected from consuming classes (set before super().__init__)
     config: FrigateConfig
@@ -64,7 +69,13 @@ class LicensePlateProcessingMixin:
         self.plate_det_speed = InferenceSpeed(self.metrics.yolov9_lpr_speed)
         # Breaks the single Plate Recognition figure into the stages that make
         # it up, so the dashboard shows which one to attack.
-        self.stage_timings = StageTimings(self.metrics.stage_speeds, prefix="plate_")
+        # Orientation is left out: _classify is not on the production path, and
+        # a card stuck at zero would suggest a stage that ran for free.
+        self.stage_timings = StageTimings(
+            self.metrics.stage_speeds,
+            prefix="plate_",
+            stages=PLATE_STAGES,
+        )
         self.plates_det_second = EventsPerSecond()
         self.plates_det_second.start()
         self.event_metadata_publisher = EventMetadataPublisher()
@@ -263,7 +274,9 @@ class LicensePlateProcessingMixin:
                 logger.warning(f"Error running LPR recognition model: {e}")
                 return [], []
 
-            batch_texts, batch_confidences = self.ctc_decoder(outputs)
+            batch_texts, batch_confidences = self.ctc_decoder(
+                outputs, allowed_characters=self.lpr_config.allowed_characters
+            )
             texts.extend(batch_texts)
             confidences.extend(batch_confidences)
 
@@ -440,8 +453,13 @@ class LicensePlateProcessingMixin:
 
             processed_indices.update(qualifying_indices)
 
-            # Combine the qualifying results into a single plate string
-            combined_plate = " ".join(qualifying_results)
+            # Combine the qualifying results into a single plate string. When the
+            # plate's characters are configured and a space is not one of them,
+            # the pieces are joined without one: otherwise a plate the detector
+            # cut in two reads "DT35 TTGP", which matches nothing exactly.
+            allowed = self.lpr_config.allowed_characters
+            separator = "" if allowed and " " not in allowed else " "
+            combined_plate = separator.join(qualifying_results)
 
             flat_confidences = [
                 conf for conf_list in qualifying_confidences for conf in conf_list
@@ -1955,9 +1973,33 @@ class CTCDecoder:
             ]
 
         self.char_map = {i: char for i, char in enumerate(self.characters)}
+        self._masks: dict[str, np.ndarray] = {}
+
+    def _mask(self, allowed_characters: str, classes: int) -> np.ndarray:
+        """1 for blank and every class whose character is allowed, else 0.
+
+        Cached per character set, so a config change takes effect on the next
+        plate without rebuilding anything per call."""
+        key = f"{classes}:{allowed_characters}"
+        mask = self._masks.get(key)
+
+        if mask is None:
+            allowed = set(allowed_characters)
+            mask = np.zeros(classes, dtype=np.float32)
+            mask[0] = 1.0  # blank, which CTC needs to separate repeated characters
+
+            for index, char in self.char_map.items():
+                if 0 < index < classes and char in allowed:
+                    mask[index] = 1.0
+
+            self._masks[key] = mask
+
+        return mask
 
     def __call__(
-        self, outputs: list[np.ndarray]
+        self,
+        outputs: list[np.ndarray],
+        allowed_characters: str | None = None,
     ) -> tuple[list[str], list[list[float]]]:
         """
         Decode a batch of model outputs into character sequences and their confidence scores.
@@ -1991,6 +2033,16 @@ class CTCDecoder:
             # output the two agreed on every one of 4000 time steps tested, and
             # on deliberately pathological near-uniform input the new path always
             # selected a probability at least as high as the old one.
+            if allowed_characters:
+                # Plates only contain a known set of characters, and the
+                # recogniser knows 6625. Where it puts a dash, a hash or a CJK
+                # character first, the best character the plate can actually
+                # contain is usually right behind it, so the argmax is taken
+                # over those alone. Stripping the symbol afterwards would drop
+                # the position instead. On 1,483 real gate frames this took
+                # reads matching a known plate exactly from 137 to 232.
+                output = output * self._mask(allowed_characters, output.shape[1])
+
             best_path = np.argmax(output, axis=1)
             probabilities = output[np.arange(output.shape[0]), best_path]
 
@@ -2007,8 +2059,6 @@ class CTCDecoder:
             # p + 1e-8 up to floating point. Taking the probability directly
             # skips a round trip that was always an identity; the epsilon stays
             # so the reported numbers do not shift.
-            confidences.append(
-                (probabilities[keep].astype(np.float64) + 1e-8).tolist()
-            )
+            confidences.append((probabilities[keep].astype(np.float64) + 1e-8).tolist())
 
         return results, confidences

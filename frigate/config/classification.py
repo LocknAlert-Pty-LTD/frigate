@@ -444,9 +444,7 @@ class FaceRecognitionConfig(FrigateBaseModel):
         """
         for name in value:
             if not name or not name.strip():
-                raise ValueError(
-                    "face_recognition.ignored_faces contains a blank name"
-                )
+                raise ValueError("face_recognition.ignored_faces contains a blank name")
 
         return value
 
@@ -581,6 +579,23 @@ class LicensePlateRecognitionConfig(FrigateBaseModel):
             raise ValueError(
                 f"lpr.format is not a valid regular expression: {err}"
             ) from err
+
+        return value
+
+    allowed_characters: str | None = Field(
+        default=None,
+        title="Allowed plate characters",
+        description="Characters a plate can contain, for example 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ. When set, the recogniser picks its best guess among these at every position instead of emitting punctuation or other symbols a plate cannot contain, and a plate read as several pieces is joined without spaces unless a space is listed. Leave unset to keep every character the model knows.",
+    )
+
+    @field_validator("allowed_characters")
+    @classmethod
+    def validate_allowed_characters(cls, value: str | None) -> str | None:
+        """Empty means unset. Taken literally, an empty set would decode every
+        position to blank and no plate would ever be read -- and clearing the
+        field in the settings form submits exactly that."""
+        if value is not None and not value.strip():
+            return None
 
         return value
 

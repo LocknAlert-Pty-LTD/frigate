@@ -12,7 +12,7 @@ import struct
 import time
 import urllib.parse
 from collections import deque
-from collections.abc import Iterator, Mapping, MutableMapping
+from collections.abc import Iterable, Iterator, Mapping, MutableMapping
 from contextlib import contextmanager
 from multiprocessing.managers import ValueProxy
 from pathlib import Path
@@ -110,12 +110,25 @@ class StageTimings:
     landing inside one would otherwise show up as a wild outlier.
     """
 
-    def __init__(self, published: MutableMapping[str, float], prefix: str = "") -> None:
+    def __init__(
+        self,
+        published: MutableMapping[str, float],
+        prefix: str = "",
+        stages: Iterable[str] = (),
+    ) -> None:
         self.__published = published
         self.__prefix = prefix
         self.__smoothed: dict[str, float] = {}
         self.__pass_totals: dict[str, float] = {}
         self.__pass_seconds = 0.0
+
+        # Published as zero up front, so the dashboard has a card for each
+        # stage from startup. Otherwise the breakdown only exists once the
+        # pipeline has run since the last restart, and until then the total
+        # sits there on its own. The zero is a placeholder, not a sample: the
+        # first real pass replaces it rather than being averaged with it.
+        for stage in stages:
+            self.__published.setdefault(f"{prefix}{stage}", 0.0)
 
     def start_pass(self) -> None:
         """Begin accounting for one trip through the pipeline."""

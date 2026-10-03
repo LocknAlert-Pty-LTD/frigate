@@ -191,6 +191,54 @@ class TestMeasureContext(StageTimingsTestCase):
         self.assertGreater(self.published["plate_ocr"], 0)
 
 
+class TestRegisteredAtStartup(unittest.TestCase):
+    """The breakdown cards exist before the first plate, not only after it.
+
+    Without this, every restart left Plate Recognition on the dashboard with its
+    total and nothing under it until a car came past."""
+
+    def test_named_stages_are_published_immediately(self) -> None:
+        published: dict[str, float] = {}
+
+        StageTimings(published, prefix="plate_", stages=("ocr", "cpu_overhead"))
+
+        self.assertEqual({"plate_ocr": 0.0, "plate_cpu_overhead": 0.0}, published)
+
+    def test_the_placeholder_is_not_averaged_into_the_first_pass(self) -> None:
+        published: dict[str, float] = {}
+        timings = StageTimings(published, prefix="plate_", stages=("ocr",))
+
+        timings.start_pass()
+        timings.add("ocr", 0.004)
+        timings.flush()
+
+        self.assertAlmostEqual(0.004, published["plate_ocr"])
+
+    def test_an_existing_value_is_not_reset(self) -> None:
+        """Registering must not wipe a figure another instance already shows."""
+        published = {"plate_ocr": 0.004}
+
+        StageTimings(published, prefix="plate_", stages=("ocr",))
+
+        self.assertEqual(0.004, published["plate_ocr"])
+
+    def test_the_plate_pipeline_registers_the_stages_that_always_run(self) -> None:
+        from frigate.data_processing.common.license_plate.mixin import PLATE_STAGES
+
+        self.assertEqual({"text_detection", "ocr", "cpu_overhead"}, set(PLATE_STAGES))
+
+    def test_it_works_on_the_shared_dict_the_stats_read(self) -> None:
+        """Production publishes into a multiprocessing DictProxy, not a dict."""
+        import multiprocessing
+
+        with multiprocessing.Manager() as manager:
+            published = manager.dict()
+
+            StageTimings(published, prefix="plate_", stages=("ocr",))
+
+            self.assertEqual({"plate_ocr": 0.0}, dict(published))
+
+
 class TestStatsContract(unittest.TestCase):
     """What the health dashboard needs in order to render these at all."""
 

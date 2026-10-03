@@ -71,6 +71,7 @@ def _metrics(devices: dict[str, str]) -> SimpleNamespace:
         review_desc_dps=value,
         object_desc_speed=value,
         object_desc_dps=value,
+        stage_speeds={},
         classification_speeds={},
         classification_cps={},
         runtime_devices=devices,

@@ -18,7 +18,6 @@ is replicated instead.
 import types
 import unittest
 
-import cv2
 import numpy as np
 
 from frigate.data_processing.common.license_plate.mixin import (
@@ -81,8 +80,15 @@ class TestDetectionSeesOneShape(unittest.TestCase):
         detection = DetectionModel()
         instance = mixin(detection)
 
-        for width, height in [(280, 64), (400, 92), (600, 136), (880, 204),
-                              (330, 220), (1200, 300), (60, 40)]:
+        for width, height in [
+            (280, 64),
+            (400, 92),
+            (600, 136),
+            (880, 204),
+            (330, 220),
+            (1200, 300),
+            (60, 40),
+        ]:
             instance._detect(plate(width, height), 0)
 
         self.assertEqual({(1, 3, CANVAS_H, CANVAS_W)}, set(detection.shapes))
@@ -212,9 +218,15 @@ class TestRecognitionWidthBuckets(unittest.TestCase):
         instance = LicensePlateProcessingMixin.__new__(LicensePlateProcessingMixin)
         instance.batch_size = 6
         instance.model_runner = types.SimpleNamespace(recognition_model=Recognition())
-        instance.ctc_decoder = lambda outputs: (["X"] * len(outputs), [[0.9]] * len(outputs))
+        instance.ctc_decoder = lambda outputs, **kwargs: (
+            ["X"] * len(outputs),
+            [[0.9]] * len(outputs),
+        )
+        instance.lpr_config = types.SimpleNamespace(allowed_characters=None)
         instance.config = types.SimpleNamespace(
-            cameras={"gate": types.SimpleNamespace(lpr=types.SimpleNamespace(enhancement=0))}
+            cameras={
+                "gate": types.SimpleNamespace(lpr=types.SimpleNamespace(enhancement=0))
+            }
         )
         instance.stage_timings = StageTimings({})
 
